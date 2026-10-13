@@ -1,0 +1,10 @@
+# other authors' downloads, kept locally for reference only (see README, Credits)
+thingiverse/
+
+# session notes and tooling output
+session-state.md
+CLAUDE.local.md
+*.log
+coin/out/
+__pycache__/
+.DS_Store
