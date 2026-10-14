@@ -93,6 +93,7 @@ FILAMENT_DIAMETER = 1.75
 FILAMENT_SLOT_CLEARANCE = 0.5  # per side, around the filament where it leaves the clip sideways
 DOCK_FUNNEL_HEIGHT = 4.0  # flared mouth added on top of the whole channels, so the chip is easy to aim into the dock
 DOCK_FUNNEL_FLARE = 2.0  # how far each side of the slot mouth opens outward at the very top
+DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the back plate's front face slopes away from the chip at the very top; the slope starts above the sticker, which stays covered
 DOCK_FILAMENT_SLOTS = False  # True cuts a narrow slot through each side wall at the two clip channels so filament can leave sideways; False leaves the side faces closed
 TRACK_INTO_POCKET = 7.5  # the tracks (rails and lips) run this far down past the lower pocket's top edge (5 to 10mm per Charles) and stop; below that only the pocket's own walls remain
 DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
@@ -203,7 +204,7 @@ def coin_parts(label: str):
 def dock_parts(slot: int | None):
     """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a full-width lower pocket over the clip-arm area carrying the big slot digit.
 
-    The lower pocket is a full-width plate just above the arm walls B and C, on full side walls; inside it the lips are left out because the cover holds the coin. Its top edge stops just past the curled tip of the tall hook finger (wall A), which stands proud above the edge, so a thumb run up the cover face catches it and lifts the coin out. Above the pocket the rails and lips form the tracks, whole from y_top to TRACK_INTO_POCKET below the pocket's top edge, and they do not run to the bottom; a flared mouth of DOCK_FUNNEL_HEIGHT sits on top of them; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
+    The lower pocket is a full-width plate just above the arm walls B and C, on full side walls; inside it the lips are left out because the cover holds the coin. Its top edge stops just past the curled tip of the tall hook finger (wall A), which stands proud above the edge, so a thumb run up the cover face catches it and lifts the coin out. Above the pocket the rails and lips form the tracks, whole from y_top to TRACK_INTO_POCKET below the pocket's top edge, and they do not run to the bottom; a flared mouth of DOCK_FUNNEL_HEIGHT sits on top of them, bevelled on all sides (back plate, sides, lips) as one funnel; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
     """
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
@@ -234,6 +235,9 @@ def dock_parts(slot: int | None):
     ramp = (z_front - z_slot_front) / DOCK_FUNNEL_HEIGHT
     lip_ramp = Polygon(*_ccw([(y_top, z_slot_front), (y_funnel_top + 1, z_slot_front), (y_funnel_top + 1, z_front + ramp)]), align=None)
     parts -= extrude(Plane.YZ * lip_ramp, amount=outer_half + 1, both=True)
+    back_slope = DOCK_FUNNEL_BACK_DEPTH * (DOCK_FUNNEL_HEIGHT + 1) / DOCK_FUNNEL_HEIGHT
+    back_ramp = Polygon(*_ccw([(y_top, -DOCK_BACK_GAP), (y_funnel_top + 1, -DOCK_BACK_GAP), (y_funnel_top + 1, -DOCK_BACK_GAP - back_slope)]), align=None)
+    parts -= extrude(Plane.YZ * back_ramp, amount=outer_half + 1, both=True)  # back plate bevel, meeting the side flares and lip ramps as one funnel
     for sign in (-1, 1):
         x_mouth = sign * (inner_half + DOCK_FUNNEL_FLARE)
         for x_start, z0 in ((sign * inner_half, z_back), (sign * (COIN_RADIUS - DOCK_LIP_OVERLAP), z_slot_front)):
