@@ -10,6 +10,8 @@ Everything this project builds on, kept so the lineage is never lost. Retrieved 
 | [Snapmaker U1 NFC / RFID Tag Holder](https://www.printables.com/model/1625982-snapmaker-u1-nfc-rfid-tag-holder) (Printables 1625982) | remmulegguh | CC BY-NC-SA 4.0 | The snap-in interface for the panel's spool-holder socket: curved plate (about 20mm tall, arc radius about 25.7mm) and two springy fingers (10mm tall, 27mm long) | Analysed from `rfidholder.stl` (`0273e2de039adc9e`) and `holderrfid_short_no1.stl` (`779cac871b7ba18e`). The plan is to reuse the plate and fingers from his mesh with his hook replaced by our dock, which would make that part a derivative of his files. |
 | [Snapmaker U1 RFID Adapter & Chip System](https://www.thingiverse.com/thing:7268905) (Thingiverse 7268905) | A-Jey | CC BY-NC-SA | The sticker-in-a-coin concept, 25mm NTAG215 stickers, per-material coins, and the tag position (a 30mm pad centred 40mm from the hub axis) | Measured from `U1-RFID-Adapter.stl` (`f1d52964b71a38d4`) and `U1-RFID-Adapter_Chip.stl` (`e13ba9e3d01e8aa0`): chip 26.98 x 26.99 x 1.2mm. Concept only; no geometry copied. |
 
+Antenna-position evidence from these files (install photos, the 31.6mm socket bore and the hook reach in remmulegguh's holders, and A-Jey's 40mm pad) is collected in `docs/ANTENNA.md`.
+
 ## Reviewed, informed the design, nothing taken
 
 | Source | Author | Licence | Note |
