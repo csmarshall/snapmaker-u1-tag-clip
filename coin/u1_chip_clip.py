@@ -90,6 +90,7 @@ COVER_PLATE_THICKNESS = 1.2
 COVER_HOOK_CLEARANCE = 0.3  # the cover's top edge stops this far beyond the hook finger's curled tip
 FILAMENT_DIAMETER = 1.75
 FILAMENT_SLOT_CLEARANCE = 0.5  # per side, around the filament where it leaves the clip sideways
+DOCK_FILAMENT_SLOTS = False  # True cuts a narrow slot through each side wall at the two clip channels so filament can leave sideways; False leaves the side faces closed
 TRACK_INTO_POCKET = 7.5  # the tracks (rails and lips) run this far down past the lower pocket's top edge (5 to 10mm per Charles) and stop; below that only the pocket's own walls remain
 DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
 
@@ -219,7 +220,7 @@ def dock_parts(slot: int | None):
     track_end_y = cover_top - TRACK_INTO_POCKET
     parts += box(-outer_half, outer_half, y_bottom, track_end_y, z_cover_in, z_cover_out)  # cover plate, full dock width below where the tracks end
     parts += box(-inner_half, inner_half, track_end_y, cover_top, z_cover_in, z_cover_out)  # cover plate between the channel walls, which show beside it running down into the pocket
-    for channel_y in CLIP_CHANNEL_Y:
+    for channel_y in CLIP_CHANNEL_Y if DOCK_FILAMENT_SLOTS else ():
         for sign in (-1, 1):
             x0, x1 = sorted((sign * ARM_LENGTH / 2, sign * (outer_half + 1)))
             parts -= box(x0, x1, channel_y - slot_half, channel_y + slot_half, COIN_THICKNESS, slot_top_z)  # filament exit slot
