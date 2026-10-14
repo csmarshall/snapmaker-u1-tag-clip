@@ -90,7 +90,7 @@ COVER_PLATE_THICKNESS = 1.2
 COVER_HOOK_CLEARANCE = 0.3  # the cover's top edge stops this far beyond the hook finger's curled tip
 FILAMENT_DIAMETER = 1.75
 FILAMENT_SLOT_CLEARANCE = 0.5  # per side, around the filament where it leaves the clip sideways
-TRACK_INTO_POCKET = 6.0  # the tracks run this far down past the lower pocket's top edge (5 to 7mm per Charles); above that there is plenty of track to hold the chip
+TRACK_INTO_POCKET = 7.5  # the tracks (rails and lips) run this far down past the lower pocket's top edge (5 to 10mm per Charles) and stop; below that only the pocket's own walls remain
 DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
@@ -187,7 +187,7 @@ def coin_parts(label: str, number: int | None):
 def dock_parts(slot: int | None):
     """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a full-width lower pocket over the clip-arm area carrying the big slot digit.
 
-    The lower pocket is a full-width plate just above the arm walls B and C, on full side walls; inside it the lips are left out because the cover holds the coin. Its top edge stops just past the curled tip of the tall hook finger (wall A), which stands proud above the edge, so a thumb run up the cover face catches it and lifts the coin out. Above the pocket the rails and lips form the tracks, whole from the open top to just below the pocket's top edge (no entry chamfer); a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
+    The lower pocket is a full-width plate just above the arm walls B and C, on full side walls; inside it the lips are left out because the cover holds the coin. Its top edge stops just past the curled tip of the tall hook finger (wall A), which stands proud above the edge, so a thumb run up the cover face catches it and lifts the coin out. Above the pocket the rails and lips form the tracks, whole from the open top to TRACK_INTO_POCKET below the pocket's top edge (no entry chamfer), and they do not run to the bottom; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
     """
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
@@ -208,14 +208,14 @@ def dock_parts(slot: int | None):
     parts = box(-outer_half, outer_half, y_bottom, y_top, z_back, -DOCK_BACK_GAP)  # back wall
     for sign in (-1, 1):
         x_in, x_out = sorted((sign * inner_half, sign * outer_half))
-        parts += box(x_in, x_out, y_bottom, y_top, z_back, z_cover_out)  # rail: one continuous side wall, as tall as the lower pocket, from the open top to the bottom stop
+        parts += box(x_in, x_out, cover_top - TRACK_INTO_POCKET, y_top, z_back, z_front)  # rail, part of the track
         lip_in = sign * (COIN_RADIUS - DOCK_LIP_OVERLAP)
         lip_lo, lip_hi = sorted((lip_in, sign * outer_half))
         parts += box(lip_lo, lip_hi, cover_top - TRACK_INTO_POCKET, y_top, z_slot_front, z_front)  # lip over the coin edge; deeper in the lower pocket the cover holds the coin instead
     parts += box(-outer_half, outer_half, y_bottom, y_bottom + DOCK_BOTTOM_THICKNESS, z_back, z_front)  # bottom stop
     for sign in (-1, 1):
         x_in, x_out = sorted((sign * inner_half, sign * outer_half))
-        parts += box(x_in, x_out, y_bottom, cover_top, z_front, z_cover_out)  # side wall of the lower pocket, carrying the cover
+        parts += box(x_in, x_out, y_bottom, cover_top, z_back, z_cover_out)  # side wall of the lower pocket, carrying the cover; it does not climb beside the tracks
     parts += box(-outer_half, outer_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate, full dock width
     for channel_y in CLIP_CHANNEL_Y:
         for sign in (-1, 1):
