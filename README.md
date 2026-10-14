@@ -6,7 +6,7 @@ A filament-clip "coin" that carries an NTAG215 sticker, plus a holder that snaps
 
 ## The idea
 
-Spools keep their tag with them. The tag lives on a coin that also clips the loose filament end, so there is no velcro and no separate chip to forget: to load a spool you take the coin off the spool, drop it into the holder on the printer, and feed the filament. When the print is done the coin goes back on the spool. The material name is engraved on the coin (deep enough to paint or fill) along with a copy number, and each coin's tag UID is registered in Spoolman through paxx12's OpenRFID support.
+Spools keep their tag with them. The tag lives on a coin that also clips the loose filament end, so there is no velcro and no separate chip to forget: to load a spool you take the coin off the spool, drop it into the holder on the printer, and feed the filament. When the print is done the coin goes back on the spool. The material name is engraved on the coin (deep enough to paint or fill) and nothing else (chips travel with spools and can end up in any position, so no copy numbers), and each coin's tag UID is registered in Spoolman through paxx12's OpenRFID support.
 
 The U1 only reads a tag when the auto feeder first engages, so put the coin in the holder before feeding the filament.
 
@@ -23,7 +23,7 @@ The U1 only reads a tag when the auto feeder first engages, so put the coin in t
 
 | Term | What it is |
 |---|---|
-| chip | The clip coin: round end up, flat end down with rounded corners, sticker pocket on the back, engraved material name and copy number on the front. |
+| chip | The clip coin: round end up, flat end down with rounded corners, sticker pocket on the back, engraved material name only on the front. |
 | clip arms | The three walls on the chip that hold the filament end, traced from Extrutim's clip and turned 180 degrees as one unit. |
 | hook finger | The tallest clip arm (wall A, curled top and a small centre nub). Deliberately 2mm taller than the original (`WALL_A_EXTRA_HEIGHT`) so it stands proud of the dock's lower pocket and a thumb run up the pocket face catches it and lifts the chip out. |
 | dock | The holder the chip drops into, one per U1 slot, numbered 1 to 4 left to right with a big engraved digit. |

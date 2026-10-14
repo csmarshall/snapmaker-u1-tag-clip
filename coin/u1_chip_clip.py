@@ -72,7 +72,7 @@ C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 # ---- label ---------------------------------------------------------------------------------
 COIN_END_CORNER_RADIUS = 5.0  # rounds the flat end's two corners so the coin is nearly pill-shaped
 LABEL_FONT_SIZE = 7.0
-NUMBER_FONT_SIZE = 4.5
+LABEL_Y = 8.0  # label centre above the sticker pocket centre, in the round end
 COVER_DIGIT_MARGIN = 1.2  # gap between the slot digit and the cover's edges; the digit is scaled to fill the cover height minus this
 U1_SLOTS = (1, 2, 3, 4)  # one dock per U1 filament position, numbered as Charles labels them
 ENGRAVE_DEPTH = 0.6  # deep enough to paint or fill, per Charles
@@ -162,8 +162,8 @@ def _lead_in_wall(z0: float):
     return Pos(0, 0, z0) * (solid + extrude(nub_outline, amount=A_NUB_HEIGHT + WALL_A_EXTRA_HEIGHT))
 
 
-def coin_parts(label: str, number: int | None):
-    """Return (body, engraving) for one filament label and copy number: the body has the label cut out (number=None leaves the copy number off) and the engraving fills the cut exactly, so a slicer can print them in two colours."""
+def coin_parts(label: str):
+    """Return (body, engraving) for one filament label: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours. There is no copy number: chips travel with spools and end up in any position."""
     # Round end and flat end: the circle's own edge would stick out past the rectangle, so cut it at COIN_FLAT_END_Y.
     below_top = Pos(0, COIN_FLAT_END_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_FLAT_END_Y + 2 * COIN_RADIUS)
     outline = (Circle(COIN_RADIUS) + Pos(0, COIN_FLAT_END_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_FLAT_END_Y)) & below_top
@@ -179,9 +179,7 @@ def coin_parts(label: str, number: int | None):
     arms += _c_catches(COIN_THICKNESS)
     body += Rot(Z=180) * arms
 
-    engrave = Pos(0, 6.0, COIN_THICKNESS) * extrude(Text(label, font_size=LABEL_FONT_SIZE), amount=-ENGRAVE_DEPTH)
-    if number is not None:
-        engrave += Pos(0, 12.0, COIN_THICKNESS) * extrude(Text(str(number), font_size=NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
+    engrave = Pos(0, LABEL_Y, COIN_THICKNESS) * extrude(Text(label, font_size=LABEL_FONT_SIZE), amount=-ENGRAVE_DEPTH)
     return body - engrave, engrave
 
 
@@ -237,9 +235,9 @@ if __name__ == "__main__":
 
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
-    for index, material in enumerate(("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon"), start=1):
-        body, engraving = coin_parts(material, index)
-        stem = f"coin_{material.replace('+', 'plus')}_{index}"
+    for material in ("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon"):
+        body, engraving = coin_parts(material)
+        stem = f"coin_{material.replace('+', 'plus')}"
         export_stl(body, str(out / f"{stem}.stl"))
         export_step(body, str(out / f"{stem}.step"))
         export_stl(engraving, str(out / f"{stem}_label.stl"))
@@ -247,11 +245,3 @@ if __name__ == "__main__":
         dock_body, dock_digit = dock_parts(slot)
         export_stl(dock_body, str(out / f"dock_slot{slot}.stl"))
         export_stl(dock_digit, str(out / f"dock_slot{slot}_digit.stl"))
-    plain = out / "nonumber"
-    plain.mkdir(exist_ok=True)
-    for material in ("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon"):
-        body, engraving = coin_parts(material, None)
-        stem = f"coin_{material.replace('+', 'plus')}"
-        export_stl(body, str(plain / f"{stem}.stl"))
-        export_stl(engraving, str(plain / f"{stem}_label.stl"))
-    export_stl(dock_parts(None)[0], str(plain / "dock.stl"))
