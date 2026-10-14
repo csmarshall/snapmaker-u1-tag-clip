@@ -90,7 +90,7 @@ COVER_PLATE_THICKNESS = 1.2
 COVER_HOOK_CLEARANCE = 0.3  # the cover's top edge stops this far beyond the hook finger's curled tip
 FILAMENT_DIAMETER = 1.75
 FILAMENT_SLOT_CLEARANCE = 0.5  # per side, around the filament where it leaves the clip sideways
-TRACK_INTO_POCKET = 3.0  # the tracks run this far down past the lower pocket's top edge, so they stay whole into the pocket
+TRACK_INTO_POCKET = 6.0  # the tracks run this far down past the lower pocket's top edge (5 to 7mm per Charles); above that there is plenty of track to hold the chip
 DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
@@ -208,7 +208,7 @@ def dock_parts(slot: int | None):
     parts = box(-outer_half, outer_half, y_bottom, y_top, z_back, -DOCK_BACK_GAP)  # back wall
     for sign in (-1, 1):
         x_in, x_out = sorted((sign * inner_half, sign * outer_half))
-        parts += box(x_in, x_out, y_bottom, y_top, z_back, z_front)  # rail
+        parts += box(x_in, x_out, y_bottom, y_top, z_back, z_cover_out)  # rail: one continuous side wall, as tall as the lower pocket, from the open top to the bottom stop
         lip_in = sign * (COIN_RADIUS - DOCK_LIP_OVERLAP)
         lip_lo, lip_hi = sorted((lip_in, sign * outer_half))
         parts += box(lip_lo, lip_hi, cover_top - TRACK_INTO_POCKET, y_top, z_slot_front, z_front)  # lip over the coin edge; deeper in the lower pocket the cover holds the coin instead
