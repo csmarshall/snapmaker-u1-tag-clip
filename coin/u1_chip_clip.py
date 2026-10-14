@@ -82,6 +82,7 @@ C_CATCH_X = (8.7, 8.95)
 C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 
 # ---- engraving ---------------------------------------------------------------------------------
+FILAMENTS = ("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon")  # the known names; their letters all share one line on the chip
 LABEL_FONT_SIZE = 9.0
 LABEL_EDGE_MARGIN = 1.5  # the engraved name stays this far inside the chip's edge
 LABEL_HOOK_GAP = 1.5  # space between the top of the hook finger and the bottom of the label
@@ -124,9 +125,6 @@ ARM_TOP_Z = ARM_WALL_TOP_Z + WALL_A_EXTRA_HEIGHT + ARM_LIP_HEIGHT  # the hook fi
 ARM_Y_HOOK_TIP = -(WALL_A_Y[1] + ARM_SHIFT_Y + max(row[2] for row in WALL_A_LIP))  # how far the hook's curled tip reaches toward the flat end, after the turn
 KEY_NOTCH_WIDTH = KEY_POST_WIDTH + 2 * FIT_CLEARANCE
 KEY_NOTCH_HEIGHT = KEY_POST_HEIGHT + 2 * FIT_CLEARANCE  # one clearance for the seat gap under the chip, one above the post
-
-
-LABEL_BOTTOM_Y = -ARM_BASE_Y + LABEL_HOOK_GAP  # the label's lowest ink sits just above the hook finger
 
 
 def _cosine_bump(x: float, half_width: float) -> float:
@@ -186,25 +184,48 @@ def _lead_in_wall(z0: float):
     return Pos(0, 0, z0) * (solid + extrude(nub_outline, amount=A_NUB_HEIGHT + WALL_A_EXTRA_HEIGHT))
 
 
-def _label_text(label: str, size: float):
-    """The label as text whose ink (not its font box) is centred left to right and rests LABEL_HOOK_GAP above the hook finger."""
-    text = Text(label, font_size=size)
+def _cap_band(size: float) -> tuple[float, float]:
+    """Baseline and cap height of the label font at this size, in the font's own frame (where Text puts them with align=None)."""
+    bb = Text("H", font_size=size, align=None).bounding_box()
+    return bb.min.Y, bb.max.Y
+
+
+def _label_text(label: str, size: float, cap_centre_y: float):
+    """The label centred left to right by its ink, with the middle of its capital-letter band at cap_centre_y, so descenders hang below and every name's letters share one line."""
+    text = Text(label, font_size=size, align=None)
     bb = text.bounding_box()
-    return Pos(-(bb.min.X + bb.max.X) / 2, LABEL_BOTTOM_Y - bb.min.Y) * text
+    cap_lo, cap_hi = _cap_band(size)
+    return Pos(-(bb.min.X + bb.max.X) / 2, cap_centre_y - (cap_lo + cap_hi) / 2) * text
 
 
-def _label_font_size(label: str) -> float:
+def _label_font_size(label: str, cap_centre_y: float) -> float:
     """Largest font size up to LABEL_FONT_SIZE whose bounding box stays LABEL_EDGE_MARGIN inside the round end and clear of the dock's lips, so long names shrink instead of being hidden."""
     limit = COIN_RADIUS - LABEL_EDGE_MARGIN
     x_limit = COIN_RADIUS - DOCK_LIP_OVERLAP - LABEL_EDGE_MARGIN
     size = LABEL_FONT_SIZE
     while size > 2.0:
-        bb = _label_text(label, size).bounding_box()
+        bb = _label_text(label, size, cap_centre_y).bounding_box()
         corner = math.hypot(max(abs(bb.min.X), abs(bb.max.X)), max(abs(bb.min.Y), abs(bb.max.Y)))
         if corner <= limit and max(abs(bb.min.X), abs(bb.max.X)) <= x_limit:
             return size
         size -= 0.1
     return size
+
+
+def _label_line() -> float:
+    """The shared height for the middle of every name's capital letters: as low as it can go while the lowest descender of any known name keeps LABEL_HOOK_GAP above the hook finger.
+
+    Sizes depend on the height (the round end narrows) and the height on the sizes, so this settles them together in a few passes.
+    """
+    floor = -ARM_BASE_Y + LABEL_HOOK_GAP
+    line = floor + LABEL_FONT_SIZE
+    for _ in range(4):
+        lowest = min(_label_text(name, _label_font_size(name, line), line).bounding_box().min.Y for name in FILAMENTS)
+        line += floor - lowest
+    return line
+
+
+LABEL_LINE_Y = _label_line()
 
 
 def chip_parts(label: str):
@@ -230,7 +251,7 @@ def chip_parts(label: str):
     arms += _c_catches(COIN_THICKNESS)
     body += Rot(Z=180) * arms
 
-    engrave = Pos(0, 0, COIN_THICKNESS) * extrude(_label_text(label, _label_font_size(label)), amount=-ENGRAVE_DEPTH)
+    engrave = Pos(0, 0, COIN_THICKNESS) * extrude(_label_text(label, _label_font_size(label, LABEL_LINE_Y), LABEL_LINE_Y), amount=-ENGRAVE_DEPTH)
     return body - engrave, engrave
 
 
@@ -334,7 +355,7 @@ if __name__ == "__main__":
 
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
-    for material in ("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon"):
+    for material in FILAMENTS:
         body, engraving = chip_parts(material)
         stem = f"chip_{material.replace('+', 'plus')}"
         export_stl(body, str(out / f"{stem}.stl"))

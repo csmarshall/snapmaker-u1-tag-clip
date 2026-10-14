@@ -142,13 +142,23 @@ def test_label_stays_inside_the_chip(material):
 
 
 @pytest.mark.parametrize("material", MATERIALS)
-def test_label_sits_just_above_the_hook_finger(material):
-    """Centred left to right, its lowest point LABEL_HOOK_GAP above the hook finger's top, and clear of the dock's lips."""
+def test_label_is_centred_and_clear_of_the_lips(material):
     label = _mesh(f"chip_{material}_label.stl")
     (x0, y0, _), (x1, y1, _) = label.bounds
     assert (x0 + x1) / 2 == pytest.approx(0, abs=0.05)
-    assert y0 == pytest.approx(-M.ARM_BASE_Y + M.LABEL_HOOK_GAP, abs=0.05)
     assert max(abs(x0), abs(x1)) <= M.COIN_RADIUS - M.DOCK_LIP_OVERLAP - M.LABEL_EDGE_MARGIN + 0.05
+
+
+def test_labels_share_one_line_above_the_hook():
+    """All-capital names (no descenders) have their letters centred at the same height; no name's ink comes closer than LABEL_HOOK_GAP to the hook, and the lowest one sits right at it."""
+    bounds = {m: _mesh(f"chip_{m}_label.stl").bounds for m in MATERIALS}
+    caps_only = [m for m in MATERIALS if m.upper() == m]
+    centres = [(bounds[m][0][1] + bounds[m][1][1]) / 2 for m in caps_only]
+    assert max(centres) - min(centres) <= 0.15  # round letters (S, G, U) overshoot the baseline by about 0.1mm, as fonts do
+    floor = -M.ARM_BASE_Y + M.LABEL_HOOK_GAP
+    lows = [bounds[m][0][1] for m in MATERIALS]
+    assert min(lows) >= floor - 0.05
+    assert min(lows) == pytest.approx(floor, abs=0.1)
 
 
 def test_label_floor_clears_the_sticker_pocket():
