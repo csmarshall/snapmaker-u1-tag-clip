@@ -93,15 +93,16 @@ DOCK_FUNNEL_FLARE = 2.0  # extra half-width of the slot mouth at the very top
 DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
-# The clip keeps its measured orientation and is only shifted as a unit down into the flat end, below the pocket: wall C's centre edge (the top of its S-bend) sits ARM_BASE_Y below the pocket centre.
+# The clip is built as measured, wall A (the tallest, with the curled-over top and nub) at +ARM_BASE_Y, then turned 180 degrees about Z as one unit so wall A faces the chip's centre
+# and the S-bend end sits in the flat end. Nothing inside the clip changes.
 ARM_BASE_Y = 3.0
-ARM_SHIFT_Y = -ARM_BASE_Y - S_BEND[0][4]
-COIN_FLAT_END_Y = -(WALL_A_Y[0] + ARM_SHIFT_Y) + TOP_MARGIN  # distance from the pocket centre to the flat end
-ARM_Y_NEAR = -ARM_BASE_Y  # arm edge nearest the sticker pocket
-ARM_Y_FAR = WALL_A_Y[0] + ARM_SHIFT_Y
+ARM_SHIFT_Y = ARM_BASE_Y - WALL_A_Y[0]  # applied before the turn
+COIN_FLAT_END_Y = S_BEND[0][4] + ARM_SHIFT_Y + TOP_MARGIN  # distance from the pocket centre to the flat end
+ARM_Y_NEAR = -ARM_BASE_Y  # after the turn: arm edge nearest the sticker pocket (wall A's outer face)
+ARM_Y_FAR = -(S_BEND[0][4] + ARM_SHIFT_Y)
 ARM_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT + ARM_LIP_HEIGHT
 # Where the filament runs through the clip at the arm ends (y of each channel centre, before the S-bend moves it).
-CLIP_CHANNEL_Y = tuple((near + far) / 2 + ARM_SHIFT_Y for near, far in ((WALL_A_Y[1], WALL_B_Y[0]), (WALL_B_Y[1], WALL_C_Y[0])))
+CLIP_CHANNEL_Y = tuple(-((near + far) / 2 + ARM_SHIFT_Y) for near, far in ((WALL_A_Y[1], WALL_B_Y[0]), (WALL_B_Y[1], WALL_C_Y[0])))
 
 
 def _cosine_bump(x: float, half_width: float) -> float:
@@ -172,7 +173,7 @@ def coin_parts(label: str, number: int | None):
     arms += _s_bend_wall(1, 2, COIN_THICKNESS)
     arms += _s_bend_wall(3, 4, COIN_THICKNESS)
     arms += _c_catches(COIN_THICKNESS)
-    body += arms
+    body += Rot(Z=180) * arms
 
     engrave = Pos(0, 6.0, COIN_THICKNESS) * extrude(Text(label, font_size=LABEL_FONT_SIZE), amount=-ENGRAVE_DEPTH)
     if number is not None:
