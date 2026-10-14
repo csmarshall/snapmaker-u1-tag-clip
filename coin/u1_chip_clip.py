@@ -216,7 +216,9 @@ def dock_parts(slot: int | None):
     for sign in (-1, 1):
         x_in, x_out = sorted((sign * inner_half, sign * outer_half))
         parts += box(x_in, x_out, y_bottom, cover_top, z_back, z_cover_out)  # side wall of the lower pocket, carrying the cover; it does not climb beside the tracks
-    parts += box(-outer_half, outer_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate, full dock width
+    track_end_y = cover_top - TRACK_INTO_POCKET
+    parts += box(-outer_half, outer_half, y_bottom, track_end_y, z_cover_in, z_cover_out)  # cover plate, full dock width below where the tracks end
+    parts += box(-inner_half, inner_half, track_end_y, cover_top, z_cover_in, z_cover_out)  # cover plate between the channel walls, which show beside it running down into the pocket
     for channel_y in CLIP_CHANNEL_Y:
         for sign in (-1, 1):
             x0, x1 = sorted((sign * ARM_LENGTH / 2, sign * (outer_half + 1)))
