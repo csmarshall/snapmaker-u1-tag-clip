@@ -101,10 +101,15 @@ COVER_PLATE_THICKNESS = 1.2
 COVER_HOOK_CLEARANCE = FIT_CLEARANCE  # the lower pocket's top edge stops this far beyond the hook finger's curled tip
 TRACK_INTO_POCKET = 7.5  # the channels run this far down past the lower pocket's top edge and stop (5 to 10mm per Charles)
 DOCK_COIN_PROTRUSION = 3.0  # how far the chip's round end would stand above the channels; the funnel sits on top of them
-DOCK_FUNNEL_HEIGHT = 4.0  # the flared mouth on top of the whole channels
-DOCK_FUNNEL_FLARE = 2.0  # how far the mouth opens sideways at the top rim, each side
-DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the mouth opens toward the back at the rim; it starts above the sticker, which stays covered
-DOCK_FUNNEL_LIP_DEPTH = 0.8  # how far the lips' undersides open toward the front at the rim; 0.4mm of lip remains there
+DOCK_FUNNEL_FLARE = 2.0  # how far each side of the mouth opens at the rim; 1mm of channel wall remains there
+# Each side of the mouth follows the chip's own corner arc (COIN_END_CORNER_RADIUS): upright at the rim, curving in to meet the channel this far below it.
+DOCK_FUNNEL_HEIGHT = math.sqrt(COIN_END_CORNER_RADIUS ** 2 - (COIN_END_CORNER_RADIUS - DOCK_FUNNEL_FLARE) ** 2)
+DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the mouth opens toward the back at the rim, on the same curve; it starts above the sticker, which stays covered
+DOCK_FUNNEL_LIP_DEPTH = 0.8  # how far the lips' undersides open toward the front at the rim, on the same curve; 0.4mm of lip remains there
+FUNNEL_STEPS = 16  # slices along the arc
+HINT_WIDTH = 12.0  # orientation hint engraved in the back plate above the lower pocket: the chip's bottom with its key cut-out, and a down arrow
+HINT_DEPTH = 0.4  # leaves 0.8mm of back plate under the hint
+HINT_GAP = 1.0  # space between the lower pocket's top edge and the hint
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
 # The clip is built as measured, wall A (the tallest, with the curled-over top and nub) at +ARM_BASE_Y, then turned 180 degrees about Z as one unit so wall A faces the
@@ -232,6 +237,24 @@ def _funnel_section(y: float, flare: float, back: float, lip: float, inner_half:
     return plane * Polygon((-w, zb), (w, zb), (w, zs), (l, zs), (l, z_open), (-l, z_open), (-l, zs), (-w, zs), align=None)
 
 
+def _orientation_hint(y_base: float):
+    """The cut for the hint engraved into the back plate's front face: a silhouette of the chip's flat end (rounded corners, key notch left uncut) with a down arrow above it."""
+    scale = HINT_WIDTH / (2 * COIN_RADIUS)
+    half, height, r = HINT_WIDTH / 2, 4.0, COIN_END_CORNER_RADIUS * scale
+    notch_half, notch_h = KEY_NOTCH_WIDTH * scale / 2, KEY_NOTCH_HEIGHT * scale
+    corner = [(-half + r - r * math.sin(a), y_base + r - r * math.cos(a)) for a in (math.pi / 2 * i / 8 for i in range(9))][::-1]
+    silhouette = [(-half, y_base + height)] + corner + [(-notch_half, y_base), (-notch_half, y_base + notch_h), (notch_half, y_base + notch_h), (notch_half, y_base)]
+    silhouette += [(-x, y) for x, y in reversed(corner)] + [(half, y_base + height)]
+    tip = y_base + height + 1.0
+    arrow = [(0, tip), (1.6, tip + 2.0), (0.5, tip + 2.0), (0.5, tip + 6.0), (-0.5, tip + 6.0), (-0.5, tip + 2.0), (-1.6, tip + 2.0)]
+    z_face = -DOCK_BACK_GAP
+    cut = None
+    for outline in (silhouette, arrow):
+        piece = Pos(0, 0, z_face - HINT_DEPTH) * extrude(Polygon(*_ccw(outline), align=None), amount=HINT_DEPTH + 0.01)
+        cut = piece if cut is None else cut + piece
+    return cut
+
+
 def dock_parts(slot: int | None) -> dict[str, object]:
     """Return the named parts of the dock for one U1 slot: back_plate, channels, lower_pocket, digit (None when slot is None), and dock, their union.
 
@@ -269,13 +292,20 @@ def dock_parts(slot: int | None) -> dict[str, object]:
         piece = rail + band_wall + lip
         channels = piece if channels is None else channels + piece
 
-    # The funnel: a ruled loft from the chip's path at y_top to the flared mouth at the rim, extended past the rim so the cut leaves one flat top face.
+    # The funnel: the chip's path grows along the chip's corner arc from y_top (no flare) to the rim (full flare, arc upright), sliced and lofted,
+    # then carried on past the rim so the cut leaves one flat top face. The back and lip bevels grow in the same proportion so the mouth is one shape.
     z_open = z_cover_out + 1
-    lower = _funnel_section(y_top, 0, 0, 0, inner_half, lip_in, z_slot_front, z_open)
-    rim = _funnel_section(y_rim, DOCK_FUNNEL_FLARE, DOCK_FUNNEL_BACK_DEPTH, DOCK_FUNNEL_LIP_DEPTH, inner_half, lip_in, z_slot_front, z_open)
+    r = COIN_END_CORNER_RADIUS
+    sections = []
+    for i in range(FUNNEL_STEPS + 1):
+        y = y_top + DOCK_FUNNEL_HEIGHT * i / FUNNEL_STEPS
+        flare = max(0.0, math.sqrt(max(r * r - (y_rim - y) ** 2, 0.0)) - (r - DOCK_FUNNEL_FLARE))
+        grow = flare / DOCK_FUNNEL_FLARE
+        sections.append(_funnel_section(y, flare, DOCK_FUNNEL_BACK_DEPTH * grow, DOCK_FUNNEL_LIP_DEPTH * grow, inner_half, lip_in, z_slot_front, z_open))
     above = _funnel_section(y_rim + 1, DOCK_FUNNEL_FLARE, DOCK_FUNNEL_BACK_DEPTH, DOCK_FUNNEL_LIP_DEPTH, inner_half, lip_in, z_slot_front, z_open)
-    funnel = loft([lower, rim], ruled=True) + loft([rim, above], ruled=True)
+    funnel = loft(sections, ruled=True) + loft([sections[-1], above], ruled=True)
     back_plate -= funnel
+    back_plate -= _orientation_hint(cover_top + HINT_GAP)
     channels -= funnel
 
     lower_pocket = _box(-inner_half, inner_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate

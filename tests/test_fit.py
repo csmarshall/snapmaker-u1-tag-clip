@@ -106,6 +106,19 @@ def test_top_rim_is_one_flat_plane():
     assert np.allclose(near_top[:, 1], top, atol=1e-4)
 
 
+def test_orientation_hint_is_engraved_and_shallow():
+    """The hint is cut into the back plate's face above the lower pocket, and the plate behind it stays at least 0.6mm thick."""
+    dock = _mesh("dock_slot3.stl")
+    y_base = M.ARM_Y_HOOK_TIP - M.COVER_HOOK_CLEARANCE + M.HINT_GAP
+    face = -M.DOCK_BACK_GAP
+    in_arrow = [0, y_base + 4.0 + 1.0 + 4.0, face - M.HINT_DEPTH / 2]
+    in_silhouette = [-M.HINT_WIDTH / 4, y_base + 2.0, face - M.HINT_DEPTH / 2]
+    in_notch = [0, y_base + 0.3, face - M.HINT_DEPTH / 2]
+    assert not dock.contains([in_arrow, in_silhouette]).any()
+    assert dock.contains([in_notch])[0]
+    assert M.DOCK_FLOOR - M.HINT_DEPTH >= 0.6
+
+
 def test_back_plate_covers_the_whole_sticker():
     dock = _mesh("dock_slot3.stl")
     r = M.POCKET_DIAMETER / 2
