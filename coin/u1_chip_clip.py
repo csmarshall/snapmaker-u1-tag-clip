@@ -84,8 +84,9 @@ DOCK_RAIL_WIDTH = 3.0
 DOCK_LIP_OVERLAP = 2.0  # rail lip over the coin's front-plate edge
 DOCK_LIP_THICKNESS = 1.2
 DOCK_BOTTOM_THICKNESS = 2.0
-COVER_ARM_CLEARANCE = 1.0  # air between the tallest clip-arm point and the cover's inside face
-COVER_PLATE_THICKNESS = 1.5
+COVER_ARM_CLEARANCE = 0.3  # air between the tops of walls B and C and the cover's inside face
+COVER_PLATE_THICKNESS = 1.2
+COVER_HOOK_CLEARANCE = 0.3  # the cover's top edge stops this far beyond the hook finger's curled tip
 FILAMENT_DIAMETER = 1.75
 FILAMENT_SLOT_CLEARANCE = 0.5  # per side, around the filament where it leaves the clip sideways
 DOCK_FUNNEL_LENGTH = 6.0  # how far down from the open top the entry funnel reaches
@@ -100,7 +101,9 @@ ARM_SHIFT_Y = ARM_BASE_Y - WALL_A_Y[0]  # applied before the turn
 COIN_FLAT_END_Y = S_BEND[0][4] + ARM_SHIFT_Y + TOP_MARGIN  # distance from the pocket centre to the flat end
 ARM_Y_NEAR = -ARM_BASE_Y  # after the turn: arm edge nearest the sticker pocket (wall A's outer face)
 ARM_Y_FAR = -(S_BEND[0][4] + ARM_SHIFT_Y)
-ARM_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT + ARM_LIP_HEIGHT
+ARM_WALL_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT  # tops of walls B and C, and of wall A's straight part
+ARM_TOP_Z = ARM_WALL_TOP_Z + ARM_LIP_HEIGHT  # the hook finger's top
+ARM_Y_HOOK_TIP = -(WALL_A_Y[1] + ARM_SHIFT_Y + max(row[2] for row in WALL_A_LIP))  # how far the hook's curled tip reaches toward the flat end, after the turn
 # Where the filament runs through the clip at the arm ends (y of each channel centre, before the S-bend moves it).
 CLIP_CHANNEL_Y = tuple(-((near + far) / 2 + ARM_SHIFT_Y) for near, far in ((WALL_A_Y[1], WALL_B_Y[0]), (WALL_B_Y[1], WALL_C_Y[0])))
 
@@ -182,9 +185,9 @@ def coin_parts(label: str, number: int | None):
 
 
 def dock_parts(slot: int | None):
-    """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a full-width cover over the clip-arm area carrying the big slot digit.
+    """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a slot-wide cover over the clip-arm area carrying the big slot digit.
 
-    The cover's top edge lines up with the clip arms' top edge so a thumb run up the front catches the arms and lifts the coin out. It stands off the dock front on full side walls so it clears the arms; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
+    The cover is a low, slot-wide plate just above the arm walls B and C. Its top edge stops just past the curled tip of the tall hook finger (wall A), so the finger stands proud above the edge and a thumb run up the cover face catches it and lifts the coin out. The cover sits on two posts on the lips; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
     """
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
@@ -192,10 +195,11 @@ def dock_parts(slot: int | None):
     z_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE + DOCK_LIP_THICKNESS
     y_bottom = -COIN_FLAT_END_Y - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
     y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION
-    cover_top = ARM_Y_NEAR
+    cover_top = ARM_Y_HOOK_TIP - COVER_HOOK_CLEARANCE
+    post_x_in = COIN_RADIUS - DOCK_LIP_OVERLAP
     slot_top_z = COIN_THICKNESS + FILAMENT_DIAMETER + 2 * FILAMENT_SLOT_CLEARANCE
     slot_half = FILAMENT_DIAMETER / 2 + FILAMENT_SLOT_CLEARANCE
-    z_cover_in = ARM_TOP_Z + COVER_ARM_CLEARANCE
+    z_cover_in = ARM_WALL_TOP_Z + COVER_ARM_CLEARANCE
     z_cover_out = z_cover_in + COVER_PLATE_THICKNESS
 
     def box(x0: float, x1: float, y0: float, y1: float, z0: float, z1: float):
@@ -222,9 +226,9 @@ def dock_parts(slot: int | None):
             mouth = Polygon(*(corners if sign > 0 else corners[::-1]), align=None)  # counter-clockwise, or extrude would run toward -Z
             parts -= Pos(0, 0, z0) * extrude(mouth, amount=z_front - z0 + 1)
     for sign in (-1, 1):
-        x_in, x_out = sorted((sign * inner_half, sign * outer_half))
-        parts += box(x_in, x_out, y_bottom, cover_top, z_front, z_cover_out)  # side wall carrying the cover
-    parts += box(-outer_half, outer_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate
+        x_in, x_out = sorted((sign * post_x_in, sign * inner_half))
+        parts += box(x_in, x_out, y_bottom, cover_top, z_front, z_cover_out)  # post standing on the lip and carrying the cover
+    parts += box(-inner_half, inner_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate, as wide as the slot
     for channel_y in CLIP_CHANNEL_Y:
         for sign in (-1, 1):
             x0, x1 = sorted((sign * ARM_LENGTH / 2, sign * (outer_half + 1)))
