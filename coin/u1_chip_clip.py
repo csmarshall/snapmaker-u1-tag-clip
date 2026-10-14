@@ -124,36 +124,37 @@ DOCK_FUNNEL_HEIGHT = math.sqrt(COIN_END_CORNER_RADIUS ** 2 - (COIN_END_CORNER_RA
 DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the mouth opens toward the back at the rim, on the same curve; it starts above the sticker, which stays covered
 DOCK_FUNNEL_LIP_DEPTH = 0.8  # how far the lips' undersides open toward the front at the rim, on the same curve; 0.4mm of lip remains there
 FUNNEL_STEPS = 16  # slices along the arc
-# ---- socket pieces: the hanger (snaps into the spool-holder socket and holds the dock with two side arms) and the blank cover (for an unused socket).
-# The dock itself is the same print either way; on its own it is the flat-back version for VHB tape. See docs/ANTENNA.md for why the dock hangs below the socket.
-SOCKET_ABOVE_STICKER = 38.0  # with the dock below, the socket axis sits this far above the sticker's centre; the antenna loop rings the socket, and 38mm below is remmulegguh's tested direction, mid-band
-SOCKET_PLATE_RADIUS = 15.8  # the round plate over the socket, as on remmulegguh's holder
-SOCKET_PLATE_FLAT = 5.0  # his plate is flat across its top this far above the socket axis, level with the fingers' top face, so the piece prints standing on both
-HANGER_PLATE_THICKNESS = DOCK_FLOOR  # the hanger's plate and yoke lie flat on the panel no thicker than the dock's back plate, so the chip's path above the dock stays clear
-SOCKET_COVER_THICKNESS = 3.0  # the blank cover's plate, as thick as remmulegguh's
-HANGER_ARM_WIDTH = 3.0  # each side arm, beside the dock
-# The hanger grips the dock only in its middle band: the stretch of side face left once the lower pocket's height is taken off both ends. That band is
-# symmetric about the dock's mid-height, so the same hanger turned 180 degrees in the socket grips the same band with the dock above the socket instead of below.
-HANGER_GROOVE_DEPTH = 1.0  # how far the groove in each side face goes in; leaves 2mm of rail beside the chip, and the tongue reaches 0.7mm into it
-HANGER_GROOVE_HEIGHT = 2.0  # front-to-back size of the groove, centred on the side face
-HANGER_GROOVE_INSET = 0.5  # the groove stops this far short of each end of the band
-HANGER_TONGUE_TIP = 0.4  # flat at the tongue's tip, front to back; above it the tongue slopes back to the arm so the dock cams the arms apart as it is pushed in
-# Each arm ends in an L clamp over the whole band: its side wall beside the dock, and a front jaw over the rail's front edge; the panel closes the C.
-HANGER_JAW_REACH = 1.0  # how far the jaw reaches in over the rail's front edge
-HANGER_JAW_THICKNESS = 1.2
-# ---- hub-base arm: slides into the slot of 1waynger1's "Snapmaker U1 Filament Hub Replacement" base (MakerWorld 2152529), which stays plugged into the socket.
-# Measured from his "Machine Interface" object (tst.3mf, 2026-10-14); his files are under a Standard Digital File License, so only these numbers are used, not his geometry.
-HUB_WIDTH = 30.48
-HUB_LENGTH = 42.95
-HUB_PLATE_THICKNESS = 7.87  # the base's plate, from the panel to its front face
-# His slot, the same along its whole length and open at both ends: (half-width, depth from the plate's front face) from the mouth to the closed back.
-HUB_SLOT_PROFILE = ((5.22, 0.0), (5.22, 0.44), (8.93, 4.15), (4.62, 6.64))
-HUB_AXIS_FROM_NEAR_END = 19.37  # the plug (and socket axis) is off-centre: this far from one end of the base, HUB_LENGTH minus this from the other
-HUB_NEAR_END_UP = True  # which end of the base is up in the printer; not yet confirmed on Charles's printer, and it moves the sticker by about 4mm
-HUB_PLUG_DIAMETER = 26.5  # for the stand-in base drawn in the viewer only
+# ---- mounts. The dock mount slides down into a slot and holds the dock on top of whatever carries that slot: 1waynger1's hub adapter (his "Snapmaker U1
+# Filament Hub Replacement" base, MakerWorld 2152529, which many owners already run), or our socket adapter, which snaps into the bare socket. Both
+# plug into the spool-holder socket; the stock spool holder is gone. The dock itself is the same print on either, and on its own it tapes to the panel.
+# The slot is his: measured from his "Machine Interface" object (tst.3mf, 2026-10-14). His files are under a Standard Digital File License, so only these
+# numbers are used here (an interface, not his model); our adapter copies the slot so the one dock mount fits both.
+ADAPTER_WIDTH = 30.48
+ADAPTER_LENGTH = 42.95
+ADAPTER_THICKNESS = 7.87  # the adapter's plate, from the panel to its front face
+# The slot, the same along the adapter's whole length and open at both ends: (half-width, depth from the plate's front face) from the mouth to the closed back.
+ADAPTER_SLOT_PROFILE = ((5.22, 0.0), (5.22, 0.44), (8.93, 4.15), (4.62, 6.64))
+ADAPTER_CORNER_RADIUS = 4.0
+HUB_AXIS_FROM_NEAR_END = 19.37  # on his adapter the plug (and socket axis) is off-centre: this far from one end, ADAPTER_LENGTH minus this from the other
+HUB_NEAR_END_UP = True  # which end of his adapter is up in the printer; not yet confirmed on Charles's printer, and it moves the sticker by about 4mm
+HUB_PLUG_DIAMETER = 26.5  # for the stand-in of his adapter drawn in the viewer only
 HUB_PLUG_DEPTH = 25.3
-HUB_TONGUE_LENGTH = 30.0  # how far the arm's tongue reaches down into the slot
-HUB_RISER = 3.0  # the crossbar resting on the base's top edge, under the dock
+SOCKET_PLATE_FLAT = 5.0  # remmulegguh's plate is flat across its top this far above the socket axis, level with his fingers' top face, so it prints standing on both
+SOCKET_ADAPTER_TOP_ABOVE_AXIS = SOCKET_PLATE_FLAT  # our adapter's top edge, level with the fingers' top face for the same reason
+SOCKET_PLATE_RADIUS = 15.8  # the blank cover's round plate, as on remmulegguh's holder
+SOCKET_COVER_THICKNESS = 3.0  # the blank cover's plate, as thick as remmulegguh's
+MOUNT_TONGUE_LENGTH = 30.0  # how far the dock mount's tongue reaches down into the slot
+MOUNT_RISER = 3.0  # the crossbar resting on the adapter's top edge, under the dock
+MOUNT_ARM_WIDTH = 3.0  # each side arm, beside the dock
+# The mount grips the dock only in its middle band: the stretch of side face left once the lower pocket's height is taken off both ends, centred on the dock.
+# Each arm ends in an L clamp over the whole band: its side wall beside the dock and a front jaw over the rail's front edge, with the panel closing the C,
+# plus a tongue in a groove in the dock's side face, which stops the dock sliding up or down.
+MOUNT_GROOVE_DEPTH = 1.0  # how far the groove in each side face goes in; leaves 2mm of rail beside the chip, and the tongue reaches 0.7mm into it
+MOUNT_GROOVE_HEIGHT = 2.0  # front-to-back size of the groove, centred on the side face
+MOUNT_GROOVE_INSET = 0.5  # the groove stops this far short of each end of the band
+MOUNT_TONGUE_TIP = 0.4  # flat at the tongue's tip, front to back; above it the tongue slopes back to the arm so the dock cams the arms apart as it is pushed in
+MOUNT_JAW_REACH = 1.0  # how far the jaw reaches in over the rail's front edge
+MOUNT_JAW_THICKNESS = 1.2
 HINT_WIDTH = 12.0  # widest the hint's chip may be; it shrinks if needed to fit under the back bevel
 HINT_DEPTH = ENGRAVE_DEPTH  # the hint is an inlay in the accent colour; it leaves 0.6mm of back plate behind it
 HINT_GAP = 1.0  # space between the lower pocket's top edge and the hint
@@ -399,11 +400,11 @@ def dock_parts(slot: int | None) -> dict[str, object]:
     hint = back_plate & hint_cut  # the inlay fills the recess exactly, flush with the back plate's face
     back_plate -= hint_cut
     channels -= funnel
-    # The hanger's grooves, one in each side face in the middle band; harmless on the taped dock.
+    # The dock mount's grooves, one in each side face in the middle band; harmless on the taped dock.
     ext = _dock_extents()
     (gy0, gy1), (gz0, gz1) = ext["groove_y"], ext["groove_z"]
     for sign in (-1, 1):
-        x0, x1 = sorted((sign * (outer_half - HANGER_GROOVE_DEPTH), sign * (outer_half + 1)))
+        x0, x1 = sorted((sign * (outer_half - MOUNT_GROOVE_DEPTH), sign * (outer_half + 1)))
         groove = _box(x0, x1, gy0, gy1, gz0, gz1)
         back_plate -= groove
         channels -= groove
@@ -426,7 +427,7 @@ def dock_parts(slot: int | None) -> dict[str, object]:
 
 
 def _dock_extents() -> dict[str, Any]:
-    """The dock's outer dimensions and its hanger grooves, derived from the same constants as dock_parts.
+    """The dock's outer dimensions and its mount grooves, derived from the same constants as dock_parts.
 
     The band runs from the lower pocket's top edge up by the dock's length less twice the pocket's height, so it is centred on y_mid, the dock's mid-height.
     """
@@ -449,148 +450,137 @@ def _dock_extents() -> dict[str, Any]:
         "y_rim": y_rim,
         "y_mid": (y_bottom + y_rim) / 2,
         "band": (cover_top, y_bottom + y_rim - cover_top),
-        "groove_y": (cover_top + HANGER_GROOVE_INSET, y_bottom + y_rim - cover_top - HANGER_GROOVE_INSET),
-        "groove_z": (z_groove_mid - HANGER_GROOVE_HEIGHT / 2, z_groove_mid + HANGER_GROOVE_HEIGHT / 2),
+        "groove_y": (cover_top + MOUNT_GROOVE_INSET, y_bottom + y_rim - cover_top - MOUNT_GROOVE_INSET),
+        "groove_z": (z_groove_mid - MOUNT_GROOVE_HEIGHT / 2, z_groove_mid + MOUNT_GROOVE_HEIGHT / 2),
     }
 
 
-def _socket_plug(plate_thickness: float, z_back: float):
-    """remmulegguh's snap fingers going into the socket, behind a round plate (flat across its top) lying on the panel.
+def _socket_fingers(axis_y: float, z_back: float):
+    """remmulegguh's snap fingers, going into the socket from the panel at z_back, centred on a socket axis at axis_y.
 
     Fingers come from coin/socket_fingers.py, mapped from his frame (socket axis along x, +z down) into this one: sideways stays sideways, depth goes to -Z,
     down goes to -Y. That mapping is a proper rotation (determinant +1), so nothing is mirrored.
     """
-    socket_y, r = SOCKET_ABOVE_STICKER, SOCKET_PLATE_RADIUS
-    disc = Pos(0, socket_y) * Circle(r)
-    below_flat = Pos(0, socket_y + SOCKET_PLATE_FLAT - 2 * r) * Rectangle(4 * r, 4 * r)
-    plate = Pos(0, 0, z_back) * extrude((disc & below_flat).faces()[0], amount=plate_thickness)
-    # Fingers: the outline is (depth into the socket, sideways); on a plane whose local x is this X and local y is -Z, a point is (sideways, depth - z_back).
-    finger_plane = Plane(origin=(0, socket_y - FINGER_HEIGHT / 2, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
-    fingers = extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in FINGER_OUTLINE]), align=None), amount=FINGER_HEIGHT)
-    return plate + fingers
+    # The outline is (depth into the socket, sideways); on a plane whose local x is this X and local y is -Z, a point is (sideways, depth - z_back).
+    finger_plane = Plane(origin=(0, axis_y - FINGER_HEIGHT / 2, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
+    return extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in FINGER_OUTLINE]), align=None), amount=FINGER_HEIGHT)
 
 
 def _band_clamp(sign: int, y_lo: float, y_hi: float):
     """One side's arm, beside the dock from y_lo to y_hi, ending in an L clamp over the dock's middle band with a tongue that snaps into the side groove.
 
-    The jaw's front face slopes, so the dock pushes straight in from the front and cams the arms apart; the tongue's back is square, so it stays. Both run
-    the band less a clearance at each end, so the clamp maps onto itself under the hanger's 180 degree turn.
+    The jaw's front face slopes, so the dock pushes straight in from the front and cams the arms apart; the tongue's back is square, so it stays.
     """
     d = _dock_extents()
     z_back, outer, z_rail = d["z_back"], d["outer_half"], d["z_rail_front"]
     (b0, b1), (gy0, gy1), (gz0, gz1) = d["band"], d["groove_y"], d["groove_z"]
     c = FIT_CLEARANCE
-    arm_in, arm_out = sign * (outer + c), sign * (outer + c + HANGER_ARM_WIDTH)
+    arm_in, arm_out = sign * (outer + c), sign * (outer + c + MOUNT_ARM_WIDTH)
     x0, x1 = sorted((arm_in, arm_out))
     arm = _box(x0, x1, y_lo, y_hi, z_back, z_rail)
     # The jaw: the arm's section in X-Z over the band, the side wall rising past the rail's front and the jaw leaning in over it.
     z_jaw = z_rail + c
-    x_tip = sign * (outer - HANGER_JAW_REACH)
-    profile = [(arm_in, z_back), (arm_out, z_back), (arm_out, z_jaw + HANGER_JAW_THICKNESS), (x_tip, z_jaw + HANGER_JAW_THICKNESS * 0.2), (x_tip, z_jaw), (arm_in, z_jaw)]
+    x_tip = sign * (outer - MOUNT_JAW_REACH)
+    profile = [(arm_in, z_back), (arm_out, z_back), (arm_out, z_jaw + MOUNT_JAW_THICKNESS), (x_tip, z_jaw + MOUNT_JAW_THICKNESS * 0.2), (x_tip, z_jaw), (arm_in, z_jaw)]
     plane = Plane(origin=(0, b0 + c, 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))  # local x = X, local y = Z, extruded toward +Y
     arm += extrude(plane * Polygon(*_ccw(profile), align=None), amount=-((b1 - c) - (b0 + c)))
-    engage = HANGER_GROOVE_DEPTH - c  # how far the tongue reaches into its groove
+    engage = MOUNT_GROOVE_DEPTH - c  # how far the tongue reaches into its groove
     slope = c * math.sqrt(2)  # the tongue's chamfered ends sit this far inside the groove's, measured along Y
     ty0, ty1 = gy0 + slope - c, gy1 - slope + c  # the tongue's ends at the arm's face
     tip = sign * (outer - engage)
     # The tongue is where two prisms meet: its outline seen from the front (chamfered ends, X-Y) and its section seen from above (square back, sloped front, X-Z).
     ends = Polygon(*_ccw([(arm_in, ty0), (tip, ty0 + c + engage), (tip, ty1 - c - engage), (arm_in, ty1)]), align=None)
     front = Pos(0, 0, gz0 + c) * extrude(ends, amount=(gz1 - c) - (gz0 + c))
-    section = [(arm_in, gz0 + c), (tip, gz0 + c), (tip, gz0 + c + HANGER_TONGUE_TIP), (arm_in, gz1 - c)]
+    section = [(arm_in, gz0 + c), (tip, gz0 + c), (tip, gz0 + c + MOUNT_TONGUE_TIP), (arm_in, gz1 - c)]
     plane = Plane(origin=(0, ty0, 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
     return arm + (front & extrude(plane * Polygon(*_ccw(section), align=None), amount=-(ty1 - ty0)))
 
 
-def hanger_parts(above: bool = False) -> dict[str, object]:
-    """The hanger: snaps into the socket and holds the dock flat against the panel, sticker SOCKET_ABOVE_STICKER below the socket axis.
+ADAPTERS = ("hub", "socket")  # 1waynger1's hub adapter, and our socket adapter
 
-    A thin plate and yoke on the panel join two side arms that run beside the dock to its middle band, where each ends in an L clamp (see _band_clamp).
-    The band is centred on the dock's mid-height, so the same print, turned 180 degrees in the socket, holds the dock above the socket instead (above=True
-    returns it in that pose, still in the dock's frame). Nothing passes behind the dock, so the sticker's distance to the antenna is the same as on the taped
-    version. Prints upside down, standing on the plate's flat top and the fingers' top face.
-    """
+
+def _adapter_top_above_axis(adapter: str) -> float:
+    if adapter == "socket":
+        return SOCKET_ADAPTER_TOP_ABOVE_AXIS
+    return HUB_AXIS_FROM_NEAR_END if HUB_NEAR_END_UP else ADAPTER_LENGTH - HUB_AXIS_FROM_NEAR_END
+
+
+def _adapter_frame(adapter: str) -> dict[str, float]:
+    """Where an adapter sits in the dock's frame: its top edge just under the dock mount's crossbar, its back on the panel, its slot centred under the dock."""
     d = _dock_extents()
-    z_back, outer = d["z_back"], d["outer_half"]
-    arm_out = outer + FIT_CLEARANCE + HANGER_ARM_WIDTH
-    yoke_bottom = d["y_rim"] + FIT_CLEARANCE
-    socket_y = SOCKET_ABOVE_STICKER
-    hanger = _socket_plug(HANGER_PLATE_THICKNESS, z_back)
-    hanger += _box(-arm_out, arm_out, yoke_bottom, socket_y, z_back, z_back + HANGER_PLATE_THICKNESS)  # yoke across the top, flat on the panel
-    for sign in (-1, 1):
-        hanger += _band_clamp(sign, d["band"][0] + FIT_CLEARANCE, yoke_bottom)
-    if above:
-        hanger = Pos(0, d["y_mid"]) * Rot(Z=180) * Pos(0, -d["y_mid"]) * hanger
-    return {"hanger": hanger}
+    y_top = d["y_bottom"] - FIT_CLEARANCE - MOUNT_RISER
+    return {"y_top": y_top, "z_back": d["z_back"], "z_front": d["z_back"] + ADAPTER_THICKNESS, "axis_y": y_top - _adapter_top_above_axis(adapter)}
 
 
-def _hub_top_above_axis() -> float:
-    return HUB_AXIS_FROM_NEAR_END if HUB_NEAR_END_UP else HUB_LENGTH - HUB_AXIS_FROM_NEAR_END
-
-
-def _hub_frame() -> dict[str, float]:
-    """Where the hub base sits in the dock's frame: its top edge just under the arm's crossbar, its back on the panel, its slot centred under the dock."""
-    d = _dock_extents()
-    y_top = d["y_bottom"] - FIT_CLEARANCE - HUB_RISER
-    return {"y_top": y_top, "z_back": d["z_back"], "z_front": d["z_back"] + HUB_PLATE_THICKNESS, "axis_y": y_top - _hub_top_above_axis()}
-
-
-def _hub_slot_section(shrink: float):
-    """The base's slot section in X-Z (front face at z_front), grown inward by `shrink` on every side when shrink is positive (the arm's tongue)."""
-    f = _hub_frame()
-    half = [(w, f["z_front"] - depth) for w, depth in HUB_SLOT_PROFILE]
-    outline = [(-w, z) for w, z in half] + [(w, z) for w, z in reversed(half)]
-    face = Polygon(*_ccw(outline), align=None)
+def _slot_section(shrink: float):
+    """The slot's section in X-Z (the adapter's front face at z_front), grown inward by `shrink` on every side when shrink is positive (the mount's tongue)."""
+    z_front = _adapter_frame("socket")["z_front"]  # the same for both adapters
+    half = [(w, z_front - depth) for w, depth in ADAPTER_SLOT_PROFILE]
+    face = Polygon(*_ccw([(-w, z) for w, z in half] + [(w, z) for w, z in reversed(half)]), align=None)
     return offset(face, amount=-shrink, kind=Kind.INTERSECTION).faces()[0] if shrink else face
 
 
-def hub_arm_parts() -> dict[str, object]:
-    """The hub-base arm: slides down into the slot of 1waynger1's hub base from above and holds the dock on top of the base.
+def _adapter_plate(adapter: str):
+    """An adapter's plate on the panel, with the slot through its whole length."""
+    f = _adapter_frame(adapter)
+    plate = Pos(0, f["y_top"] - ADAPTER_LENGTH / 2, f["z_back"]) * extrude(RectangleRounded(ADAPTER_WIDTH, ADAPTER_LENGTH, ADAPTER_CORNER_RADIUS), amount=ADAPTER_THICKNESS)
+    plane = Plane(origin=(0, f["y_top"] + 1, 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))  # local x = X, local y = Z, extruded toward -Y
+    return plate - extrude(plane * _slot_section(0), amount=ADAPTER_LENGTH + 2)
 
-    A tongue (the slot's section, less FIT_CLEARANCE all round) runs HUB_TONGUE_LENGTH down the slot; above the base a crossbar, as deep as the base's plate,
+
+def dock_mount_parts() -> dict[str, object]:
+    """The dock mount: slides down into either adapter's slot from above and holds the dock on top of the adapter.
+
+    A tongue (the slot's section, less FIT_CLEARANCE all round) runs MOUNT_TONGUE_LENGTH down the slot; above the adapter a crossbar, as deep as the plate,
     rests on its top edge and carries the dock's bottom stop, and two arms rise beside the dock to L clamps over its middle band (see _band_clamp).
-    The dock pushes in from the front; the arm lifts straight out of the base, so the spool arm can go back in. Prints upside down, standing on the arms' ends.
+    The dock pushes in from the front; the mount lifts straight out. Prints upside down, standing on the arms' ends.
     """
-    d, f = _dock_extents(), _hub_frame()
-    arm_out = d["outer_half"] + FIT_CLEARANCE + HANGER_ARM_WIDTH
-    y_cross = f["y_top"] + HUB_RISER  # the crossbar's top, under the dock's bottom stop
-    plane = Plane(origin=(0, f["y_top"], 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))  # local x = X, local y = Z, extruded toward -Y
-    tongue = extrude(plane * _hub_slot_section(FIT_CLEARANCE), amount=HUB_TONGUE_LENGTH)
-    arm = tongue + _box(-arm_out, arm_out, f["y_top"], y_cross, f["z_back"], f["z_front"])
+    d, f = _dock_extents(), _adapter_frame("socket")
+    arm_out = d["outer_half"] + FIT_CLEARANCE + MOUNT_ARM_WIDTH
+    y_cross = f["y_top"] + MOUNT_RISER  # the crossbar's top, under the dock's bottom stop
+    plane = Plane(origin=(0, f["y_top"], 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
+    mount = extrude(plane * _slot_section(FIT_CLEARANCE), amount=MOUNT_TONGUE_LENGTH)
+    mount += _box(-arm_out, arm_out, f["y_top"], y_cross, f["z_back"], f["z_front"])
     for sign in (-1, 1):
-        arm += _band_clamp(sign, y_cross, d["band"][1] - FIT_CLEARANCE)
-    return {"hub_arm": arm}
+        mount += _band_clamp(sign, y_cross, d["band"][1] - FIT_CLEARANCE)
+    return {"dock_mount": mount}
 
 
-def hub_base_standin() -> dict[str, object]:
-    """A stand-in for 1waynger1's hub base, drawn from the measured numbers above, for the viewer and fit checks: plate, slot and plug. Not his model, and not a part to print."""
-    f = _hub_frame()
-    y_mid = f["y_top"] - HUB_LENGTH / 2
-    plate = Pos(0, y_mid, f["z_back"]) * extrude(RectangleRounded(HUB_WIDTH, HUB_LENGTH, 4.0), amount=HUB_PLATE_THICKNESS)
-    plane = Plane(origin=(0, f["y_top"] + 1, 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
-    plate -= extrude(plane * _hub_slot_section(0), amount=HUB_LENGTH + 2)
+def socket_adapter_parts() -> dict[str, object]:
+    """Our socket adapter: remmulegguh's snap fingers behind a plate with 1waynger1's slot, so the dock mount fits it as it fits his hub adapter.
+
+    The plate's top edge is level with the fingers' top face (SOCKET_ADAPTER_TOP_ABOVE_AXIS), so it prints standing on both with the slot's faces upright.
+    """
+    f = _adapter_frame("socket")
+    return {"socket_adapter": _adapter_plate("socket") + _socket_fingers(f["axis_y"], f["z_back"])}
+
+
+def hub_adapter_standin() -> dict[str, object]:
+    """A stand-in for 1waynger1's hub adapter, drawn from the measured numbers above, for the viewer and checks: plate, slot and plug. Not his model, and not a part to print."""
+    f = _adapter_frame("hub")
     plug = Pos(0, f["axis_y"], f["z_back"] - HUB_PLUG_DEPTH) * Cylinder(HUB_PLUG_DIAMETER / 2, HUB_PLUG_DEPTH, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    return {"hub_base": plate + plug}
+    return {"hub_adapter": _adapter_plate("hub") + plug}
 
 
-def hub_axis_below_sticker() -> float:
-    """How far below the sticker's centre the socket axis sits with the dock on the hub-base arm."""
-    return -_hub_frame()["axis_y"]
-
-
-def socket_above_sticker(above: bool) -> float:
-    """How far the socket axis sits from the sticker's centre along the panel: positive above it (dock below the socket), negative below it (dock above)."""
-    return SOCKET_ABOVE_STICKER if not above else 2 * _dock_extents()["y_mid"] - SOCKET_ABOVE_STICKER
+def sticker_above_axis(adapter: str) -> float:
+    """How far above the socket axis the sticker's centre sits with the dock on the dock mount in that adapter."""
+    return -_adapter_frame(adapter)["axis_y"]
 
 
 def cover_parts(slot: int | None) -> dict[str, object]:
-    """The blank cover for an unused socket: the snap fingers and a round plate, with the slot digit inlaid in the accent colour (none when slot is None)."""
-    z_back = -DOCK_BACK_GAP - DOCK_FLOOR
-    cover = _socket_plug(SOCKET_COVER_THICKNESS, z_back)
+    """The blank cover for an unused socket: the snap fingers and a round plate (flat across its top), with the slot digit inlaid in the accent colour (none when slot is None).
+
+    It sits on the same socket axis as the socket adapter, so the two can be compared in place.
+    """
+    f = _adapter_frame("socket")
+    axis_y, z_back, r = f["axis_y"], f["z_back"], SOCKET_PLATE_RADIUS
+    below_flat = Pos(0, axis_y + SOCKET_PLATE_FLAT - 2 * r) * Rectangle(4 * r, 4 * r)
+    plate = Pos(0, 0, z_back) * extrude(((Pos(0, axis_y) * Circle(r)) & below_flat).faces()[0], amount=SOCKET_COVER_THICKNESS)
+    cover = plate + _socket_fingers(axis_y, z_back)
     accent = None
     if slot is not None:
-        size = 2 * SOCKET_PLATE_RADIUS * 0.55 / Text(str(slot), font_size=1.0).bounding_box().size.Y
-        digit_text = Text(str(slot), font_size=size)
-        accent = Pos(0, SOCKET_ABOVE_STICKER - 2, z_back + SOCKET_COVER_THICKNESS) * extrude(digit_text, amount=-ENGRAVE_DEPTH)
+        size = 2 * r * 0.55 / Text(str(slot), font_size=1.0).bounding_box().size.Y
+        accent = Pos(0, axis_y - 2, z_back + SOCKET_COVER_THICKNESS) * extrude(Text(str(slot), font_size=size), amount=-ENGRAVE_DEPTH)
         cover -= accent
     return {"cover": cover, "accent": accent}
 
@@ -619,17 +609,11 @@ if __name__ == "__main__":
         for name, shape in cover.items():
             BRepTools.Clean_s(shape.wrapped)
             export_stl(shape, str(out / (f"cover_slot{slot}.stl" if name == "cover" else f"cover_slot{slot}_{name}.stl")))
-    hanger = hanger_parts()["hanger"]
-    export_stl(hanger, str(out / "hanger.stl"))
-    export_step(hanger, str(out / "hanger.step"))
-    # The same print turned 180 degrees in the socket, placed in the dock's frame, for the fit checks and the viewer; not a separate part to print.
-    export_stl(hanger_parts(above=True)["hanger"], str(out / "hanger_pose_above.stl"))
-    hub_arm = hub_arm_parts()["hub_arm"]
-    export_stl(hub_arm, str(out / "hub_arm.stl"))
-    export_step(hub_arm, str(out / "hub_arm.step"))
-    export_stl(hub_base_standin()["hub_base"], str(out / "hub_base_standin.stl"))  # viewer and checks only
+    for name, shape in (("dock_mount", dock_mount_parts()["dock_mount"]), ("socket_adapter", socket_adapter_parts()["socket_adapter"])):
+        export_stl(shape, str(out / f"{name}.stl"))
+        export_step(shape, str(out / f"{name}.step"))
+    export_stl(hub_adapter_standin()["hub_adapter"], str(out / "hub_adapter_standin.stl"))  # viewer and checks only
     print(f"chip: pause at {PAUSE_HEIGHT:.2f} mm (start of that layer) and drop the sticker in; print back-down")
-    print("dock: print standing on its bottom stop (flat end down); tape it to the panel, or push it into a hanger")
-    print("hanger and cover: print upside down, standing on the plate's flat top and the fingers' top face")
-    print(f"hub arm: slide it down into 1waynger1's hub base; the sticker sits {hub_axis_below_sticker():.1f} mm above the socket axis ({'near' if HUB_NEAR_END_UP else 'far'} end of the base up)")
-    print(f"hanger: dock below the socket puts the sticker {socket_above_sticker(False):.1f} mm under the socket axis; turned 180 degrees, {-socket_above_sticker(True):.1f} mm above it")
+    print("dock: print standing on its bottom stop (flat end down); tape it to the panel, or push it into the dock mount")
+    print("dock mount: print upside down, standing on the ends of its arms; socket adapter and cover: print standing on the plate's flat top and the fingers' top face")
+    print(f"dock mount: the sticker sits {sticker_above_axis('socket'):.1f} mm above the socket axis on our socket adapter, {sticker_above_axis('hub'):.1f} mm on 1waynger1's hub adapter ({'near' if HUB_NEAR_END_UP else 'far'} end up)")

@@ -33,9 +33,9 @@ uv run python tools/build_preview.py
 ## Printing
 
 - **Chip:** back face down. Pause at the layer that starts at 1.20mm (`PAUSE_HEIGHT`), drop the sticker into its pocket, resume. For two colours, load `chip_<material>.stl` and `chip_<material>_label.stl` together as one object.
-- **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. The same `dock_slot<n>` either tapes to the panel over the antenna with VHB, or pushes into the hanger.
-- **Hub-base arm** (`hub_arm.stl`): print upside down, standing on the ends of its arms; the crossbar bridges about 39mm between them. `hub_base_standin.stl` is only a stand-in for his base, drawn from measurements, for the viewer and checks.
-- **Hanger** (`hanger.stl`) and **blank cover** (`cover_slot<n>.stl` plus `_accent` for the digit): print upside down, standing on the plate's flat top and the fingers' top face. Both snap into a spool-holder socket with remmulegguh's fingers. The hanger holds a dock by tongues that snap into grooves in the middle of its sides: the sticker sits 38mm below the socket, or, with the hanger turned 180° in the socket, 41.3mm above it. `hanger_pose_above.stl` is only that second position for the checks and viewer, not another print. The cover just closes an unused socket. For two colours, load `dock_slot<n>.stl` (body) with `dock_slot<n>_accent.stl` (the slot digit and the orientation hint, inlaid flush).
+- **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. The same `dock_slot<n>` either tapes to the panel over the antenna with VHB, or pushes into the dock mount. For two colours, load `dock_slot<n>.stl` (body) with `dock_slot<n>_accent.stl` (the slot digit and the orientation hint, inlaid flush).
+- **Dock mount** (`dock_mount.stl`): print upside down, standing on the ends of its arms; the crossbar bridges about 39mm between them.
+- **Socket adapter** (`socket_adapter.stl`) and **blank cover** (`cover_slot<n>.stl` plus `_accent` for the digit): print standing on the plate's flat top and the fingers' top face. Both snap into a spool-holder socket with remmulegguh's fingers. `hub_adapter_standin.stl` only stands in for 1waynger1's base in the viewer and checks; it is not a print.
 - Every sliding gap derives from `FIT_CLEARANCE` (0.3mm). Change that one number after a fit test.
 
 ## Parts and terms
@@ -49,8 +49,9 @@ uv run python tools/build_preview.py
 | lower pocket | The wide plate and walls over the clip arms, at the flat end of the chip. Its top edge stops just past the hook finger; its side faces are closed. |
 | channels | The straight side rails and lips (the tracks in the code) that guide the chip from the dock's open top. They run 7.5mm past the lower pocket's top edge (`TRACK_INTO_POCKET`) and stop; the bottom of the pocket has only its own walls. |
 | back plate, bottom stop | The wall behind the chip (over the sticker) and the full-depth ledge the flat end rests on, which closes the lower pocket at the bottom. |
-| hub-base arm | Slides down into the slot of 1waynger1's hub base (MakerWorld 2152529), which stays in the socket in place of his spool arm. A crossbar rests on the base and the dock stands on it, held by L clamps (side wall, front jaw, tongue in the side groove) on its middle band. Sticker about 43mm above the socket axis. |
-| hanger | Snaps into the spool-holder socket; its two side arms end in tongues that snap into the grooves in the dock's sides (never touching its back). The same print holds the dock below the socket or, turned 180°, above it. |
+| dock mount | Slides down into an adapter's slot from above. A crossbar rests on the adapter's top edge and the dock stands on it, held by L clamps (side wall, front jaw, tongue in the side groove) on its middle band. Fits our socket adapter and 1waynger1's hub adapter alike. |
+| socket adapter | Ours: remmulegguh's snap fingers behind a plate carrying a copy of 1waynger1's slot, so the dock mount fits it. Sticker 28.6mm above the socket axis. |
+| hub adapter | 1waynger1's base (MakerWorld 2152529), for owners who already run it in place of his spool arm. Sticker 43.0mm above the axis (47.2mm if fitted the other way up). |
 | grip band, grooves | The middle of the dock's sides: what is left of its length once the lower pocket's height is taken off both ends (6.64mm), centred on the dock. A groove in each side there takes the hanger's tongue. |
 | blank cover | The snap fingers and a round plate with the slot number, for an unused socket. |
 | key post | A 3mm post on the bottom stop that fits the notch between the chip's 4mm feet. Put in upside down, the chip's round end lands on it and sits about 3mm high. |

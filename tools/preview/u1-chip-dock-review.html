@@ -17,6 +17,7 @@
   --dockbody: #6f7f93;
   --hanger: #c9783e;
   --hubbase: #b9b2a6;
+  --adapter: #3f9582;
   --label: #e5b62a;
   --sev-high: #b3261e;
   --sev-med: #a4660b;
@@ -94,8 +95,8 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <div class="stage" id="stage"><div class="status" id="status">Loading meshes…</div></div>
     <div class="controls">
       <label for="mount">Show <select id="mount">
-        <optgroup label="Put together"><option value="asm_hub" selected>on the hub base: dock above it</option><option value="asm_hanger">snap-in hanger: dock below the socket</option><option value="asm_hanger_above">snap-in hanger turned: dock above</option><option value="asm_vhb">dock taped to the panel</option></optgroup>
-        <optgroup label="Each print on its own"><option value="chip">chip</option><option value="dock">dock</option><option value="hub_arm">hub-base arm</option><option value="hanger">snap-in hanger</option><option value="cover">blank cover</option></optgroup>
+        <optgroup label="Put together"><option value="asm_socket" selected>dock mount in our socket adapter</option><option value="asm_hub">dock mount in 1waynger1's hub adapter</option><option value="asm_vhb">dock taped to the panel</option></optgroup>
+        <optgroup label="Each print on its own"><option value="chip">chip</option><option value="dock">dock</option><option value="dock_mount">dock mount</option><option value="socket_adapter">socket adapter</option><option value="cover">blank cover</option></optgroup>
       </select></label>
       <label for="mat">Chip <select id="mat"><option value="PETG" selected>PETG</option></select></label>
       <label for="slot">Slot <select id="slot"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
@@ -124,42 +125,44 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <div class="legend">
       <span><i class="sw" style="background:var(--dockbody)"></i>dock body (colour 1)</span>
       <span><i class="sw" style="background:var(--chip)"></i>chip body (colour 1)</span>
-      <span><i class="sw" style="background:var(--hanger)"></i>hub-base arm, hanger and blank cover</span>
-      <span><i class="sw" style="background:var(--hubbase)"></i>1waynger1's hub base (stand-in drawn from measurements)</span>
+      <span><i class="sw" style="background:var(--hanger)"></i>dock mount and blank cover</span>
+      <span><i class="sw" style="background:var(--adapter)"></i>our socket adapter</span>
+      <span><i class="sw" style="background:var(--hubbase)"></i>1waynger1's hub adapter (stand-in drawn from measurements)</span>
       <span><i class="sw" style="background:var(--label)"></i>colour 2: chip name, dock digit and hint</span>
       <span><i class="sw" style="background:repeating-linear-gradient(45deg, var(--channel) 0 2px, transparent 2px 6px)"></i>channels, marked only here (not printed)</span>
     </div>
-    <p class="verified">The slider does whatever the menu beside it says, and at the far left it does nothing. Explode pulls the pieces apart the way they come apart in use (chip up out of the dock, dock out toward you, the hub base down off the arm). X-ray fades everything so you can see the tongue in the slot and the clamps on the dock. Turn around spins the model. The cuts peel it back 0.2 mm at a time: front to back shows the chip as it prints, layer by layer (back face down, sticker pocket at 1.2 mm); top down is how the dock prints. Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
+    <p class="verified">The slider does whatever the menu beside it says, and at the far left it does nothing. Explode pulls the pieces apart the way they come apart in use (chip up out of the dock, dock out toward you, the adapter down off the mount). X-ray fades everything so you can see the tongue in the slot and the clamps on the dock. Turn around spins the model. The cuts peel it back 0.2 mm at a time: front to back shows the chip as it prints, layer by layer (back face down, sticker pocket at 1.2 mm); top down is how the dock prints. Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
   </section>
 
   <section class="review">
-    <p class="summary">Newest: the dock can sit on top of 1waynger1's hub base, the printed socket base many U1 owners already run for his quick-swap spool arm. A hub-base arm slides down into the base's slot where the spool arm would go, and its L clamps hold the dock by its middle band, with the sticker about 43mm above the socket axis. Lift the arm out and the spool arm goes back in. The viewer now has one slider that does whatever its menu says: explode, x-ray, turn around, or cut. Before that: the chip's feet are 2mm shorter, and the hanger grips the dock's middle band with a tongue in a groove on each side, so one print holds the dock below the socket or, turned 180°, above it. The dock is one print whichever way it mounts. Tape it to the panel over the antenna, or push it into the hanger, which snaps into the spool-holder socket with remmulegguh's fingers. A blank cover closes sockets you aren't using. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
+    <p class="summary">Newest: one dock mount for both sockets. It slides down into a slot and holds the dock on top of whatever carries the slot: 1waynger1's hub adapter (his quick-swap spool base, which many U1 owners already run) or our socket adapter, a copy of his slot on a plate with remmulegguh's snap fingers, kept in this repo so we control it. Sticker about <span class="num">28.6 mm</span> above the socket axis on ours, <span class="num">43 mm</span> on his. The snap-in hanger is retired, and with it the dock-below option. The viewer's one slider does whatever its menu says: explode, x-ray, turn around, or cut. Earlier: the chip's feet are 2mm shorter, the dock grips in its middle band with L clamps and side grooves, it prints in two colours, the sticker is sealed in at a pause, and twenty filament names are built. Read range is still unknown, so the next step is a test print.</p>
 
-    <h2>New: shorter feet, and one hanger for above or below</h2>
+    <h2>Shorter feet and the grip band</h2>
     <figure class="orient">
       <img src="revision_compare.png" alt="Front views of the previous and new chip and dock, with the dock's middle grip band shaded" width="1164" height="499">
-      <figcaption>Left, the previous version; right, this one. The chip's feet are <span class="num">4 mm</span> instead of <span class="num">6 mm</span> and the key post <span class="num">3 mm</span> instead of <span class="num">5 mm</span>, so the chip and dock are <span class="num">2 mm</span> shorter. The shaded band is what is left of the dock once the lower pocket's height comes off both ends: <span class="num">6.64 mm</span>, up from <span class="num">4.64 mm</span>, centred on the dock's mid-height. Each side face has a groove there, and the hanger's arms end in tongues that snap into it. The outer corners of the feet keep their <span class="num">5 mm</span> rounding, the same arc the funnel at the top of the slot follows.</figcaption>
+      <figcaption>Left, the version before 2026-10-14; right, this one. The chip's feet are <span class="num">4 mm</span> instead of <span class="num">6 mm</span> and the key post <span class="num">3 mm</span> instead of <span class="num">5 mm</span>, so the chip and dock are <span class="num">2 mm</span> shorter. The shaded band is what is left of the dock once the lower pocket's height comes off both ends: <span class="num">6.64 mm</span>, centred on the dock. Each side face has a groove there for the dock mount's tongues, and its L clamps cover the whole band. The outer corners of the feet keep their <span class="num">5 mm</span> rounding, the same arc the funnel at the top of the slot follows.</figcaption>
     </figure>
 
     <h2>How the pieces go together</h2>
     <dl class="print">
       <dt>Chip</dt><dd>Clips onto the spool's filament end on the shelf; drops into the dock from above when you load that spool.</dd>
-      <dt>Dock</dt><dd>One print for both mounts. Its flat back goes against the panel over the antenna.</dd>
-      <dt>Snap-in hanger</dt><dd>For a socket without the hub base: snaps in with remmulegguh's fingers. Two arms run beside the dock to the same L clamps on its middle band. Push the dock straight in toward the panel: the jaws' sloped fronts spread the arms and the tongues click into the grooves (Explode shows the motion). The grooves lock it up, down and away from the panel. Because the band is centred on the dock, the same print turned 180° in the socket holds the dock above it instead (sticker <span class="num">38 mm</span> below the socket axis, or <span class="num">41.3 mm</span> above it). It never touches the dock's back, so the sticker is as close to the antenna as when taped.</dd>
-      <dt>Hub-base arm</dt><dd>For 1waynger1's hub base (MakerWorld 2152529). Its tongue, the shape of his slot less <span class="num">0.3 mm</span> all round, slides <span class="num">30 mm</span> down into the slot from above, and a crossbar rests on the base's top edge. The dock stands on the crossbar, and two arms rise beside it to L clamps over its middle band: a side wall, a front jaw over the rail's edge and the tongue in the side groove, with the panel closing the C. The dock pushes in from the front. The sticker sits <span class="num">43.0 mm</span> above the socket axis if the base's plug-near end is up, <span class="num">47.2 mm</span> if the other end is (<code>HUB_NEAR_END_UP</code>); which way yours is fitted hasn't been checked. The beige base in the viewer is a stand-in drawn from my measurements, not his file.</dd>
+      <dt>Dock</dt><dd>One print for every mount. Its flat back goes against the panel over the antenna, taped there or held by the dock mount.</dd>
+      <dt>Dock mount</dt><dd>Fits either adapter. Its tongue, the shape of the slot less <span class="num">0.3 mm</span> all round, slides <span class="num">30 mm</span> down into the slot from above, and a crossbar rests on the adapter's top edge. The dock stands on the crossbar, and two arms rise beside it to L clamps over its middle band: a side wall, a front jaw over the rail's edge and a tongue in the side groove, with the panel closing the C. The dock pushes in from the front (Explode shows the motion); lift the mount out to clear the socket. It never touches the dock's back, so the sticker is as close to the antenna as when taped.</dd>
+      <dt>Socket adapter</dt><dd>Ours, in this repo. remmulegguh's snap fingers go into the socket behind a <span class="num">30.5 × 43 × 7.87 mm</span> plate with 1waynger1's slot copied from measurements. Its top edge is level with the fingers' top, <span class="num">5 mm</span> above the socket axis, so the sticker sits <span class="num">28.6 mm</span> above the axis.</dd>
+      <dt>Hub adapter</dt><dd>1waynger1's base (MakerWorld 2152529), if you already run it: lift his spool arm out and drop the dock mount in. The sticker sits <span class="num">43.0 mm</span> above the axis with the base's plug-near end up, <span class="num">47.2 mm</span> the other way (<code>HUB_NEAR_END_UP</code>, not yet checked on your printer). The beige base in the viewer is a stand-in drawn from my measurements, not his file.</dd>
       <dt>Blank cover</dt><dd>The same snap fingers with a plain round plate and the slot number, for a socket you aren't using.</dd>
     </dl>
 
-    <h2>Printing the hanger</h2>
+    <h2>Printing the socket adapter and dock mount</h2>
     <figure class="orient">
-      <img src="print_orientation.png" alt="The hanger drawn on a print bed upright and upside down, with faces that need support in red" width="1120" height="960">
-      <figcaption>Red faces overhang by more than 45° and need support; blue faces sit on the bed. Upside down, the hanger stands on its plate's flat top and the fingers' top face, which are level, so it prints with almost no support. The dock is a separate print, the same one you would tape to the panel, and prints standing on its bottom stop.</figcaption>
+      <img src="print_orientation.png" alt="The socket adapter and the dock mount on a print bed as printed, with faces that need support in red" width="1120" height="960">
+      <figcaption>Red faces overhang by more than 45° and need support; blue faces sit on the bed. The socket adapter stands on its flat top and the fingers' top face, which are level; only its rounded top corners overhang (about <span class="num">31 mm²</span>). The dock mount stands on the ends of its arms, so the tongue grows straight up; its crossbar spans about <span class="num">39 mm</span> between them as a bridge (the red band), which most printers manage, or support it there only.</figcaption>
     </figure>
 
     <h2>How to print it</h2>
     <dl class="print">
       <dt>Chip</dt><dd>Back face down. Pause at the layer that starts at <span class="num">1.20 mm</span>, drop the sticker in, resume. The chip is <span class="num">2.4 mm</span> thick, with <span class="num">0.6 mm</span> of plastic under the sticker.</dd>
-      <dt>Hub-base arm</dt><dd>Upside down, standing on the ends of its two arms, so the tongue grows straight up with its slot faces vertical. The crossbar then spans about <span class="num">39 mm</span> between the arms as a bridge; most printers bridge that, otherwise add support under it only. Not yet checked with the print-orientation tool.</dd>
+      <dt>Dock mount, socket adapter</dt><dd>Each standing on its top end; see the figure above.</dd>
       <dt>Dock</dt><dd>Standing on its bottom stop (flat end down), so the cover, lips and funnel are all vertical or slope upward.</dd>
       <dt>Two colours</dt><dd>Body plus label STL for each chip, and dock plus digit STL for each slot, sharing one origin.</dd>
     </dl>
@@ -216,8 +219,8 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     </article>
 
     <h2>What the checks do and don't show</h2>
-    <p class="verified">New checks that use someone else's file, so they are independent of this model: with 1waynger1's real base placed in the dock's frame (turned 180° about X, a proper rotation), its screw hole lands on the socket axis the model assumes, the arm lowered from 35 mm above slides into his slot without touching it, and once seated it cannot drop or move 0.5 mm sideways or away from the panel. The stand-in base matches his plate and slot within 4% by volume. They do not show which end of his base is up on your printer, or how tight the tongue feels.</p>
-    <p class="verified">Passing: watertight parts that add up to the dock; no chip overlaps its dock; a chip lowered from 30 mm seats without touching; chips 1.8 mm off-centre, 0.4 mm forward or 0.6 mm back drop into the funnel; a flipped chip stops on the key post; the back plate covers the whole sticker; the sticker pocket is sealed; labels stay inside the edge; the hook finger stands at least 2 mm proud of the lower pocket. With the hanger in either position, below or turned above the socket: the chip still slides in from above without touching it, the dock seats without touching it, pushing the dock in from the front meets only the tongues and only inside the grooves, and a seated dock moved 1 mm up, down or away from the panel runs into the tongues. The clip matches Extrutim's original within 0.1 mm wherever it was sampled. All but that last check use numbers from the same script that builds the parts. They show the files agree with themselves, not that anything fits a printer or a real sticker.</p>
+    <p class="verified">Checks that use someone else's file, so they are independent of this model: with 1waynger1's real base placed in the dock's frame (turned 180° about X, a proper rotation), its screw hole lands on the socket axis the model assumes; the dock mount lowered from 35 mm above slides into his slot without touching it, and once seated cannot drop or move 0.5 mm sideways or away from the panel; and over the middle of the plate, our socket adapter and our stand-in each match his slotted plate within 2% by volume, so our copy of his slot is his slot. The socket adapter's fingers match remmulegguh's within 2%. They do not show which end of his base is up on your printer, or how tight the tongue feels in print.</p>
+    <p class="verified">Passing: watertight parts that add up to the dock; no chip overlaps its dock; a chip lowered from 30 mm seats without touching; chips 1.8 mm off-centre, 0.4 mm forward or 0.6 mm back drop into the funnel; a flipped chip stops on the key post; the back plate covers the whole sticker; the sticker pocket is sealed; labels stay inside the edge; the hook finger stands at least 2 mm proud of the lower pocket. With the dock mount in either adapter, the chip still slides in from above without touching anything; the dock seats in the mount without touching it; pushing the dock in from the front meets only the jaws and tongues, only in the band; and a seated dock moved 1 mm up, down or away from the panel runs into the clamps. The clip matches Extrutim's original within 0.1 mm wherever it was sampled. All but that last check use numbers from the same script that builds the parts. They show the files agree with themselves, not that anything fits a printer or a real sticker.</p>
   </section>
 </div>
 
@@ -289,18 +292,19 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     const chipX = together ? [V(0, 40, 0), V(0, 40, 0)] : [V(0, 0, 0), V(0, 0, 10)];
     const dockX = together ? V(0, 0, 32) : null;
     const dockParts = [["back_plate", "--dockbody", V(0, 0, -10)], ["lower_pocket", "--dockbody", V(0, 0, 10)], ["channels", "--dockbody", V(0, 0, 0), true], ["accent", "--label", V(0, 0, 22)]];
-    const holder = { asm_hub: "hub_arm", hub_arm: "hub_arm", asm_hanger: "hanger", hanger: "hanger", asm_hanger_above: "hanger_pose_above" }[show];
+    const holder = { asm_socket: "dock_mount", asm_hub: "dock_mount", dock_mount: "dock_mount", socket_adapter: "socket_adapter" }[show];
+    const base = { asm_socket: ["socket_adapter", "--adapter"], asm_hub: ["hub_adapter_standin", "--hubbase"] }[show];
     try {
       await Promise.all([
         setGroup(chipGroup, [["mesh/chip_" + m + ".txt", "--chip", chipX[0]], ["mesh/chip_" + m + "_label.txt", "--label", chipX[1]]]),
         setGroup(dockGroup, dockParts.map(([n, t, x, h]) => ["mesh/dock_slot" + s + "_" + n + ".txt", t, dockX ? dockX.clone().add(x.clone().multiplyScalar(0.3)) : x, h])),
-        setGroup(holderGroup, show === "cover" ? [["mesh/cover_slot" + s + ".txt", "--hanger"], ["mesh/cover_slot" + s + "_accent.txt", "--label", V(0, 0, 10)]] : holder ? [["mesh/" + holder + ".txt", "--hanger"]] : []),
-        setGroup(baseGroup, show === "asm_hub" ? [["mesh/hub_base_standin.txt", "--hubbase", V(0, -45, 0)]] : []),
+        setGroup(holderGroup, show === "cover" ? [["mesh/cover_slot" + s + ".txt", "--hanger"], ["mesh/cover_slot" + s + "_accent.txt", "--label", V(0, 0, 10)]] : holder ? [["mesh/" + holder + ".txt", holder === "socket_adapter" ? "--adapter" : "--hanger"]] : []),
+        setGroup(baseGroup, base ? [["mesh/" + base[0] + ".txt", base[1], V(0, -45, 0)]] : []),
       ]);
       chipGroup.visible = (together || show === "chip") && chipOn;
       dockGroup.visible = (together || show === "dock") && dockOn;
       holderGroup.visible = !!holder || show === "cover";
-      baseGroup.visible = show === "asm_hub";
+      baseGroup.visible = !!base;
       status.textContent = document.getElementById("mount").selectedOptions[0].text + " (slot " + s + ", " + document.getElementById("mat").selectedOptions[0].text + " chip)";
       apply();
       frame();

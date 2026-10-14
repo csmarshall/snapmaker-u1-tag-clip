@@ -26,8 +26,8 @@ What this does not tell us:
 
 ## What follows for the design
 
-- **Hanger (issue #2):** built as a separate piece. It snaps into the socket with remmulegguh's traced fingers and holds the dock by tongues in grooves at the middle of its sides, so the sticker centre sits `SOCKET_ABOVE_STICKER` = 38mm below the socket axis. Turned 180° in the socket, the same hanger holds the dock above it with the sticker 41.3mm above the axis, also inside the tested 25 to 45mm band but in a direction nobody has tried yet. Its plate and yoke lie flat on the panel at the back plate's 1.2mm, so the chip's path above the dock stays clear; his 3mm plate would stand proud and block it.
-- **Hub-base arm:** stands the dock on top of 1waynger1's hub base. The sticker sits 43.0mm above the socket axis with the base's plug-near end up, or 47.2mm with the other end up. That is at or just past the top of the tested band, and above the socket, where only A-Jey's 1 to 2 o'clock position is a data point. The first test print should check the read here before anything else.
+- **Mounts (issue #2):** the dock mount holds the dock above an adapter's top edge. On our socket adapter the sticker centre is 28.6mm above the socket axis, inside the tested band; on 1waynger1's hub adapter 43.0mm (47.2mm the other way up), at or just past its top. Both are above the socket, where only A-Jey's 1 to 2 o'clock position is a data point. The plates and crossbar lie in front of the panel below the dock, never behind it, so the sticker's distance to the antenna is the dock's own.
+- **First read test:** check the sticker reads on both adapters before printing a set.
 - **Testing a read:** `FILAMENT_DT_UPDATE CHANNEL=<0-3>` in the Fluidd console re-reads a channel (channel 1 is 0), per Snapmaker's RFID troubleshooting page.
 - **VHB mount (issue #5):** the same spot. Below the socket, the sticker centre is about 35 to 40mm from the socket's centre.
 - **Check before trusting it:** the coin-finder puck and the standoff strip (issue #3) settle the band and the plastic thickness.
