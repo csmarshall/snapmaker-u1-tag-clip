@@ -10,7 +10,8 @@ re-drawn here from those numbers; the dock's snap fingers come from remmulegguh'
 (Printables 1625982, CC BY-NC-SA). The coin idea (sticker coin per filament) follows A-Jey
 (Thingiverse 7268905, CC BY-NC-SA). Files made from this script carry the same licence.
 
-Coin frame: X = width, Y = up (coin slides down -Y into the dock), Z = front (arms side), back face at Z=0.
+Coin frame: X = width, Y = up (coin slides down -Y into the dock, flat end first), Z = front (arms side), back face at Z=0.
+The round end is up with the label under it, upright; the flat end holds the clip arms and seats on the dock's bottom stop.
 """
 import math
 
@@ -22,6 +23,7 @@ from build123d import (
     Plane,
     Polygon,
     Pos,
+    Rot,
     Rectangle,
     Text,
     export_step,
@@ -35,7 +37,7 @@ STICKER_CLEARANCE = 0.3  # per side
 POCKET_DEPTH = 0.6  # sticker is ~0.4mm thick; the dock wall closes the pocket
 COIN_THICKNESS = 2.0  # plate behind the arms; 1.4mm remains in front of the pocket
 COIN_RADIUS = 16.0  # half-width of the coin, and radius of its rounded bottom
-TOP_MARGIN = 1.5  # space between the last arm wall and the top edge
+TOP_MARGIN = 1.5  # space between the last arm wall and the flat end
 
 # ---- clip arms, measured from Clip-Classic.stl at x=-8.5 and x=0 (y across the arms, z up) ------
 ARM_WALL_THICKNESS = 1.2
@@ -64,13 +66,13 @@ DOCK_RAIL_WIDTH = 3.0
 DOCK_LIP_OVERLAP = 2.0  # rail lip over the coin's front-plate edge
 DOCK_LIP_THICKNESS = 1.2
 DOCK_BOTTOM_THICKNESS = 2.0
-DOCK_COIN_PROTRUSION = 6.0  # how far the coin top (and the clip arms) stand above the dock, so it can be gripped and the filament clipped in place
+DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
-# Arms sit at the top of the coin: wall A's outer face starts a fixed distance above the sticker pocket centre.
+# Arms are drawn at +Y, then the plate and arms are turned 180 degrees about Z so they sit in the flat end, below the pocket.
 ARM_BASE_Y = 3.0
 ARM_SHIFT_Y = ARM_BASE_Y - WALL_A_Y[0]
-COIN_TOP_Y = WALL_C_Y[1] + WALL_C_BUMP + ARM_SHIFT_Y + TOP_MARGIN
+COIN_FLAT_END_Y = WALL_C_Y[1] + WALL_C_BUMP + ARM_SHIFT_Y + TOP_MARGIN
 
 
 def _bump(x: float) -> float:
@@ -108,20 +110,20 @@ def _lead_in_wall(z0: float):
 
 def coin(label: str, number: int):
     """Return the clip coin for one filament label and copy number."""
-    # Round bottom, flat top: the circle's own top would stick out above the rectangle, so cut it at COIN_TOP_Y.
-    below_top = Pos(0, COIN_TOP_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_TOP_Y + 2 * COIN_RADIUS)
-    outline = (Circle(COIN_RADIUS) + Pos(0, COIN_TOP_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_TOP_Y)) & below_top
-    plate = extrude(outline, amount=COIN_THICKNESS)
+    # Round end and flat end: the circle's own edge would stick out past the rectangle, so cut it at COIN_FLAT_END_Y.
+    below_top = Pos(0, COIN_FLAT_END_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_FLAT_END_Y + 2 * COIN_RADIUS)
+    outline = (Circle(COIN_RADIUS) + Pos(0, COIN_FLAT_END_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_FLAT_END_Y)) & below_top
+    plate = Rot(Z=180) * extrude(outline, amount=COIN_THICKNESS)
     pocket = Pos(0, 0, -0.01) * Cylinder(POCKET_DIAMETER / 2, POCKET_DEPTH + 0.01, align=(Align.CENTER, Align.CENTER, Align.MIN))
     body = plate - pocket
 
     arms = _lead_in_wall(COIN_THICKNESS)
     arms += _wavy_wall(WALL_B_Y, WALL_B_BUMP, COIN_THICKNESS)
     arms += _wavy_wall(WALL_C_Y, WALL_C_BUMP, COIN_THICKNESS)
-    body += arms
+    body += Rot(Z=180) * arms
 
-    engrave = Pos(0, -6.0, COIN_THICKNESS) * extrude(Text(label, font_size=LABEL_FONT_SIZE), amount=-ENGRAVE_DEPTH)
-    engrave += Pos(0, -12.0, COIN_THICKNESS) * extrude(Text(str(number), font_size=NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
+    engrave = Pos(0, 6.0, COIN_THICKNESS) * extrude(Text(label, font_size=LABEL_FONT_SIZE), amount=-ENGRAVE_DEPTH)
+    engrave += Pos(0, 12.0, COIN_THICKNESS) * extrude(Text(str(number), font_size=NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
     return body - engrave
 
 
@@ -131,8 +133,8 @@ def dock():
     outer_half = inner_half + DOCK_RAIL_WIDTH
     z_back = -DOCK_BACK_GAP - DOCK_FLOOR
     z_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE + DOCK_LIP_THICKNESS
-    y_bottom = -COIN_RADIUS - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
-    y_top = COIN_TOP_Y - DOCK_COIN_PROTRUSION
+    y_bottom = -COIN_FLAT_END_Y - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
+    y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION
     height = y_top - y_bottom
     depth = z_front - z_back
 
