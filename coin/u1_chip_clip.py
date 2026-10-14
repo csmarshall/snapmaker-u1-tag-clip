@@ -64,6 +64,7 @@ DOCK_RAIL_WIDTH = 3.0
 DOCK_LIP_OVERLAP = 2.0  # rail lip over the coin's front-plate edge
 DOCK_LIP_THICKNESS = 1.2
 DOCK_BOTTOM_THICKNESS = 2.0
+DOCK_COIN_PROTRUSION = 6.0  # how far the coin top (and the clip arms) stand above the dock, so it can be gripped and the filament clipped in place
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
 # Arms sit at the top of the coin: wall A's outer face starts a fixed distance above the sticker pocket centre.
@@ -107,7 +108,9 @@ def _lead_in_wall(z0: float):
 
 def coin(label: str, number: int):
     """Return the clip coin for one filament label and copy number."""
-    outline = Circle(COIN_RADIUS) + Pos(0, COIN_TOP_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_TOP_Y)
+    # Round bottom, flat top: the circle's own top would stick out above the rectangle, so cut it at COIN_TOP_Y.
+    below_top = Pos(0, COIN_TOP_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_TOP_Y + 2 * COIN_RADIUS)
+    outline = (Circle(COIN_RADIUS) + Pos(0, COIN_TOP_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_TOP_Y)) & below_top
     plate = extrude(outline, amount=COIN_THICKNESS)
     pocket = Pos(0, 0, -0.01) * Cylinder(POCKET_DIAMETER / 2, POCKET_DEPTH + 0.01, align=(Align.CENTER, Align.CENTER, Align.MIN))
     body = plate - pocket
@@ -129,7 +132,7 @@ def dock():
     z_back = -DOCK_BACK_GAP - DOCK_FLOOR
     z_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE + DOCK_LIP_THICKNESS
     y_bottom = -COIN_RADIUS - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
-    y_top = COIN_TOP_Y
+    y_top = COIN_TOP_Y - DOCK_COIN_PROTRUSION
     height = y_top - y_bottom
     depth = z_front - z_back
 
