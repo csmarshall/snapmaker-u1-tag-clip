@@ -33,7 +33,7 @@ uv run python tools/build_preview.py
 ## Printing
 
 - **Chip:** back face down. Pause at the layer that starts at 1.20mm (`PAUSE_HEIGHT`), drop the sticker into its pocket, resume. For two colours, load `chip_<material>.stl` and `chip_<material>_label.stl` together as one object.
-- **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. For two colours, load `dock_slot<n>.stl` (body) with `dock_slot<n>_accent.stl` (the slot digit and the orientation hint, inlaid flush).
+- **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. `dock_slot<n>` has a flat back for VHB tape; `dock_clip_slot<n>` snaps into the spool-holder socket with remmulegguh's fingers (they stick out the back, so they need support in this orientation). For two colours, load `dock_slot<n>.stl` (body) with `dock_slot<n>_accent.stl` (the slot digit and the orientation hint, inlaid flush).
 - Every sliding gap derives from `FIT_CLEARANCE` (0.3mm). Change that one number after a fit test.
 
 ## Parts and terms

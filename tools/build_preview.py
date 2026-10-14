@@ -24,7 +24,7 @@ def main() -> int:
         print("no chips in coin/out: run coin/u1_chip_clip.py first", file=sys.stderr)
         return 1
     names = [f"chip_{m}" for m in stems] + [f"chip_{m}_label" for m in stems]
-    names += [f"dock_slot{s}_{p}" for s in (1, 2, 3, 4) for p in DOCK_PARTS]
+    names += [f"{prefix}_slot{s}_{p}" for prefix in ("dock", "dock_clip") for s in (1, 2, 3, 4) for p in DOCK_PARTS]
     missing = [n for n in names if not (OUT / f"{n}.stl").exists()]
     if missing:
         print(f"missing build outputs (run coin/u1_chip_clip.py first): {', '.join(missing)}", file=sys.stderr)

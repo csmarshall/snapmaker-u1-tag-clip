@@ -17,6 +17,7 @@ Printing: the chip prints back-down and pauses at PAUSE_HEIGHT for the sticker; 
 """
 import math
 
+from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE
 from build123d import (
     Align,
     Box,
@@ -119,6 +120,11 @@ DOCK_FUNNEL_HEIGHT = math.sqrt(COIN_END_CORNER_RADIUS ** 2 - (COIN_END_CORNER_RA
 DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the mouth opens toward the back at the rim, on the same curve; it starts above the sticker, which stays covered
 DOCK_FUNNEL_LIP_DEPTH = 0.8  # how far the lips' undersides open toward the front at the rim, on the same curve; 0.4mm of lip remains there
 FUNNEL_STEPS = 16  # slices along the arc
+# ---- mounts: "vhb" is the flat back as it is; "clip" adds a plate up to the spool-holder socket with remmulegguh's snap fingers (see docs/ANTENNA.md)
+DOCK_MOUNTS = ("vhb", "clip")
+SOCKET_ABOVE_STICKER = 38.0  # the socket axis sits this far above the sticker's centre; the antenna loop rings the socket, and 38mm below is remmulegguh's tested direction, mid-band
+CLIP_PLATE_RADIUS = 15.8  # the round plate around the socket, as on remmulegguh's holder
+CLIP_PLATE_FLAT = 5.0  # his plate is flat across its top this far above the socket axis; kept in case it clears a key on the socket
 HINT_WIDTH = 12.0  # widest the hint's chip may be; it shrinks if needed to fit under the back bevel
 HINT_DEPTH = ENGRAVE_DEPTH  # the hint is an inlay in the accent colour; it leaves 0.6mm of back plate behind it
 HINT_GAP = 1.0  # space between the lower pocket's top edge and the hint
@@ -304,7 +310,27 @@ def _orientation_hint(y_base: float, y_bevel: float):
     return Pos(0, 0, z_face - HINT_DEPTH) * (extrude(chip, amount=HINT_DEPTH + 0.01) + extrude(arrow, amount=HINT_DEPTH + 0.01))
 
 
-def dock_parts(slot: int | None) -> dict[str, object]:
+def _clip_mount(y_rim: float, z_back: float):
+    """The clip mount: the back plate carried on up to the socket as a round plate (same thickness, flat on the panel, so the chip's path stays clear), and the snap fingers behind it going into the socket.
+
+    Fingers come from coin/socket_fingers.py, mapped from remmulegguh's frame (socket axis along x, +z down) into this one: sideways stays sideways, depth goes to -Z, down goes to -Y.
+    That mapping is a proper rotation (determinant +1), so nothing is mirrored.
+    """
+    socket_y = SOCKET_ABOVE_STICKER
+    thickness_z = (z_back, -DOCK_BACK_GAP)
+    r = CLIP_PLATE_RADIUS
+    disc = Pos(0, socket_y) * Circle(r)
+    keep = Pos(0, (socket_y + CLIP_PLATE_FLAT + y_rim - 1) / 2) * Rectangle(4 * r, socket_y + CLIP_PLATE_FLAT - (y_rim - 1))
+    stem = Pos(0, (y_rim - 1 + socket_y) / 2) * Rectangle(2 * r, socket_y - (y_rim - 1))
+    outline = ((disc + stem) & keep).faces()[0]
+    plate = Pos(0, 0, thickness_z[0]) * extrude(outline, amount=thickness_z[1] - thickness_z[0])
+    # Fingers: the outline is (depth into the socket, sideways); on a plane whose local x is this X and local y is -Z, a point is (sideways, depth - z_back).
+    finger_plane = Plane(origin=(0, socket_y - FINGER_HEIGHT / 2, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
+    fingers = extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in FINGER_OUTLINE]), align=None), amount=FINGER_HEIGHT)
+    return plate + fingers
+
+
+def dock_parts(slot: int | None, mount: str = "vhb") -> dict[str, object]:
     """Return the named parts of the dock for one U1 slot: back_plate, channels, lower_pocket, accent (the slot digit and the hint, inlaid flush), and dock, the body's union.
 
     For two colours, print dock (body colour) together with accent (number colour); they share one origin.
@@ -356,6 +382,10 @@ def dock_parts(slot: int | None) -> dict[str, object]:
     above = _funnel_section(y_rim + 1, DOCK_FUNNEL_FLARE, DOCK_FUNNEL_BACK_DEPTH, DOCK_FUNNEL_LIP_DEPTH, inner_half, lip_in, z_slot_front, z_open)
     funnel = loft(sections, ruled=True) + loft([sections[-1], above], ruled=True)
     back_plate -= funnel
+    if mount == "clip":
+        back_plate += _clip_mount(y_rim, z_back)
+    elif mount != "vhb":
+        raise ValueError(f"unknown mount {mount!r}; expected one of {DOCK_MOUNTS}")
     hint_cut = _orientation_hint(cover_top + HINT_GAP, y_top)
     hint = back_plate & hint_cut  # the inlay fills the recess exactly, flush with the back plate's face
     back_plate -= hint_cut
@@ -391,12 +421,14 @@ if __name__ == "__main__":
         export_stl(body, str(out / f"{stem}.stl"))
         export_step(body, str(out / f"{stem}.step"))
         export_stl(engraving, str(out / f"{stem}_label.stl"))
-    for slot in U1_SLOTS:
-        parts = dock_parts(slot)
-        for name, shape in parts.items():
-            # OCC keeps a triangulation on each face, and the parts share faces with the whole dock; clear it so every export meshes its own faces.
-            BRepTools.Clean_s(shape.wrapped)
-            export_stl(shape, str(out / (f"dock_slot{slot}.stl" if name == "dock" else f"dock_slot{slot}_{name}.stl")))
-        export_step(parts["dock"], str(out / f"dock_slot{slot}.step"))
+    for mount in DOCK_MOUNTS:
+        prefix = "dock" if mount == "vhb" else f"dock_{mount}"  # the flat-back VHB dock keeps the plain dock_slot<n> names
+        for slot in U1_SLOTS:
+            parts = dock_parts(slot, mount)
+            for name, shape in parts.items():
+                # OCC keeps a triangulation on each face, and the parts share faces with the whole dock; clear it so every export meshes its own faces.
+                BRepTools.Clean_s(shape.wrapped)
+                export_stl(shape, str(out / (f"{prefix}_slot{slot}.stl" if name == "dock" else f"{prefix}_slot{slot}_{name}.stl")))
+            export_step(parts["dock"], str(out / f"{prefix}_slot{slot}.step"))
     print(f"chip: pause at {PAUSE_HEIGHT:.2f} mm (start of that layer) and drop the sticker in; print back-down")
-    print("dock: print standing on its bottom stop (flat end down)")
+    print("dock: print standing on its bottom stop (flat end down); dock_slot<n> is the flat back for VHB tape, dock_clip_slot<n> snaps into the spool-holder socket")

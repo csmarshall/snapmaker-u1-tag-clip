@@ -5,6 +5,7 @@ means the files agree with their own parameters, not that anything fits a real p
 """
 import hashlib
 import importlib.util
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +21,7 @@ CLIP_CLASSIC_SHA256_PREFIX = "5cb545de106921d3"
 
 def _load_model():
     """Import the build script as a module, for its constants."""
+    sys.path.insert(0, str(ROOT / "coin"))  # the model imports its traced data (socket_fingers) from beside it
     spec = importlib.util.spec_from_file_location("u1_chip_clip", ROOT / "coin" / "u1_chip_clip.py")
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -50,13 +52,18 @@ def _turned(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
     return turned
 
 
+PREFIXES = {"vhb": "dock", "clip": "dock_clip"}
+
+
+@pytest.mark.parametrize("mount", M.DOCK_MOUNTS)
 @pytest.mark.parametrize("slot", M.U1_SLOTS)
-def test_dock_parts_are_watertight_and_disjoint(slot):
-    dock = _mesh(f"dock_slot{slot}.stl")
-    parts = [_mesh(f"dock_slot{slot}_{name}.stl") for name in ("back_plate", "channels", "lower_pocket")]
+def test_dock_parts_are_watertight_and_disjoint(slot, mount):
+    prefix = PREFIXES[mount]
+    dock = _mesh(f"{prefix}_slot{slot}.stl")
+    parts = [_mesh(f"{prefix}_slot{slot}_{name}.stl") for name in ("back_plate", "channels", "lower_pocket")]
     assert dock.is_watertight and all(p.is_watertight for p in parts)
     assert sum(p.volume for p in parts) == pytest.approx(dock.volume, abs=0.5)
-    accent = _mesh(f"dock_slot{slot}_accent.stl")
+    accent = _mesh(f"{prefix}_slot{slot}_accent.stl")
     assert accent.is_watertight
     assert _overlap(accent, dock) == pytest.approx(0, abs=0.01)  # the inlay's curved faces coincide with the recess; meshing leaves ~0.002mm3 of noise
 
@@ -68,10 +75,11 @@ def test_chip_seats_without_touching(material):
     assert _overlap(chip, dock) == pytest.approx(0, abs=1e-3)
 
 
-def test_chip_slides_in_from_above():
-    chip, dock = _mesh("chip_PETG.stl"), _mesh("dock_slot3.stl")
+@pytest.mark.parametrize("mount", M.DOCK_MOUNTS)
+def test_chip_slides_in_from_above(mount):
+    chip, dock = _mesh("chip_PETG.stl"), _mesh(f"{PREFIXES[mount]}_slot3.stl")
     worst = 0.0
-    for dy in np.arange(30.0, -0.01, -0.5):
+    for dy in np.arange(45.0, -0.01, -0.5):  # from well above, past the clip mount's plate
         moved = chip.copy()
         moved.apply_translation([0, dy, 0])
         worst = max(worst, _overlap(moved, dock))
@@ -203,3 +211,41 @@ def test_clip_matches_extrutim():
             assert len(o) == len(c), f"wall count differs at x={x} z={z}"
             worst = max(worst, float(np.abs(o - c).max()))
     assert worst <= 0.1
+
+
+def test_clip_mount_stays_behind_the_chip_path_and_reaches_into_the_socket():
+    """Above the dock the clip's plate is no thicker than the back plate, so it never reaches the chip's path; its fingers go about 30mm into the socket."""
+    dock = _mesh("dock_clip_slot3.stl")
+    rim = _mesh("dock_slot3.stl").bounds[1][1]
+    above = dock.vertices[dock.vertices[:, 1] > rim + 0.05]
+    assert above[:, 2].max() <= -M.DOCK_BACK_GAP + 1e-3
+    z_back = -M.DOCK_BACK_GAP - M.DOCK_FLOOR
+    assert z_back - dock.bounds[0][2] == pytest.approx(max(d for d, _ in M.FINGER_OUTLINE), abs=0.05)
+    socket_y = M.SOCKET_ABOVE_STICKER
+    fingers = dock.vertices[dock.vertices[:, 2] < z_back - 0.5]
+    assert fingers[:, 1].min() == pytest.approx(socket_y - M.FINGER_HEIGHT / 2, abs=0.05)
+    assert fingers[:, 1].max() == pytest.approx(socket_y + M.FINGER_HEIGHT / 2, abs=0.05)
+    assert abs(fingers[:, 0].mean()) < 0.1  # centred on the socket axis
+
+
+def test_clip_fingers_match_remmulegguh():
+    """Independent check: the traced fingers, mapped into the dock frame, coincide with his holder's fingers within 0.1mm."""
+    src = ROOT / "thingiverse" / "printables1625982" / "holderrfid_short.stl"
+    if not src.exists():
+        pytest.skip("remmulegguh's holderrfid_short.stl is not present (it is not redistributed)")
+    his = trimesh.load(src, force="mesh")
+    his.apply_translation([0, -219.3, 6.5])  # his socket axis to the origin
+    plate_back = 179.15
+    z_back = -M.DOCK_BACK_GAP - M.DOCK_FLOOR
+    # His frame to ours: sideways y -> X, down +z -> -Y, depth x -> -Z. A proper rotation: no mirror.
+    R = np.array([[0, 1, 0], [0, 0, -1], [-1, 0, 0]], float)
+    assert np.linalg.det(R) == pytest.approx(1.0)
+    his.vertices = his.vertices @ R.T + [0, M.SOCKET_ABOVE_STICKER, z_back + plate_back]
+    probe = trimesh.creation.box(extents=[40, 20, 29])
+    probe.apply_translation([0, M.SOCKET_ABOVE_STICKER, z_back - 15.5])  # the fingers' region, 1-30mm deep, clear of both plates
+    ours = trimesh.boolean.intersection([_mesh("dock_clip_slot3.stl"), probe], engine="manifold")
+    theirs = trimesh.boolean.intersection([his, probe], engine="manifold")
+    shared = trimesh.boolean.intersection([ours, theirs], engine="manifold")
+    assert theirs.volume > 100
+    assert shared.volume == pytest.approx(theirs.volume, rel=0.02)
+    assert shared.volume == pytest.approx(ours.volume, rel=0.02)

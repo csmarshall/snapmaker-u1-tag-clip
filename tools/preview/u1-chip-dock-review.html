@@ -89,6 +89,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <div class="stage" id="stage"><div class="status" id="status">Loading meshes…</div></div>
     <div class="controls">
       <label for="mat">Chip <select id="mat"><option value="PETG" selected>PETG</option></select></label>
+      <label for="mount">Mount <select id="mount"><option value="dock_clip" selected>socket clip</option><option value="dock">flat back (VHB)</option></select></label>
       <label for="slot">Dock slot <select id="slot"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
       <button id="btnLift" aria-pressed="false">Lift chip out</button>
       <button id="btnChip" aria-pressed="true">Chip</button>
@@ -121,7 +122,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   </section>
 
   <section class="review">
-    <p class="summary">Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
+    <p class="summary">New: the socket-clip mount. Its back plate carries on up to the spool-holder socket, and remmulegguh's snap fingers (traced) go into the socket behind it, so the sticker sits 38mm below the socket axis, inside the antenna loop that the official coil-replacement guide shows ringing each socket. The flat-back VHB version is the other choice in Mount. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
 
     <h2>How to print it</h2>
     <dl class="print">
@@ -243,17 +244,17 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   }
   async function refresh() {
     status.textContent = "Loading meshes…";
-    const m = document.getElementById("mat").value, s = document.getElementById("slot").value;
+    const m = document.getElementById("mat").value, s = document.getElementById("slot").value, d = document.getElementById("mount").value;
     try {
       await Promise.all([
         setGroup(chipGroup, [["mesh/chip_" + m + ".txt", "--chip"], ["mesh/chip_" + m + "_label.txt", "--label"]]),
-        setGroup(dockGroup, [["mesh/dock_slot" + s + "_back_plate.txt", "--dockbody"], ["mesh/dock_slot" + s + "_lower_pocket.txt", "--dockbody"], ["mesh/dock_slot" + s + "_channels.txt", "--dockbody", true], ["mesh/dock_slot" + s + "_accent.txt", "--label"]]),
+        setGroup(dockGroup, [["mesh/" + d + "_slot" + s + "_back_plate.txt", "--dockbody"], ["mesh/" + d + "_slot" + s + "_lower_pocket.txt", "--dockbody"], ["mesh/" + d + "_slot" + s + "_channels.txt", "--dockbody", true], ["mesh/" + d + "_slot" + s + "_accent.txt", "--label"]]),
       ]);
-      status.textContent = "Chip " + document.getElementById("mat").selectedOptions[0].text + " in slot " + s + " dock";
+      status.textContent = "Chip " + document.getElementById("mat").selectedOptions[0].text + " in slot " + s + " dock, " + document.getElementById("mount").selectedOptions[0].text;
       updateCut();
     } catch (e) { status.textContent = "Could not load a mesh file."; }
   }
-  const views = { front: [0, 2, 95], side: [95, 2, 8], angle: [-55, 35, 70], top: [0, 95, 20] };
+  const views = { front: [0, 12, 125], side: [125, 12, 0], angle: [-80, 50, 95], top: [0, 130, 25] };
   function setView(name) { const v = views[name]; camera.position.set(v[0], v[1], v[2]); controls.target.set(0, 0, 3); controls.update(); }
   document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
   const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener("click", () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(on)); fn(on); }); };
@@ -283,6 +284,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   toggle("btnHatch", (on) => { hatchOn = on; dockGroup.children.forEach((m) => { if (m.userData.hatch) m.visible = on; }); });
   document.getElementById("mat").addEventListener("change", refresh);
   document.getElementById("slot").addEventListener("change", refresh);
+  document.getElementById("mount").addEventListener("change", refresh);
 
   function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
   new ResizeObserver(resize).observe(stage);
