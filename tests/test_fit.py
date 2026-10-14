@@ -208,9 +208,11 @@ def test_clip_matches_extrutim():
 
 
 HANGER_POSES = ["hanger.stl", "hanger_pose_above.stl"]  # the same print, dock below the socket and turned 180 degrees with the dock above
+CLAMPS = HANGER_POSES + ["hub_arm.stl"]  # everything that holds the dock by its middle band
+HUB_BASE = ROOT / "thingiverse" / "makerworld2152529_hub" / "1.stl"  # 1waynger1's "Machine Interface", split out of tst.3mf; not redistributed
 
 
-@pytest.mark.parametrize("pose", HANGER_POSES)
+@pytest.mark.parametrize("pose", CLAMPS)
 def test_chip_slides_in_from_above_past_the_hanger(pose):
     chip, dock = _mesh("chip_PETG.stl"), trimesh.util.concatenate([_mesh("dock_slot3.stl"), _mesh(pose)])
     worst = 0.0
@@ -221,14 +223,14 @@ def test_chip_slides_in_from_above_past_the_hanger(pose):
     assert worst == pytest.approx(0, abs=1e-3)
 
 
-@pytest.mark.parametrize("pose", HANGER_POSES)
+@pytest.mark.parametrize("pose", CLAMPS)
 def test_hanger_holds_the_dock_without_touching_it(pose):
     hanger, dock = _mesh(pose), _mesh("dock_slot3.stl")
     assert hanger.is_watertight
     assert _overlap(hanger, dock) == pytest.approx(0, abs=0.01)
 
 
-@pytest.mark.parametrize("pose", HANGER_POSES)
+@pytest.mark.parametrize("pose", CLAMPS)
 @pytest.mark.parametrize("shift", [(0, 1.0, 0), (0, -1.0, 0), (0, 0, 1.0)])
 def test_tongues_lock_the_dock_up_down_and_away_from_the_panel(pose, shift):
     """Seated, the dock cannot move 1mm up, down or out from the panel without running into the tongues (sideways is the other arm's job)."""
@@ -248,12 +250,12 @@ def test_grip_band_is_centred_and_matches_the_pocket():
     assert (g0 + g1) / 2 == pytest.approx(d["y_mid"])
 
 
-@pytest.mark.parametrize("pose", HANGER_POSES)
+@pytest.mark.parametrize("pose", CLAMPS)
 def test_dock_pushes_into_the_hanger_from_the_front_past_the_tongues_only(pose):
-    """Pushed straight in toward the panel, the dock only ever meets the tongues, which the arms flex outward to pass; it never meets the plate or yoke."""
+    """Pushed straight in toward the panel, the dock only ever meets the jaws and tongues in its middle band, which the arms flex outward to pass."""
     hanger, dock = _mesh(pose), _mesh("dock_slot3.stl")
     d = M._dock_extents()
-    engage = M.HANGER_GROOVE_DEPTH - M.FIT_CLEARANCE
+    engage = max(M.HANGER_JAW_REACH, M.HANGER_GROOVE_DEPTH - M.FIT_CLEARANCE)
     touched = False
     for dz in np.arange(12.0, 0.01, -0.25):
         moved = dock.copy()
@@ -262,7 +264,7 @@ def test_dock_pushes_into_the_hanger_from_the_front_past_the_tongues_only(pose):
         if len(inter.vertices) and inter.volume > 1e-3:
             touched = True
             assert np.abs(inter.vertices[:, 0]).min() >= d["outer_half"] - engage - 0.05
-            assert d["groove_y"][0] - 0.05 <= inter.vertices[:, 1].min() and inter.vertices[:, 1].max() <= d["groove_y"][1] + 0.05
+            assert d["band"][0] - 0.05 <= inter.vertices[:, 1].min() and inter.vertices[:, 1].max() <= d["band"][1] + 0.05
     assert touched  # the tongues do catch it: that is the snap
 
 
@@ -304,3 +306,62 @@ def test_socket_fingers_match_remmulegguh(piece):
     assert theirs.volume > 100
     assert shared.volume == pytest.approx(theirs.volume, rel=0.02)
     assert shared.volume == pytest.approx(ours.volume, rel=0.02)
+
+
+def _his_hub_base() -> trimesh.Trimesh:
+    """1waynger1's base moved into the dock's frame: turned 180 degrees about X (plug into the panel, his y=0 end up), slot centred, back on the panel.
+
+    The turn is a proper rotation (determinant +1). Which end is up is HUB_NEAR_END_UP; the plug-centre test checks the placement against his plug.
+    """
+    if not HUB_BASE.exists():
+        pytest.skip("1waynger1's hub base is not present (it is not redistributed)")
+    base = trimesh.load(HUB_BASE, force="mesh")
+    base.apply_translation(-base.bounds[0])
+    R = np.diag([1.0, -1.0, -1.0])
+    assert np.linalg.det(R) == pytest.approx(1.0)
+    f = M._hub_frame()
+    if not M.HUB_NEAR_END_UP:
+        base.apply_transform(trimesh.transformations.rotation_matrix(np.pi, [0, 0, 1], [M.HUB_WIDTH / 2, M.HUB_LENGTH / 2, 0]))
+    base.vertices = base.vertices @ R.T + [-M.HUB_WIDTH / 2, f["y_top"], f["z_front"]]
+    return base
+
+
+def test_hub_frame_puts_the_socket_axis_on_his_plug():
+    """Independent check of the measured numbers: the centre of his plug's screw hole lands on the axis the model assumes."""
+    base, f = _his_hub_base(), M._hub_frame()
+    sec = base.section(plane_origin=[0, f["axis_y"], f["z_back"] - 5], plane_normal=[0, 0, 1])
+    loops = sorted(sec.discrete, key=lambda e: np.ptp(e[:, 0]))
+    hole = loops[0]
+    assert np.ptp(hole[:, 0]) < 4  # the screw hole, not the plug's outside
+    assert hole[:, 0].mean() == pytest.approx(0, abs=0.1)
+    assert (hole[:, 1].min() + hole[:, 1].max()) / 2 == pytest.approx(f["axis_y"], abs=0.1)
+
+
+def test_hub_arm_slides_into_his_base_without_touching_it():
+    """Independent check: the arm's tongue, lowered from 35mm above into his real slot, never touches his base."""
+    base, arm = _his_hub_base(), _mesh("hub_arm.stl")
+    assert arm.is_watertight
+    for dy in np.arange(35.0, -0.01, -0.5):
+        moved = arm.copy()
+        moved.apply_translation([0, dy, 0])
+        assert _overlap(moved, base) == pytest.approx(0, abs=1e-3), f"touches at {dy} mm above its seat"
+
+
+@pytest.mark.parametrize("shift", [(0, -0.5, 0), (0.5, 0, 0), (-0.5, 0, 0), (0, 0, 0.5)])
+def test_hub_arm_is_held_by_his_base(shift):
+    """Seated, the arm cannot drop (the crossbar sits on the base's top edge) or move sideways or out from the panel (the tongue is a dovetail) by 0.5mm."""
+    base, arm = _his_hub_base(), _mesh("hub_arm.stl")
+    arm.apply_translation(shift)
+    assert _overlap(arm, base) > 0.01
+
+
+def test_hub_standin_matches_his_base():
+    """The viewer's stand-in base, drawn from the measured numbers, covers his plate and slot to within a few percent by volume (the plug is only approximate)."""
+    base, ours, f = _his_hub_base(), _mesh("hub_base_standin.stl"), M._hub_frame()
+    probe = trimesh.creation.box(extents=[40, 60, M.HUB_PLATE_THICKNESS - 0.02])
+    probe.apply_translation([0, f["y_top"] - 25, f["z_back"] + M.HUB_PLATE_THICKNESS / 2])
+    his_plate = trimesh.boolean.intersection([base, probe], engine="manifold")
+    our_plate = trimesh.boolean.intersection([ours, probe], engine="manifold")
+    shared = trimesh.boolean.intersection([his_plate, our_plate], engine="manifold")
+    assert shared.volume == pytest.approx(his_plate.volume, rel=0.04)
+    assert shared.volume == pytest.approx(our_plate.volume, rel=0.04)

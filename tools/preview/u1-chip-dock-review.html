@@ -16,6 +16,7 @@
   --chip: #3d64b8;
   --dockbody: #6f7f93;
   --hanger: #c9783e;
+  --hubbase: #b9b2a6;
   --label: #e5b62a;
   --sev-high: #b3261e;
   --sev-med: #a4660b;
@@ -92,46 +93,47 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   <section class="viewer-col" aria-label="3D model">
     <div class="stage" id="stage"><div class="status" id="status">Loading meshes…</div></div>
     <div class="controls">
-      <label for="mat">Chip <select id="mat"><option value="PETG" selected>PETG</option></select></label>
       <label for="mount">Show <select id="mount">
-        <optgroup label="Assembled"><option value="asm_hanger" selected>chip in dock, hanger: dock below socket</option><option value="asm_hanger_above">chip in dock, hanger turned: dock above socket</option><option value="asm_vhb">chip in dock (taped)</option></optgroup>
-        <optgroup label="Each piece on its own"><option value="chip">chip</option><option value="dock">dock</option><option value="hanger">hanger</option><option value="cover">blank cover</option></optgroup>
+        <optgroup label="Put together"><option value="asm_hub" selected>on the hub base: dock above it</option><option value="asm_hanger">snap-in hanger: dock below the socket</option><option value="asm_hanger_above">snap-in hanger turned: dock above</option><option value="asm_vhb">dock taped to the panel</option></optgroup>
+        <optgroup label="Each print on its own"><option value="chip">chip</option><option value="dock">dock</option><option value="hub_arm">hub-base arm</option><option value="hanger">snap-in hanger</option><option value="cover">blank cover</option></optgroup>
       </select></label>
-      <label for="slot">Dock slot <select id="slot"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
-      <button id="btnLift" aria-pressed="false">Lift chip out</button>
-      <button id="btnPull" aria-pressed="false">Pull dock out of hanger</button>
-      <button id="btnChip" aria-pressed="true">Chip</button>
-      <button id="btnDock" aria-pressed="true">Dock</button>
-      <button id="btnHatch" aria-pressed="true">Mark channels</button>
+      <label for="mat">Chip <select id="mat"><option value="PETG" selected>PETG</option></select></label>
+      <label for="slot">Slot <select id="slot"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
+    </div>
+    <div class="controls cut">
+      <label for="mode">Slider <select id="mode">
+        <option value="explode" selected>explode</option>
+        <option value="xray">x-ray</option>
+        <option value="turn">turn around</option>
+        <option value="z">cut front to back</option>
+        <option value="y">cut top down</option>
+        <option value="x">cut side to side</option>
+      </select></label>
+      <input type="range" id="amount" min="0" max="1000" value="0" step="1" aria-label="Slider amount">
+      <span class="num" id="amountVal">assembled</span>
     </div>
     <div class="controls">
       <button data-view="front">Front</button>
       <button data-view="side">Side</button>
       <button data-view="angle">Angled</button>
       <button data-view="top">From above</button>
-    </div>
-    <div class="controls cut">
-      <label for="cutAxis">Cut away <select id="cutAxis">
-        <option value="none">off</option>
-        <option value="z">front to back</option>
-        <option value="y">top down</option>
-        <option value="x">side to side</option>
-      </select></label>
-      <input type="range" id="cut" min="0" max="1000" value="1000" step="1" disabled aria-label="Cut position">
-      <span class="num" id="cutVal">whole model</span>
+      <button id="btnChip" aria-pressed="true">Chip</button>
+      <button id="btnDock" aria-pressed="true">Dock</button>
+      <button id="btnHatch" aria-pressed="true">Mark channels</button>
     </div>
     <div class="legend">
       <span><i class="sw" style="background:var(--dockbody)"></i>dock body (colour 1)</span>
       <span><i class="sw" style="background:var(--chip)"></i>chip body (colour 1)</span>
-      <span><i class="sw" style="background:var(--hanger)"></i>hanger and blank cover</span>
+      <span><i class="sw" style="background:var(--hanger)"></i>hub-base arm, hanger and blank cover</span>
+      <span><i class="sw" style="background:var(--hubbase)"></i>1waynger1's hub base (stand-in drawn from measurements)</span>
       <span><i class="sw" style="background:var(--label)"></i>colour 2: chip name, dock digit and hint</span>
       <span><i class="sw" style="background:repeating-linear-gradient(45deg, var(--channel) 0 2px, transparent 2px 6px)"></i>channels, marked only here (not printed)</span>
     </div>
-    <p class="verified">Use Cut away to peel the model back 0.2 mm at a time: front to back shows the chip as it prints, layer by layer (back face down, sticker pocket at 1.2 mm); top down is how the dock prints. Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
+    <p class="verified">The slider does whatever the menu beside it says, and at the far left it does nothing. Explode pulls the pieces apart the way they come apart in use (chip up out of the dock, dock out toward you, the hub base down off the arm). X-ray fades everything so you can see the tongue in the slot and the clamps on the dock. Turn around spins the model. The cuts peel it back 0.2 mm at a time: front to back shows the chip as it prints, layer by layer (back face down, sticker pocket at 1.2 mm); top down is how the dock prints. Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
   </section>
 
   <section class="review">
-    <p class="summary">New: the chip's feet are 2mm shorter, and the hanger grips the dock's middle band with a tongue in a groove on each side, so one print holds the dock below the socket or, turned 180°, above it. The dock is one print whichever way it mounts. Tape it to the panel over the antenna, or push it into the hanger, which snaps into the spool-holder socket with remmulegguh's fingers. A blank cover closes sockets you aren't using. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
+    <p class="summary">Newest: the dock can sit on top of 1waynger1's hub base, the printed socket base many U1 owners already run for his quick-swap spool arm. A hub-base arm slides down into the base's slot where the spool arm would go, and its L clamps hold the dock by its middle band, with the sticker about 43mm above the socket axis. Lift the arm out and the spool arm goes back in. The viewer now has one slider that does whatever its menu says: explode, x-ray, turn around, or cut. Before that: the chip's feet are 2mm shorter, and the hanger grips the dock's middle band with a tongue in a groove on each side, so one print holds the dock below the socket or, turned 180°, above it. The dock is one print whichever way it mounts. Tape it to the panel over the antenna, or push it into the hanger, which snaps into the spool-holder socket with remmulegguh's fingers. A blank cover closes sockets you aren't using. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
 
     <h2>New: shorter feet, and one hanger for above or below</h2>
     <figure class="orient">
@@ -143,7 +145,8 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <dl class="print">
       <dt>Chip</dt><dd>Clips onto the spool's filament end on the shelf; drops into the dock from above when you load that spool.</dd>
       <dt>Dock</dt><dd>One print for both mounts. Its flat back goes against the panel over the antenna.</dd>
-      <dt>Hanger</dt><dd>Snaps into the spool-holder socket. Two arms run beside the dock to its middle band, where a tongue on each arm snaps into a groove in the dock's side. Push the dock straight in toward the panel: the tongues' sloped fronts spread the arms and they click into the grooves ("Pull dock out of hanger" shows the motion). The grooves lock it up, down and away from the panel. Because the band is centred on the dock, the same print turned 180° in the socket holds the dock above it instead (sticker <span class="num">38 mm</span> below the socket axis, or <span class="num">41.3 mm</span> above it). It never touches the dock's back, so the sticker is as close to the antenna as when taped.</dd>
+      <dt>Snap-in hanger</dt><dd>For a socket without the hub base: snaps in with remmulegguh's fingers. Two arms run beside the dock to the same L clamps on its middle band. Push the dock straight in toward the panel: the jaws' sloped fronts spread the arms and the tongues click into the grooves (Explode shows the motion). The grooves lock it up, down and away from the panel. Because the band is centred on the dock, the same print turned 180° in the socket holds the dock above it instead (sticker <span class="num">38 mm</span> below the socket axis, or <span class="num">41.3 mm</span> above it). It never touches the dock's back, so the sticker is as close to the antenna as when taped.</dd>
+      <dt>Hub-base arm</dt><dd>For 1waynger1's hub base (MakerWorld 2152529). Its tongue, the shape of his slot less <span class="num">0.3 mm</span> all round, slides <span class="num">30 mm</span> down into the slot from above, and a crossbar rests on the base's top edge. The dock stands on the crossbar, and two arms rise beside it to L clamps over its middle band: a side wall, a front jaw over the rail's edge and the tongue in the side groove, with the panel closing the C. The dock pushes in from the front. The sticker sits <span class="num">43.0 mm</span> above the socket axis if the base's plug-near end is up, <span class="num">47.2 mm</span> if the other end is (<code>HUB_NEAR_END_UP</code>); which way yours is fitted hasn't been checked. The beige base in the viewer is a stand-in drawn from my measurements, not his file.</dd>
       <dt>Blank cover</dt><dd>The same snap fingers with a plain round plate and the slot number, for a socket you aren't using.</dd>
     </dl>
 
@@ -156,6 +159,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <h2>How to print it</h2>
     <dl class="print">
       <dt>Chip</dt><dd>Back face down. Pause at the layer that starts at <span class="num">1.20 mm</span>, drop the sticker in, resume. The chip is <span class="num">2.4 mm</span> thick, with <span class="num">0.6 mm</span> of plastic under the sticker.</dd>
+      <dt>Hub-base arm</dt><dd>Upside down, standing on the ends of its two arms, so the tongue grows straight up with its slot faces vertical. The crossbar then spans about <span class="num">39 mm</span> between the arms as a bridge; most printers bridge that, otherwise add support under it only. Not yet checked with the print-orientation tool.</dd>
       <dt>Dock</dt><dd>Standing on its bottom stop (flat end down), so the cover, lips and funnel are all vertical or slope upward.</dd>
       <dt>Two colours</dt><dd>Body plus label STL for each chip, and dock plus digit STL for each slot, sharing one origin.</dd>
     </dl>
@@ -212,6 +216,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     </article>
 
     <h2>What the checks do and don't show</h2>
+    <p class="verified">New checks that use someone else's file, so they are independent of this model: with 1waynger1's real base placed in the dock's frame (turned 180° about X, a proper rotation), its screw hole lands on the socket axis the model assumes, the arm lowered from 35 mm above slides into his slot without touching it, and once seated it cannot drop or move 0.5 mm sideways or away from the panel. The stand-in base matches his plate and slot within 4% by volume. They do not show which end of his base is up on your printer, or how tight the tongue feels.</p>
     <p class="verified">Passing: watertight parts that add up to the dock; no chip overlaps its dock; a chip lowered from 30 mm seats without touching; chips 1.8 mm off-centre, 0.4 mm forward or 0.6 mm back drop into the funnel; a flipped chip stops on the key post; the back plate covers the whole sticker; the sticker pocket is sealed; labels stay inside the edge; the hook finger stands at least 2 mm proud of the lower pocket. With the hanger in either position, below or turned above the socket: the chip still slides in from above without touching it, the dock seats without touching it, pushing the dock in from the front meets only the tongues and only inside the grooves, and a seated dock moved 1 mm up, down or away from the panel runs into the tongues. The clip matches Extrutim's original within 0.1 mm wherever it was sampled. All but that last check use numbers from the same script that builds the parts. They show the files agree with themselves, not that anything fits a printer or a real sticker.</p>
   </section>
 </div>
@@ -257,16 +262,20 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     transparent: true, depthWrite: false, side: THREE.DoubleSide, clipping: true, clippingPlanes: [clip],
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
   });
-  const chipGroup = new THREE.Group(), dockGroup = new THREE.Group(), hangerGroup = new THREE.Group();
-  let hatchOn = true;
-  scene.add(chipGroup, dockGroup, hangerGroup);
+  // Everything sits in one root so "turn around" spins the whole model; each mesh carries its own explode direction.
+  const root = new THREE.Group(); scene.add(root);
+  const chipGroup = new THREE.Group(), dockGroup = new THREE.Group(), holderGroup = new THREE.Group(), baseGroup = new THREE.Group();
+  root.add(chipGroup, dockGroup, holderGroup, baseGroup);
+  let hatchOn = true, chipOn = true, dockOn = true;
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
   async function setGroup(group, parts) {
-    const meshes = await Promise.all(parts.map(([path, token, hatch]) => load(path).then((g) => {
+    const meshes = await Promise.all(parts.map(([path, token, explode, hatch]) => load(path).then((g) => {
       const solid = new THREE.Mesh(g, mat(token));
+      solid.userData.explode = explode || V(0, 0, 0);
       if (!hatch) return [solid];
       const overlay = new THREE.Mesh(g, hatchMaterial());
-      overlay.userData.hatch = true; overlay.visible = hatchOn; overlay.renderOrder = 1;
+      overlay.userData.hatch = true; overlay.userData.explode = solid.userData.explode; overlay.visible = hatchOn; overlay.renderOrder = 1;
       return [solid, overlay];
     })));
     group.clear(); meshes.flat().forEach((m) => group.add(m));
@@ -274,50 +283,78 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   async function refresh() {
     status.textContent = "Loading meshes…";
     const m = document.getElementById("mat").value, s = document.getElementById("slot").value, show = document.getElementById("mount").value;
+    const together = show.startsWith("asm_");
+    // Explode directions, in mm at full slider: put together, the chip lifts out of the dock, the dock comes out toward you, and the hub base drops off the arm;
+    // on its own, each print splits into its colours and parts.
+    const chipX = together ? [V(0, 40, 0), V(0, 40, 0)] : [V(0, 0, 0), V(0, 0, 10)];
+    const dockX = together ? V(0, 0, 32) : null;
+    const dockParts = [["back_plate", "--dockbody", V(0, 0, -10)], ["lower_pocket", "--dockbody", V(0, 0, 10)], ["channels", "--dockbody", V(0, 0, 0), true], ["accent", "--label", V(0, 0, 22)]];
+    const holder = { asm_hub: "hub_arm", hub_arm: "hub_arm", asm_hanger: "hanger", hanger: "hanger", asm_hanger_above: "hanger_pose_above" }[show];
     try {
       await Promise.all([
-        setGroup(chipGroup, [["mesh/chip_" + m + ".txt", "--chip"], ["mesh/chip_" + m + "_label.txt", "--label"]]),
-        setGroup(dockGroup, [["mesh/dock_slot" + s + "_back_plate.txt", "--dockbody"], ["mesh/dock_slot" + s + "_lower_pocket.txt", "--dockbody"], ["mesh/dock_slot" + s + "_channels.txt", "--dockbody", true], ["mesh/dock_slot" + s + "_accent.txt", "--label"]]),
-        setGroup(hangerGroup, show === "cover" ? [["mesh/cover_slot" + s + ".txt", "--hanger"], ["mesh/cover_slot" + s + "_accent.txt", "--label"]] : [[show === "asm_hanger_above" ? "mesh/hanger_pose_above.txt" : "mesh/hanger.txt", "--hanger"]]),
+        setGroup(chipGroup, [["mesh/chip_" + m + ".txt", "--chip", chipX[0]], ["mesh/chip_" + m + "_label.txt", "--label", chipX[1]]]),
+        setGroup(dockGroup, dockParts.map(([n, t, x, h]) => ["mesh/dock_slot" + s + "_" + n + ".txt", t, dockX ? dockX.clone().add(x.clone().multiplyScalar(0.3)) : x, h])),
+        setGroup(holderGroup, show === "cover" ? [["mesh/cover_slot" + s + ".txt", "--hanger"], ["mesh/cover_slot" + s + "_accent.txt", "--label", V(0, 0, 10)]] : holder ? [["mesh/" + holder + ".txt", "--hanger"]] : []),
+        setGroup(baseGroup, show === "asm_hub" ? [["mesh/hub_base_standin.txt", "--hubbase", V(0, -45, 0)]] : []),
       ]);
-      // What each choice shows: a single piece, or the pieces put together.
-      const inHanger = show === "asm_hanger" || show === "asm_hanger_above";
-      chipGroup.visible = (inHanger || ["asm_vhb", "chip"].includes(show)) && chipOn;
-      dockGroup.visible = (inHanger || ["asm_vhb", "dock"].includes(show)) && dockOn;
-      hangerGroup.visible = inHanger || ["hanger", "cover"].includes(show);
-      document.getElementById("btnPull").disabled = !inHanger;
+      chipGroup.visible = (together || show === "chip") && chipOn;
+      dockGroup.visible = (together || show === "dock") && dockOn;
+      holderGroup.visible = !!holder || show === "cover";
+      baseGroup.visible = show === "asm_hub";
       status.textContent = document.getElementById("mount").selectedOptions[0].text + " (slot " + s + ", " + document.getElementById("mat").selectedOptions[0].text + " chip)";
-      updateCut();
+      apply();
+      frame();
     } catch (e) { status.textContent = "Could not load a mesh file."; }
   }
-  const views = { front: [0, 12, 125], side: [125, 12, 0], angle: [-80, 50, 95], top: [0, 130, 25] };
-  function setView(name) { const v = views[name]; camera.position.set(v[0], v[1], v[2]); controls.target.set(0, 0, 3); controls.update(); }
-  document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
-  const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener("click", () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(on)); fn(on); }); };
-  let chipOn = true, dockOn = true;
-  toggle("btnLift", (on) => { chipGroup.position.y = on ? 32 : 0; updateCut(); });
-  // The dock pushes into the hanger straight toward the panel (along Z), so pulling it out moves it (and its chip) toward you.
-  toggle("btnPull", (on) => { dockGroup.position.z = on ? 25 : 0; chipGroup.position.z = on ? 25 : 0; updateCut(); });
-  // Cut-away slider: snaps to 0.2 mm, the usual layer height, across the visible parts' extent on the chosen axis.
-  const cutAxis = document.getElementById("cutAxis"), cut = document.getElementById("cut"), cutVal = document.getElementById("cutVal");
-  const axisName = { x: "x", y: "height", z: "depth" };
-  function extent(axis) {
+  // Camera views look at the middle of whatever is shown, from a distance that fits it.
+  const views = { front: [0, 0.1, 1], side: [1, 0.1, 0], angle: [-0.62, 0.38, 0.72], top: [0, 1, 0.2] };
+  let currentView = "angle";
+  function shownBox() {
+    // The assembled model plus every piece at full explode, so pulling the slider never runs a piece off the screen.
     const box = new THREE.Box3();
-    [chipGroup, dockGroup, hangerGroup].forEach((g) => { if (g.visible) box.expandByObject(g); });
-    return box.isEmpty() ? [0, 1] : [box.min[axis], box.max[axis]];
+    const t = amount.value; amount.value = 0; apply();
+    [chipGroup, dockGroup, holderGroup, baseGroup].forEach((g) => {
+      if (!g.visible) return;
+      g.children.forEach((m) => { const b = new THREE.Box3().setFromObject(m); box.union(b); box.union(b.clone().translate(m.userData.explode)); });
+    });
+    amount.value = t; apply();
+    return box;
   }
-  function updateCut() {
-    const axis = cutAxis.value;
-    cut.disabled = axis === "none";
-    if (axis === "none") { clip.set(new THREE.Vector3(0, 0, -1), 1e6); cutVal.textContent = "whole model"; return; }
-    const [lo, hi] = extent(axis);
-    const at = Math.round((lo + (hi - lo) * cut.value / 1000) / 0.2) * 0.2;
-    const normal = new THREE.Vector3(axis === "x" ? -1 : 0, axis === "y" ? -1 : 0, axis === "z" ? -1 : 0);
-    clip.set(normal, at);
-    cutVal.textContent = axisName[axis] + " \u2264 " + at.toFixed(1) + " mm";
+  function frame() {
+    const box = shownBox(); if (box.isEmpty()) return;
+    const c = box.getCenter(V(0, 0, 0)), r = box.getSize(V(0, 0, 0)).length() / 2;
+    const d = views[currentView], dir = V(d[0], d[1], d[2]).normalize();
+    controls.target.copy(c); camera.position.copy(c.clone().add(dir.multiplyScalar(r / Math.tan(camera.fov * Math.PI / 360) * 1.15))); controls.update();
   }
-  cutAxis.addEventListener("change", () => { cut.value = 1000; updateCut(); });
-  cut.addEventListener("input", updateCut);
+  document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => { currentView = b.dataset.view; frame(); }));
+  const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener("click", () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(on)); fn(on); }); };
+
+  // One slider, one menu: the slider always does what the menu says; at 0 it does nothing.
+  const mode = document.getElementById("mode"), amount = document.getElementById("amount"), amountVal = document.getElementById("amountVal");
+  const allMeshes = () => [chipGroup, dockGroup, holderGroup, baseGroup].flatMap((g) => g.children);
+  function apply() {
+    const k = mode.value, t = amount.value / 1000;
+    allMeshes().forEach((mesh) => {
+      mesh.position.copy(k === "explode" ? mesh.userData.explode.clone().multiplyScalar(t) : V(0, 0, 0));
+      if (!mesh.userData.hatch) {
+        const fade = k === "xray" ? 1 - 0.85 * t : 1;
+        mesh.material.transparent = fade < 1; mesh.material.opacity = fade; mesh.material.depthWrite = fade === 1;
+      }
+    });
+    root.rotation.y = k === "turn" ? t * 2 * Math.PI : 0;
+    if (k === "x" || k === "y" || k === "z") {
+      const box = new THREE.Box3(); [chipGroup, dockGroup, holderGroup, baseGroup].forEach((g) => { if (g.visible) box.expandByObject(g); });
+      const lo = box.isEmpty() ? 0 : box.min[k], hi = box.isEmpty() ? 1 : box.max[k];
+      const at = Math.round((hi - (hi - lo) * t) / 0.2) * 0.2;
+      clip.set(V(k === "x" ? -1 : 0, k === "y" ? -1 : 0, k === "z" ? -1 : 0), at);
+      amountVal.textContent = t === 0 ? "whole model" : ({ x: "x", y: "height", z: "depth" })[k] + " \u2264 " + at.toFixed(1) + " mm";
+    } else {
+      clip.set(V(0, 0, -1), 1e6);
+      amountVal.textContent = t === 0 ? (k === "explode" ? "assembled" : k === "xray" ? "solid" : "0\u00b0") : k === "explode" ? Math.round(t * 100) + "% apart" : k === "xray" ? Math.round(85 * t) + "% see-through" : Math.round(t * 360) + "\u00b0";
+    }
+  }
+  mode.addEventListener("change", () => { amount.value = 0; apply(); });
+  amount.addEventListener("input", apply);
   toggle("btnChip", (on) => { chipOn = on; refresh(); });
   toggle("btnDock", (on) => { dockOn = on; refresh(); });
   toggle("btnHatch", (on) => { hatchOn = on; dockGroup.children.forEach((m) => { if (m.userData.hatch) m.visible = on; }); });
@@ -337,7 +374,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     m.chips.forEach((stem) => { const o = document.createElement("option"); o.value = stem; o.textContent = label(stem); if (stem === "PETG") o.selected = true; sel.appendChild(o); });
     refresh();
   }).catch(() => refresh());
-  resize(); setView("angle");
+  resize();
   (function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
 })();
 </script>
