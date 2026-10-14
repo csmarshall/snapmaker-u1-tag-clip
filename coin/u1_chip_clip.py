@@ -84,6 +84,7 @@ C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 # ---- engraving ---------------------------------------------------------------------------------
 LABEL_FONT_SIZE = 9.0
 LABEL_EDGE_MARGIN = 1.5  # the engraved name stays this far inside the chip's edge
+LABEL_HOOK_GAP = 1.5  # space between the top of the hook finger and the bottom of the label
 COVER_DIGIT_MARGIN = 1.2  # gap between the slot digit and the lower pocket's edges; the digit is scaled to fill the height minus this
 U1_SLOTS = (1, 2, 3, 4)  # one dock per U1 filament position, numbered left to right
 ENGRAVE_DEPTH = 0.6  # deep enough to paint or fill, or to print in a second colour
@@ -125,23 +126,7 @@ KEY_NOTCH_WIDTH = KEY_POST_WIDTH + 2 * FIT_CLEARANCE
 KEY_NOTCH_HEIGHT = KEY_POST_HEIGHT + 2 * FIT_CLEARANCE  # one clearance for the seat gap under the chip, one above the post
 
 
-def _visible_face_centroid_y(steps: int = 4000) -> float:
-    """Height of the area centroid of the chip face you see when it is docked: from the hook finger's top to the chip's top, between the dock's lips.
-
-    The round top makes that shape bottom-heavy, so its visual centre sits below the middle of its bounding box.
-    """
-    y0, y1, lip_x = -ARM_BASE_Y, COIN_RADIUS, COIN_RADIUS - DOCK_LIP_OVERLAP
-    area = moment = 0.0
-    for i in range(steps):
-        y = y0 + (y1 - y0) * (i + 0.5) / steps
-        half = COIN_RADIUS if y <= 0 else math.sqrt(max(COIN_RADIUS ** 2 - y * y, 0.0))
-        width = 2 * min(lip_x, half)
-        area += width
-        moment += width * y
-    return moment / area
-
-
-LABEL_Y = _visible_face_centroid_y()  # the label is centred on the visual centre of the docked chip's visible face
+LABEL_BOTTOM_Y = -ARM_BASE_Y + LABEL_HOOK_GAP  # the label's lowest ink sits just above the hook finger
 
 
 def _cosine_bump(x: float, half_width: float) -> float:
@@ -202,10 +187,10 @@ def _lead_in_wall(z0: float):
 
 
 def _label_text(label: str, size: float):
-    """The label as text whose ink (not its font box) is centred on (0, LABEL_Y)."""
+    """The label as text whose ink (not its font box) is centred left to right and rests LABEL_HOOK_GAP above the hook finger."""
     text = Text(label, font_size=size)
     bb = text.bounding_box()
-    return Pos(-(bb.min.X + bb.max.X) / 2, LABEL_Y - (bb.min.Y + bb.max.Y) / 2) * text
+    return Pos(-(bb.min.X + bb.max.X) / 2, LABEL_BOTTOM_Y - bb.min.Y) * text
 
 
 def _label_font_size(label: str) -> float:
