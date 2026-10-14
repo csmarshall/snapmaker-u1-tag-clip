@@ -91,6 +91,8 @@ COVER_PLATE_THICKNESS = 1.2
 COVER_HOOK_CLEARANCE = 0.3  # the cover's top edge stops this far beyond the hook finger's curled tip
 FILAMENT_DIAMETER = 1.75
 FILAMENT_SLOT_CLEARANCE = 0.5  # per side, around the filament where it leaves the clip sideways
+DOCK_FUNNEL_HEIGHT = 4.0  # flared mouth added on top of the whole channels, so the chip is easy to aim into the dock
+DOCK_FUNNEL_FLARE = 2.0  # how far each side of the slot mouth opens outward at the very top
 DOCK_FILAMENT_SLOTS = False  # True cuts a narrow slot through each side wall at the two clip channels so filament can leave sideways; False leaves the side faces closed
 TRACK_INTO_POCKET = 7.5  # the tracks (rails and lips) run this far down past the lower pocket's top edge (5 to 10mm per Charles) and stop; below that only the pocket's own walls remain
 DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
@@ -201,14 +203,15 @@ def coin_parts(label: str):
 def dock_parts(slot: int | None):
     """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a full-width lower pocket over the clip-arm area carrying the big slot digit.
 
-    The lower pocket is a full-width plate just above the arm walls B and C, on full side walls; inside it the lips are left out because the cover holds the coin. Its top edge stops just past the curled tip of the tall hook finger (wall A), which stands proud above the edge, so a thumb run up the cover face catches it and lifts the coin out. Above the pocket the rails and lips form the tracks, whole from the open top to TRACK_INTO_POCKET below the pocket's top edge (no entry chamfer), and they do not run to the bottom; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
+    The lower pocket is a full-width plate just above the arm walls B and C, on full side walls; inside it the lips are left out because the cover holds the coin. Its top edge stops just past the curled tip of the tall hook finger (wall A), which stands proud above the edge, so a thumb run up the cover face catches it and lifts the coin out. Above the pocket the rails and lips form the tracks, whole from y_top to TRACK_INTO_POCKET below the pocket's top edge, and they do not run to the bottom; a flared mouth of DOCK_FUNNEL_HEIGHT sits on top of them; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
     """
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
     z_back = -DOCK_BACK_GAP - DOCK_FLOOR
     z_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE + DOCK_LIP_THICKNESS
     y_bottom = -COIN_FLAT_END_Y - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
-    y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION
+    y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION  # where the whole channels end and the funnel begins
+    y_funnel_top = y_top + DOCK_FUNNEL_HEIGHT
     cover_top = ARM_Y_HOOK_TIP - COVER_HOOK_CLEARANCE
     slot_top_z = COIN_THICKNESS + FILAMENT_DIAMETER + 2 * FILAMENT_SLOT_CLEARANCE
     slot_half = FILAMENT_DIAMETER / 2 + FILAMENT_SLOT_CLEARANCE
@@ -219,14 +222,23 @@ def dock_parts(slot: int | None):
         return Pos((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2) * Box(x1 - x0, y1 - y0, z1 - z0)
 
     z_slot_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE
-    parts = box(-outer_half, outer_half, y_bottom, y_top, z_back, -DOCK_BACK_GAP)  # back wall
+    parts = box(-outer_half, outer_half, y_bottom, y_funnel_top, z_back, -DOCK_BACK_GAP)  # back wall
     for sign in (-1, 1):
         x_in, x_out = sorted((sign * inner_half, sign * outer_half))
-        parts += box(x_in, x_out, cover_top - TRACK_INTO_POCKET, y_top, z_back, z_front)  # rail, part of the track
+        parts += box(x_in, x_out, cover_top - TRACK_INTO_POCKET, y_funnel_top, z_back, z_front)  # rail, part of the channel
         lip_in = sign * (COIN_RADIUS - DOCK_LIP_OVERLAP)
         lip_lo, lip_hi = sorted((lip_in, sign * outer_half))
-        parts += box(lip_lo, lip_hi, cover_top - TRACK_INTO_POCKET, y_top, z_slot_front, z_front)  # lip over the coin edge; deeper in the lower pocket the cover holds the coin instead
+        parts += box(lip_lo, lip_hi, cover_top - TRACK_INTO_POCKET, y_funnel_top, z_slot_front, z_front)  # lip over the coin edge; deeper in the lower pocket the cover holds the coin instead
     parts += box(-outer_half, outer_half, y_bottom, y_bottom + DOCK_BOTTOM_THICKNESS, z_back, z_front)  # bottom stop
+    # Flared mouth above the whole channels: the rails open outward in plan and the lips ramp up and open outward, so a chip that is a little off still finds the slot.
+    ramp = (z_front - z_slot_front) / DOCK_FUNNEL_HEIGHT
+    lip_ramp = Polygon(*_ccw([(y_top, z_slot_front), (y_funnel_top + 1, z_slot_front), (y_funnel_top + 1, z_front + ramp)]), align=None)
+    parts -= extrude(Plane.YZ * lip_ramp, amount=outer_half + 1, both=True)
+    for sign in (-1, 1):
+        x_mouth = sign * (inner_half + DOCK_FUNNEL_FLARE)
+        for x_start, z0 in ((sign * inner_half, z_back), (sign * (COIN_RADIUS - DOCK_LIP_OVERLAP), z_slot_front)):
+            mouth = Polygon(*_ccw([(x_start, y_top), (x_mouth, y_funnel_top), (x_mouth, y_funnel_top + 1), (x_start, y_funnel_top + 1)]), align=None)
+            parts -= Pos(0, 0, z0) * extrude(mouth, amount=z_front - z0 + 1)
     for sign in (-1, 1):
         x_in, x_out = sorted((sign * inner_half, sign * outer_half))
         parts += box(x_in, x_out, y_bottom, cover_top, z_back, z_cover_out)  # side wall of the lower pocket, carrying the cover; it does not climb beside the tracks
