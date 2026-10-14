@@ -110,8 +110,8 @@ def _lead_in_wall(z0: float):
     return Pos(0, 0, z0) * solid
 
 
-def coin(label: str, number: int):
-    """Return the clip coin for one filament label and copy number."""
+def coin_parts(label: str, number: int):
+    """Return (body, engraving) for one filament label and copy number: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours."""
     # Round end and flat end: the circle's own edge would stick out past the rectangle, so cut it at COIN_FLAT_END_Y.
     below_top = Pos(0, COIN_FLAT_END_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_FLAT_END_Y + 2 * COIN_RADIUS)
     outline = (Circle(COIN_RADIUS) + Pos(0, COIN_FLAT_END_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_FLAT_END_Y)) & below_top
@@ -126,7 +126,7 @@ def coin(label: str, number: int):
 
     engrave = Pos(0, 6.0, COIN_THICKNESS) * extrude(Text(label, font_size=LABEL_FONT_SIZE), amount=-ENGRAVE_DEPTH)
     engrave += Pos(0, 12.0, COIN_THICKNESS) * extrude(Text(str(number), font_size=NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
-    return body - engrave
+    return body - engrave, engrave
 
 
 def dock(slot: int):
@@ -163,9 +163,10 @@ if __name__ == "__main__":
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
     for index, material in enumerate(("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon"), start=1):
-        shape = coin(material, index)
+        body, engraving = coin_parts(material, index)
         stem = f"coin_{material.replace('+', 'plus')}_{index}"
-        export_stl(shape, str(out / f"{stem}.stl"))
-        export_step(shape, str(out / f"{stem}.step"))
+        export_stl(body, str(out / f"{stem}.stl"))
+        export_step(body, str(out / f"{stem}.step"))
+        export_stl(engraving, str(out / f"{stem}_label.stl"))
     for slot in U1_SLOTS:
         export_stl(dock(slot), str(out / f"dock_slot{slot}.stl"))
