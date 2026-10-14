@@ -127,6 +127,15 @@ def test_label_stays_inside_the_chip(material):
     assert np.hypot(label.vertices[:, 0], label.vertices[:, 1]).max() <= M.COIN_RADIUS - M.LABEL_EDGE_MARGIN + 0.05
 
 
+@pytest.mark.parametrize("material", MATERIALS)
+def test_label_is_centred_in_the_top_half(material):
+    label = _mesh(f"chip_{material}_label.stl")
+    top, middle = M.COIN_RADIUS, (M.COIN_RADIUS - M.COIN_FLAT_END_Y) / 2
+    (x0, y0, _), (x1, y1, _) = label.bounds
+    assert (x0 + x1) / 2 == pytest.approx(0, abs=0.05)
+    assert (y0 + y1) / 2 == pytest.approx((top + middle) / 2, abs=0.05)
+
+
 def test_label_floor_clears_the_sticker_pocket():
     assert M.COIN_THICKNESS - M.ENGRAVE_DEPTH - M.PAUSE_HEIGHT >= 0.4
 

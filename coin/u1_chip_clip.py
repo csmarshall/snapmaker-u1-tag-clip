@@ -84,7 +84,6 @@ C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 # ---- engraving ---------------------------------------------------------------------------------
 LABEL_FONT_SIZE = 9.0
 LABEL_EDGE_MARGIN = 1.5  # the engraved name stays this far inside the chip's edge
-LABEL_Y = 8.0  # label centre above the sticker centre, in the round end
 COVER_DIGIT_MARGIN = 1.2  # gap between the slot digit and the lower pocket's edges; the digit is scaled to fill the height minus this
 U1_SLOTS = (1, 2, 3, 4)  # one dock per U1 filament position, numbered left to right
 ENGRAVE_DEPTH = 0.6  # deep enough to paint or fill, or to print in a second colour
@@ -117,6 +116,7 @@ ARM_Y_FAR = -(S_BEND[0][4] + ARM_SHIFT_Y)  # after the turn: arm edge nearest th
 ARM_WALL_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT  # tops of walls B and C, and of wall A's straight part
 ARM_TOP_Z = ARM_WALL_TOP_Z + WALL_A_EXTRA_HEIGHT + ARM_LIP_HEIGHT  # the hook finger's top
 ARM_Y_HOOK_TIP = -(WALL_A_Y[1] + ARM_SHIFT_Y + max(row[2] for row in WALL_A_LIP))  # how far the hook's curled tip reaches toward the flat end, after the turn
+LABEL_Y = (COIN_RADIUS + (COIN_RADIUS - COIN_FLAT_END_Y) / 2) / 2  # centre of the chip's top half: halfway between its top and its middle
 KEY_NOTCH_WIDTH = KEY_POST_WIDTH + 2 * FIT_CLEARANCE
 KEY_NOTCH_HEIGHT = KEY_POST_HEIGHT + 2 * FIT_CLEARANCE  # one clearance for the seat gap under the chip, one above the post
 
@@ -178,12 +178,19 @@ def _lead_in_wall(z0: float):
     return Pos(0, 0, z0) * (solid + extrude(nub_outline, amount=A_NUB_HEIGHT + WALL_A_EXTRA_HEIGHT))
 
 
+def _label_text(label: str, size: float):
+    """The label as text whose ink (not its font box) is centred on (0, LABEL_Y)."""
+    text = Text(label, font_size=size)
+    bb = text.bounding_box()
+    return Pos(-(bb.min.X + bb.max.X) / 2, LABEL_Y - (bb.min.Y + bb.max.Y) / 2) * text
+
+
 def _label_font_size(label: str) -> float:
     """Largest font size up to LABEL_FONT_SIZE whose bounding box corners stay LABEL_EDGE_MARGIN inside the round end, so long names shrink instead of running off the chip."""
     limit = COIN_RADIUS - LABEL_EDGE_MARGIN
     size = LABEL_FONT_SIZE
     while size > 2.0:
-        bb = (Pos(0, LABEL_Y, 0) * Text(label, font_size=size)).bounding_box()
+        bb = _label_text(label, size).bounding_box()
         corner = math.hypot(max(abs(bb.min.X), abs(bb.max.X)), max(abs(bb.min.Y), abs(bb.max.Y)))
         if corner <= limit:
             return size
@@ -212,7 +219,7 @@ def chip_parts(label: str):
     arms += _c_catches(COIN_THICKNESS)
     body += Rot(Z=180) * arms
 
-    engrave = Pos(0, LABEL_Y, COIN_THICKNESS) * extrude(Text(label, font_size=_label_font_size(label)), amount=-ENGRAVE_DEPTH)
+    engrave = Pos(0, 0, COIN_THICKNESS) * extrude(_label_text(label, _label_font_size(label)), amount=-ENGRAVE_DEPTH)
     return body - engrave, engrave
 
 
