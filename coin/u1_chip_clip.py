@@ -47,6 +47,7 @@ ARM_LIP_HEIGHT = 2.02  # extra height of the curved-over lead-in on wall A (tota
 WALL_A_LIP = ((0.0, 0.0, 0.0), (0.1, 0.02, 0.0), (0.3, 0.05, 0.01), (0.5, 0.11, 0.03), (0.7, 0.18, 0.05), (0.9, 0.26, 0.09), (1.1, 0.35, 0.15),
               (1.3, 0.46, 0.21), (1.5, 0.58, 0.29), (1.7, 0.71, 0.38), (1.9, 0.86, 0.48), (2.02, 0.94, 0.45))
 # A small nub on wall A's inner face at the clip's centre (x=0), cosine-shaped, running the wall's full height; measured at x=0 and x=+-0.2..1.5.
+WALL_A_EXTRA_HEIGHT = 2.0  # the one deliberate change to Extrutim's clip, asked for by Charles: the hook finger (wall A) is this much taller so it stands proud of the pocket
 A_NUB_AMPLITUDE = 0.48
 A_NUB_HALF_WIDTH = 1.5
 A_NUB_HEIGHT = 4.9
@@ -102,7 +103,7 @@ COIN_FLAT_END_Y = S_BEND[0][4] + ARM_SHIFT_Y + TOP_MARGIN  # distance from the p
 ARM_Y_NEAR = -ARM_BASE_Y  # after the turn: arm edge nearest the sticker pocket (wall A's outer face)
 ARM_Y_FAR = -(S_BEND[0][4] + ARM_SHIFT_Y)
 ARM_WALL_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT  # tops of walls B and C, and of wall A's straight part
-ARM_TOP_Z = ARM_WALL_TOP_Z + ARM_LIP_HEIGHT  # the hook finger's top
+ARM_TOP_Z = ARM_WALL_TOP_Z + WALL_A_EXTRA_HEIGHT + ARM_LIP_HEIGHT  # the hook finger's top
 ARM_Y_HOOK_TIP = -(WALL_A_Y[1] + ARM_SHIFT_Y + max(row[2] for row in WALL_A_LIP))  # how far the hook's curled tip reaches toward the flat end, after the turn
 # Where the filament runs through the clip at the arm ends (y of each channel centre, before the S-bend moves it).
 CLIP_CHANNEL_Y = tuple(-((near + far) / 2 + ARM_SHIFT_Y) for near, far in ((WALL_A_Y[1], WALL_B_Y[0]), (WALL_B_Y[1], WALL_C_Y[0])))
@@ -150,7 +151,7 @@ def _c_catches(z0: float):
 def _lead_in_wall(z0: float):
     """Wall A: a straight wall whose top curls toward the channel (WALL_A_LIP), extruded along X from a side profile in (y, z), plus the centre nub on its inner face."""
     outer, inner = WALL_A_Y
-    rows = [(ARM_WALL_HEIGHT + dz, outer + d_out, inner + d_in) for dz, d_out, d_in in WALL_A_LIP]
+    rows = [(ARM_WALL_HEIGHT + WALL_A_EXTRA_HEIGHT + dz, outer + d_out, inner + d_in) for dz, d_out, d_in in WALL_A_LIP]
     profile = [(outer, 0.0), (inner, 0.0)] + [(y_in, z) for z, _, y_in in rows] + [(y_out, z) for z, y_out, _ in reversed(rows)]
     section = Polygon(*[(y + ARM_SHIFT_Y, z) for y, z in profile], align=None)
     # Polygon is drawn in XY; rotate so its Y becomes Z and its X becomes the coin's Y, then extrude along X.
@@ -158,7 +159,7 @@ def _lead_in_wall(z0: float):
     xs = [-A_NUB_HALF_WIDTH + 2 * A_NUB_HALF_WIDTH * i / 30 for i in range(31)]
     y_face = inner + ARM_SHIFT_Y
     nub_outline = Polygon(*[(x, y_face - 0.05) for x in xs], *[(x, y_face + A_NUB_AMPLITUDE * _cosine_bump(x, A_NUB_HALF_WIDTH)) for x in reversed(xs)], align=None)
-    return Pos(0, 0, z0) * (solid + extrude(nub_outline, amount=A_NUB_HEIGHT))
+    return Pos(0, 0, z0) * (solid + extrude(nub_outline, amount=A_NUB_HEIGHT + WALL_A_EXTRA_HEIGHT))
 
 
 def coin_parts(label: str, number: int | None):
@@ -185,9 +186,9 @@ def coin_parts(label: str, number: int | None):
 
 
 def dock_parts(slot: int | None):
-    """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a slot-wide cover over the clip-arm area carrying the big slot digit.
+    """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a full-width lower pocket over the clip-arm area carrying the big slot digit.
 
-    The cover is a low, slot-wide plate just above the arm walls B and C. Its top edge stops just past the curled tip of the tall hook finger (wall A), so the finger stands proud above the edge and a thumb run up the cover face catches it and lifts the coin out. The cover sits on two posts on the lips; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
+    The lower pocket is a full-width plate just above the arm walls B and C, on full side walls; inside it the lips are left out because the cover holds the coin. Its top edge stops just past the curled tip of the tall hook finger (wall A), which stands proud above the edge, so a thumb run up the cover face catches it and lifts the coin out. Above the pocket the rails and lips form the tracks down from the open top; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
     """
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
@@ -196,7 +197,6 @@ def dock_parts(slot: int | None):
     y_bottom = -COIN_FLAT_END_Y - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
     y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION
     cover_top = ARM_Y_HOOK_TIP - COVER_HOOK_CLEARANCE
-    post_x_in = COIN_RADIUS - DOCK_LIP_OVERLAP
     slot_top_z = COIN_THICKNESS + FILAMENT_DIAMETER + 2 * FILAMENT_SLOT_CLEARANCE
     slot_half = FILAMENT_DIAMETER / 2 + FILAMENT_SLOT_CLEARANCE
     z_cover_in = ARM_WALL_TOP_Z + COVER_ARM_CLEARANCE
@@ -212,7 +212,7 @@ def dock_parts(slot: int | None):
         parts += box(x_in, x_out, y_bottom, y_top, z_back, z_front)  # rail
         lip_in = sign * (COIN_RADIUS - DOCK_LIP_OVERLAP)
         lip_lo, lip_hi = sorted((lip_in, sign * outer_half))
-        parts += box(lip_lo, lip_hi, y_bottom, y_top, z_slot_front, z_front)  # lip over the coin edge
+        parts += box(lip_lo, lip_hi, cover_top, y_top, z_slot_front, z_front)  # lip over the coin edge; inside the lower pocket the cover holds the coin instead
     parts += box(-outer_half, outer_half, y_bottom, y_bottom + DOCK_BOTTOM_THICKNESS, z_back, z_front)  # bottom stop
     # Entry funnel at the open top: rails and lips flare outward in plan, and the lips' undersides ramp up, so a coin that is a little off finds the track.
     flare_y = y_top - DOCK_FUNNEL_LENGTH
@@ -226,9 +226,9 @@ def dock_parts(slot: int | None):
             mouth = Polygon(*(corners if sign > 0 else corners[::-1]), align=None)  # counter-clockwise, or extrude would run toward -Z
             parts -= Pos(0, 0, z0) * extrude(mouth, amount=z_front - z0 + 1)
     for sign in (-1, 1):
-        x_in, x_out = sorted((sign * post_x_in, sign * inner_half))
-        parts += box(x_in, x_out, y_bottom, cover_top, z_front, z_cover_out)  # post standing on the lip and carrying the cover
-    parts += box(-inner_half, inner_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate, as wide as the slot
+        x_in, x_out = sorted((sign * inner_half, sign * outer_half))
+        parts += box(x_in, x_out, y_bottom, cover_top, z_front, z_cover_out)  # side wall of the lower pocket, carrying the cover
+    parts += box(-outer_half, outer_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate, full dock width
     for channel_y in CLIP_CHANNEL_Y:
         for sign in (-1, 1):
             x0, x1 = sorted((sign * ARM_LENGTH / 2, sign * (outer_half + 1)))
