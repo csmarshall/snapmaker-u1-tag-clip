@@ -111,9 +111,10 @@ def test_orientation_hint_is_engraved_and_shallow():
     dock = _mesh("dock_slot3.stl")
     y_base = M.ARM_Y_HOOK_TIP - M.COVER_HOOK_CLEARANCE + M.HINT_GAP
     face = -M.DOCK_BACK_GAP
-    in_arrow = [0, y_base + 4.0 + 1.0 + 4.0, face - M.HINT_DEPTH / 2]
-    in_silhouette = [-M.HINT_WIDTH / 4, y_base + 2.0, face - M.HINT_DEPTH / 2]
-    in_notch = [0, y_base + 0.3, face - M.HINT_DEPTH / 2]
+    y_chip = y_base + 7.0  # silhouette above, arrow below
+    in_arrow = [0, y_base + 4.0, face - M.HINT_DEPTH / 2]
+    in_silhouette = [-M.HINT_WIDTH / 4, y_chip + 2.0, face - M.HINT_DEPTH / 2]
+    in_notch = [0, y_chip + 0.3, face - M.HINT_DEPTH / 2]
     assert not dock.contains([in_arrow, in_silhouette]).any()
     assert dock.contains([in_notch])[0]
     assert M.DOCK_FLOOR - M.HINT_DEPTH >= 0.6

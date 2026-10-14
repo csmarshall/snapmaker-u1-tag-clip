@@ -240,17 +240,18 @@ def _funnel_section(y: float, flare: float, back: float, lip: float, inner_half:
 
 
 def _orientation_hint(y_base: float):
-    """The cut for the hint engraved into the back plate's front face: a scaled silhouette of the chip's flat end (rounded corners, rounded key notch left uncut) with a down arrow above it."""
+    """The cut for the hint engraved into the back plate's front face, read top to bottom: a scaled silhouette of the chip's flat end (rounded corners, rounded key notch left uncut), then a down arrow under it."""
     scale = HINT_WIDTH / (2 * COIN_RADIUS)
-    height = 4.0
+    height, arrow_len, gap = 4.0, 6.0, 1.0
+    y_chip = y_base + arrow_len + gap  # silhouette's feet
     notch_w, notch_h = KEY_NOTCH_WIDTH * scale, KEY_NOTCH_HEIGHT * scale
-    body = Pos(0, y_base + height / 2) * Rectangle(HINT_WIDTH, height)
-    notch = Pos(0, y_base + notch_h / 2 - 0.5) * Rectangle(notch_w, notch_h + 1)
+    body = Pos(0, y_chip + height / 2) * Rectangle(HINT_WIDTH, height)
+    notch = Pos(0, y_chip + notch_h / 2 - 0.5) * Rectangle(notch_w, notch_h + 1)
     face = (body - notch).faces()[0]
-    feet = [v for v in face.vertices() if abs(v.Y - y_base) < 1e-6]
+    feet = [v for v in face.vertices() if abs(v.Y - y_chip) < 1e-6]
     silhouette = face.fillet_2d(COIN_END_CORNER_RADIUS * scale, feet)
-    tip = y_base + height + 1.0
-    arrow = Polygon(*_ccw([(0, tip), (1.6, tip + 2.0), (0.5, tip + 2.0), (0.5, tip + 6.0), (-0.5, tip + 6.0), (-0.5, tip + 2.0), (-1.6, tip + 2.0)]), align=None)
+    tip = y_base  # the arrow points down, toward the lower pocket
+    arrow = Polygon(*_ccw([(0, tip), (1.6, tip + 2.0), (0.5, tip + 2.0), (0.5, tip + arrow_len), (-0.5, tip + arrow_len), (-0.5, tip + 2.0), (-1.6, tip + 2.0)]), align=None)
     z_face = -DOCK_BACK_GAP
     return Pos(0, 0, z_face - HINT_DEPTH) * (extrude(silhouette, amount=HINT_DEPTH + 0.01) + extrude(arrow, amount=HINT_DEPTH + 0.01))
 
