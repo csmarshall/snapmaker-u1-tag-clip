@@ -121,7 +121,7 @@ ARM_Y_FAR = -(S_BEND[0][4] + ARM_SHIFT_Y)  # after the turn: arm edge nearest th
 ARM_WALL_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT  # tops of walls B and C, and of wall A's straight part
 ARM_TOP_Z = ARM_WALL_TOP_Z + WALL_A_EXTRA_HEIGHT + ARM_LIP_HEIGHT  # the hook finger's top
 ARM_Y_HOOK_TIP = -(WALL_A_Y[1] + ARM_SHIFT_Y + max(row[2] for row in WALL_A_LIP))  # how far the hook's curled tip reaches toward the flat end, after the turn
-LABEL_Y = (COIN_RADIUS + (COIN_RADIUS - COIN_FLAT_END_Y) / 2) / 2  # centre of the chip's top half: halfway between its top and its middle
+LABEL_Y = (-ARM_BASE_Y + COIN_RADIUS) / 2  # centre of the face you see when the chip is docked: between the hook finger's top and the chip's top
 KEY_NOTCH_WIDTH = KEY_POST_WIDTH + 2 * FIT_CLEARANCE
 KEY_NOTCH_HEIGHT = KEY_POST_HEIGHT + 2 * FIT_CLEARANCE  # one clearance for the seat gap under the chip, one above the post
 
@@ -191,13 +191,14 @@ def _label_text(label: str, size: float):
 
 
 def _label_font_size(label: str) -> float:
-    """Largest font size up to LABEL_FONT_SIZE whose bounding box corners stay LABEL_EDGE_MARGIN inside the round end, so long names shrink instead of running off the chip."""
+    """Largest font size up to LABEL_FONT_SIZE whose bounding box stays LABEL_EDGE_MARGIN inside the round end and clear of the dock's lips, so long names shrink instead of being hidden."""
     limit = COIN_RADIUS - LABEL_EDGE_MARGIN
+    x_limit = COIN_RADIUS - DOCK_LIP_OVERLAP - LABEL_EDGE_MARGIN
     size = LABEL_FONT_SIZE
     while size > 2.0:
         bb = _label_text(label, size).bounding_box()
         corner = math.hypot(max(abs(bb.min.X), abs(bb.max.X)), max(abs(bb.min.Y), abs(bb.max.Y)))
-        if corner <= limit:
+        if corner <= limit and max(abs(bb.min.X), abs(bb.max.X)) <= x_limit:
             return size
         size -= 0.1
     return size
