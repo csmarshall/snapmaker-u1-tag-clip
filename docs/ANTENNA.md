@@ -25,7 +25,7 @@ What this does not tell us:
 
 ## What follows for the design
 
-- **Clip mount (issue #2):** built. The back plate carries on up to the socket, remmulegguh's traced snap fingers go into the socket, and the sticker centre sits `SOCKET_ABOVE_STICKER` = 38mm below the socket axis. His 3mm plate is not used: it stands proud of the panel and would block the chip's path, while our 1.2mm plate lies flat on the panel.
+- **Hanger (issue #2):** built as a separate piece. It snaps into the socket with remmulegguh's traced fingers and holds the dock on two side arms so the sticker centre sits `SOCKET_ABOVE_STICKER` = 38mm below the socket axis. Its plate and yoke lie flat on the panel at the back plate's 1.2mm, so the chip's path above the dock stays clear; his 3mm plate would stand proud and block it.
 - **Testing a read:** `FILAMENT_DT_UPDATE CHANNEL=<0-3>` in the Fluidd console re-reads a channel (channel 1 is 0), per Snapmaker's RFID troubleshooting page.
 - **VHB mount (issue #5):** the same spot. Below the socket, the sticker centre is about 35 to 40mm from the socket's centre.
 - **Check before trusting it:** the coin-finder puck and the standoff strip (issue #3) settle the band and the plastic thickness.

@@ -1,4 +1,4 @@
-"""Draw the clip dock on a print bed in each candidate orientation and mark the faces that would need support (facing down more steeply than 45 degrees, not on the bed).
+"""Draw the hanger on a print bed in each candidate orientation and mark the faces that would need support (facing down more steeply than 45 degrees, not on the bed).
 
 Writes a PNG for the review page. Run after the build: uv run --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/print_orientation.py <out.png>
 """
@@ -19,7 +19,7 @@ LIGHT = np.array([-0.3, 0.6, 0.75]) / np.linalg.norm([-0.3, 0.6, 0.75])
 
 
 # Chip frame (X width, Y up the dock, Z out from the panel) to printer frame (Z up from the bed), as proper rotations (rows are the printer axes).
-UPRIGHT = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)  # flat end on the bed
+UPRIGHT = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)  # arms' feet on the bed
 UPSIDE_DOWN = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]], float)  # the plate's flat top and the fingers' top face on the bed
 
 
@@ -60,20 +60,20 @@ def draw(ax, mesh: trimesh.Trimesh, view: np.ndarray, title: str) -> float:
 
 def main() -> int:
     """Render both orientations side by side to the path given on the command line."""
-    dock = trimesh.util.concatenate([trimesh.load(OUT / "dock_clip_slot3.stl"), trimesh.load(OUT / "dock_clip_slot3_accent.stl")])
+    dock = trimesh.load(OUT / "hanger.stl")
     az, el = np.radians(40), np.radians(-25)  # from the front-right and a little below, so downward-facing faces show
     cam = np.array([np.cos(el) * np.sin(az), -np.cos(el) * np.cos(az), np.sin(el)])  # unit vector toward the viewer
     right = np.cross([0, 0, 1], cam); right /= np.linalg.norm(right)
     upv = np.cross(cam, right)
     below = np.array([right, upv, cam])
     fig, axs = plt.subplots(2, 2, figsize=(14, 12))
-    for col, (rotation, name) in enumerate(((UPRIGHT, "Upright: flat end on the bed"), (UPSIDE_DOWN, "Upside down: plate's flat top and fingers on the bed"))):
+    for col, (rotation, name) in enumerate(((UPRIGHT, "Upright: arms' feet on the bed"), (UPSIDE_DOWN, "Upside down: plate's flat top and fingers on the bed (use this)"))):
         m = orient(dock, rotation)
         out_of_panel = rotation @ [0, 0, 1]  # the chip's front direction in the printer frame, drawn to the right
         side = np.array([out_of_panel, [0, 0, 1], np.cross(out_of_panel, [0, 0, 1])], float)
         area = draw(axs[0, col], m, side, f"{name}\nside profile: the panel is on the left, the fingers poke left into it")
         draw(axs[1, col], m, below, f"seen from below; needs support: about {area:.0f} mm\u00b2")
-    fig.suptitle("Clip dock on the print bed. Red: faces overhanging more than 45\u00b0 (need support). Blue: on the bed. Black line: the bed.", fontsize=12)
+    fig.suptitle("Hanger on the print bed. Red: faces overhanging more than 45\u00b0 (need support). Blue: on the bed. Black line: the bed.", fontsize=12)
     fig.tight_layout()
     fig.savefig(sys.argv[1], dpi=80)
     return 0

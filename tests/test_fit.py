@@ -52,18 +52,13 @@ def _turned(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
     return turned
 
 
-PREFIXES = {"vhb": "dock", "clip": "dock_clip"}
-
-
-@pytest.mark.parametrize("mount", M.DOCK_MOUNTS)
 @pytest.mark.parametrize("slot", M.U1_SLOTS)
-def test_dock_parts_are_watertight_and_disjoint(slot, mount):
-    prefix = PREFIXES[mount]
-    dock = _mesh(f"{prefix}_slot{slot}.stl")
-    parts = [_mesh(f"{prefix}_slot{slot}_{name}.stl") for name in ("back_plate", "channels", "lower_pocket")]
+def test_dock_parts_are_watertight_and_disjoint(slot):
+    dock = _mesh(f"dock_slot{slot}.stl")
+    parts = [_mesh(f"dock_slot{slot}_{name}.stl") for name in ("back_plate", "channels", "lower_pocket")]
     assert dock.is_watertight and all(p.is_watertight for p in parts)
     assert sum(p.volume for p in parts) == pytest.approx(dock.volume, abs=0.5)
-    accent = _mesh(f"{prefix}_slot{slot}_accent.stl")
+    accent = _mesh(f"dock_slot{slot}_accent.stl")
     assert accent.is_watertight
     assert _overlap(accent, dock) == pytest.approx(0, abs=0.01)  # the inlay's curved faces coincide with the recess; meshing leaves ~0.002mm3 of noise
 
@@ -75,11 +70,13 @@ def test_chip_seats_without_touching(material):
     assert _overlap(chip, dock) == pytest.approx(0, abs=1e-3)
 
 
-@pytest.mark.parametrize("mount", M.DOCK_MOUNTS)
-def test_chip_slides_in_from_above(mount):
-    chip, dock = _mesh("chip_PETG.stl"), _mesh(f"{PREFIXES[mount]}_slot3.stl")
+@pytest.mark.parametrize("with_hanger", [False, True])
+def test_chip_slides_in_from_above(with_hanger):
+    chip, dock = _mesh("chip_PETG.stl"), _mesh("dock_slot3.stl")
+    if with_hanger:
+        dock = trimesh.util.concatenate([dock, _mesh("hanger.stl")])
     worst = 0.0
-    for dy in np.arange(45.0, -0.01, -0.5):  # from well above, past the clip mount's plate
+    for dy in np.arange(45.0, -0.01, -0.5):  # from well above, past the hanger's plate
         moved = chip.copy()
         moved.apply_translation([0, dy, 0])
         worst = max(worst, _overlap(moved, dock))
@@ -213,23 +210,46 @@ def test_clip_matches_extrutim():
     assert worst <= 0.1
 
 
-def test_clip_mount_stays_behind_the_chip_path_and_reaches_into_the_socket():
-    """Above the dock the clip's plate is no thicker than the back plate, so it never reaches the chip's path; its fingers go about 30mm into the socket."""
-    dock = _mesh("dock_clip_slot3.stl")
-    rim = _mesh("dock_slot3.stl").bounds[1][1]
-    above = dock.vertices[dock.vertices[:, 1] > rim + 0.05]
-    assert above[:, 2].max() <= -M.DOCK_BACK_GAP + 1e-3
-    z_back = -M.DOCK_BACK_GAP - M.DOCK_FLOOR
-    assert z_back - dock.bounds[0][2] == pytest.approx(max(d for d, _ in M.FINGER_OUTLINE), abs=0.05)
-    socket_y = M.SOCKET_ABOVE_STICKER
-    fingers = dock.vertices[dock.vertices[:, 2] < z_back - 0.5]
-    assert fingers[:, 1].min() == pytest.approx(socket_y - M.FINGER_HEIGHT / 2, abs=0.05)
-    assert fingers[:, 1].max() == pytest.approx(socket_y + M.FINGER_HEIGHT / 2, abs=0.05)
-    assert abs(fingers[:, 0].mean()) < 0.1  # centred on the socket axis
+def test_hanger_holds_the_dock_without_touching_it():
+    hanger, dock = _mesh("hanger.stl"), _mesh("dock_slot3.stl")
+    assert hanger.is_watertight
+    assert _overlap(hanger, dock) == pytest.approx(0, abs=0.01)
 
 
-def test_clip_fingers_match_remmulegguh():
-    """Independent check: the traced fingers, mapped into the dock frame, coincide with his holder's fingers within 0.1mm."""
+def test_dock_pushes_into_the_hanger_from_the_front_past_the_ridges_only():
+    """Pushed straight in toward the panel, the dock only ever meets the snap ridges, which the arms flex outward to pass; it never meets the plate, yoke or feet."""
+    hanger, dock = _mesh("hanger.stl"), _mesh("dock_slot3.stl")
+    outer = M.COIN_RADIUS + M.DOCK_SLOT_CLEARANCE + M.DOCK_RAIL_WIDTH
+    touched = False
+    for dz in np.arange(12.0, 0.01, -0.5):
+        moved = dock.copy()
+        moved.apply_translation([0, 0, dz])
+        inter = trimesh.boolean.intersection([moved, hanger], engine="manifold")
+        if len(inter.vertices) and inter.volume > 1e-3:
+            touched = True
+            assert np.abs(inter.vertices[:, 0]).min() >= outer - M.HANGER_RIDGE_REACH - 0.05
+    assert touched  # the ridges do catch it: that is the snap
+
+
+def test_hanger_and_cover_stand_on_one_flat_face_for_printing():
+    """Upside down, the plate's flat top and the fingers' top face are the lowest points, level with each other."""
+    top = M.SOCKET_ABOVE_STICKER + M.SOCKET_PLATE_FLAT
+    for name in ("hanger.stl", "cover_slot3.stl"):
+        m = _mesh(name)
+        assert m.bounds[1][1] == pytest.approx(top, abs=0.02)
+        finger_tops = m.vertices[(m.vertices[:, 2] < -M.DOCK_BACK_GAP - M.DOCK_FLOOR - 0.5)][:, 1]
+        assert finger_tops.max() == pytest.approx(top, abs=0.02)
+
+
+def test_cover_parts_are_watertight_and_disjoint():
+    cover, accent = _mesh("cover_slot3.stl"), _mesh("cover_slot3_accent.stl")
+    assert cover.is_watertight and accent.is_watertight
+    assert _overlap(cover, accent) == pytest.approx(0, abs=0.01)
+
+
+@pytest.mark.parametrize("piece", ["hanger.stl", "cover_slot3.stl"])
+def test_socket_fingers_match_remmulegguh(piece):
+    """Independent check: the traced fingers, mapped into the dock frame, coincide with his holder's fingers within 2% by volume."""
     src = ROOT / "thingiverse" / "printables1625982" / "holderrfid_short.stl"
     if not src.exists():
         pytest.skip("remmulegguh's holderrfid_short.stl is not present (it is not redistributed)")
@@ -243,7 +263,7 @@ def test_clip_fingers_match_remmulegguh():
     his.vertices = his.vertices @ R.T + [0, M.SOCKET_ABOVE_STICKER, z_back + plate_back]
     probe = trimesh.creation.box(extents=[40, 20, 29])
     probe.apply_translation([0, M.SOCKET_ABOVE_STICKER, z_back - 15.5])  # the fingers' region, 1-30mm deep, clear of both plates
-    ours = trimesh.boolean.intersection([_mesh("dock_clip_slot3.stl"), probe], engine="manifold")
+    ours = trimesh.boolean.intersection([_mesh(piece), probe], engine="manifold")
     theirs = trimesh.boolean.intersection([his, probe], engine="manifold")
     shared = trimesh.boolean.intersection([ours, theirs], engine="manifold")
     assert theirs.volume > 100

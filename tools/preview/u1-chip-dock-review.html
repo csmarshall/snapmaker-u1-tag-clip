@@ -15,6 +15,7 @@
   --plate: #9aa3a0;
   --chip: #3d64b8;
   --dockbody: #6f7f93;
+  --hanger: #c9783e;
   --label: #e5b62a;
   --sev-high: #b3261e;
   --sev-med: #a4660b;
@@ -92,9 +93,13 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <div class="stage" id="stage"><div class="status" id="status">Loading meshes…</div></div>
     <div class="controls">
       <label for="mat">Chip <select id="mat"><option value="PETG" selected>PETG</option></select></label>
-      <label for="mount">Mount <select id="mount"><option value="dock_clip" selected>socket clip</option><option value="dock">flat back (VHB)</option></select></label>
+      <label for="mount">Show <select id="mount">
+        <optgroup label="Assembled"><option value="asm_hanger" selected>chip in dock, in hanger</option><option value="asm_vhb">chip in dock (taped)</option></optgroup>
+        <optgroup label="Each piece on its own"><option value="chip">chip</option><option value="dock">dock</option><option value="hanger">hanger</option><option value="cover">blank cover</option></optgroup>
+      </select></label>
       <label for="slot">Dock slot <select id="slot"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
       <button id="btnLift" aria-pressed="false">Lift chip out</button>
+      <button id="btnPull" aria-pressed="false">Pull dock out of hanger</button>
       <button id="btnChip" aria-pressed="true">Chip</button>
       <button id="btnDock" aria-pressed="true">Dock</button>
       <button id="btnHatch" aria-pressed="true">Mark channels</button>
@@ -118,6 +123,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <div class="legend">
       <span><i class="sw" style="background:var(--dockbody)"></i>dock body (colour 1)</span>
       <span><i class="sw" style="background:var(--chip)"></i>chip body (colour 1)</span>
+      <span><i class="sw" style="background:var(--hanger)"></i>hanger and blank cover</span>
       <span><i class="sw" style="background:var(--label)"></i>colour 2: chip name, dock digit and hint</span>
       <span><i class="sw" style="background:repeating-linear-gradient(45deg, var(--channel) 0 2px, transparent 2px 6px)"></i>channels, marked only here (not printed)</span>
     </div>
@@ -125,12 +131,20 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   </section>
 
   <section class="review">
-    <p class="summary">New: the socket-clip mount. Its back plate carries on up to the spool-holder socket, and remmulegguh's snap fingers (traced) go into the socket behind it, so the sticker sits 38mm below the socket axis, inside the antenna loop that the official coil-replacement guide shows ringing each socket. The flat-back VHB version is the other choice in Mount. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
+    <p class="summary">New: the dock is one print whichever way it mounts. Tape it to the panel over the antenna, or push it into the hanger, which snaps into the spool-holder socket with remmulegguh's fingers and holds the dock 38mm below the socket on two flexing side arms. A blank cover closes sockets you aren't using. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
 
-    <h2>Printing the clip dock</h2>
+    <h2>How the pieces go together</h2>
+    <dl class="print">
+      <dt>Chip</dt><dd>Clips onto the spool's filament end on the shelf; drops into the dock from above when you load that spool.</dd>
+      <dt>Dock</dt><dd>One print for both mounts. Its flat back goes against the panel over the antenna.</dd>
+      <dt>Hanger</dt><dd>Snaps into the spool-holder socket. Two arms run down either side of the dock, and their snap ridges hook over the dock's front side edges. Feet sit under its bottom corners. Push the dock straight in toward the panel and the arms flex out and click over it ("Pull dock out of hanger" shows the motion). It touches only the dock's sides and front edges, never its back, so the sticker is as close to the antenna as when taped.</dd>
+      <dt>Blank cover</dt><dd>The same snap fingers with a plain round plate and the slot number, for a socket you aren't using.</dd>
+    </dl>
+
+    <h2>Printing the hanger</h2>
     <figure class="orient">
-      <img src="print_orientation.png" alt="The clip dock drawn on a print bed upright and upside down, with faces that need support in red" width="1120" height="960">
-      <figcaption>Red faces overhang by more than 45° and need support; blue faces sit on the bed. Upright, almost all of the red is the underside of the two snap fingers, which stick 30mm out of the back about 60mm above the bed. Upside down the fingers sit on the bed, but more small overhangs appear around the dock.</figcaption>
+      <img src="print_orientation.png" alt="The hanger drawn on a print bed upright and upside down, with faces that need support in red" width="1120" height="960">
+      <figcaption>Red faces overhang by more than 45° and need support; blue faces sit on the bed. Upside down, the hanger stands on its plate's flat top and the fingers' top face, which are level, so it prints with almost no support. The dock is a separate print, the same one you would tape to the panel, and prints standing on its bottom stop.</figcaption>
     </figure>
 
     <h2>How to print it</h2>
@@ -237,9 +251,9 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     transparent: true, depthWrite: false, side: THREE.DoubleSide, clipping: true, clippingPlanes: [clip],
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
   });
-  const chipGroup = new THREE.Group(), dockGroup = new THREE.Group();
+  const chipGroup = new THREE.Group(), dockGroup = new THREE.Group(), hangerGroup = new THREE.Group();
   let hatchOn = true;
-  scene.add(chipGroup, dockGroup);
+  scene.add(chipGroup, dockGroup, hangerGroup);
 
   async function setGroup(group, parts) {
     const meshes = await Promise.all(parts.map(([path, token, hatch]) => load(path).then((g) => {
@@ -253,13 +267,19 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   }
   async function refresh() {
     status.textContent = "Loading meshes…";
-    const m = document.getElementById("mat").value, s = document.getElementById("slot").value, d = document.getElementById("mount").value;
+    const m = document.getElementById("mat").value, s = document.getElementById("slot").value, show = document.getElementById("mount").value;
     try {
       await Promise.all([
         setGroup(chipGroup, [["mesh/chip_" + m + ".txt", "--chip"], ["mesh/chip_" + m + "_label.txt", "--label"]]),
-        setGroup(dockGroup, [["mesh/" + d + "_slot" + s + "_back_plate.txt", "--dockbody"], ["mesh/" + d + "_slot" + s + "_lower_pocket.txt", "--dockbody"], ["mesh/" + d + "_slot" + s + "_channels.txt", "--dockbody", true], ["mesh/" + d + "_slot" + s + "_accent.txt", "--label"]]),
+        setGroup(dockGroup, [["mesh/dock_slot" + s + "_back_plate.txt", "--dockbody"], ["mesh/dock_slot" + s + "_lower_pocket.txt", "--dockbody"], ["mesh/dock_slot" + s + "_channels.txt", "--dockbody", true], ["mesh/dock_slot" + s + "_accent.txt", "--label"]]),
+        setGroup(hangerGroup, show === "cover" ? [["mesh/cover_slot" + s + ".txt", "--hanger"], ["mesh/cover_slot" + s + "_accent.txt", "--label"]] : [["mesh/hanger.txt", "--hanger"]]),
       ]);
-      status.textContent = "Chip " + document.getElementById("mat").selectedOptions[0].text + " in slot " + s + " dock, " + document.getElementById("mount").selectedOptions[0].text;
+      // What each choice shows: a single piece, or the pieces put together.
+      chipGroup.visible = ["asm_hanger", "asm_vhb", "chip"].includes(show) && chipOn;
+      dockGroup.visible = ["asm_hanger", "asm_vhb", "dock"].includes(show) && dockOn;
+      hangerGroup.visible = ["asm_hanger", "hanger", "cover"].includes(show);
+      document.getElementById("btnPull").disabled = show !== "asm_hanger";
+      status.textContent = document.getElementById("mount").selectedOptions[0].text + " (slot " + s + ", " + document.getElementById("mat").selectedOptions[0].text + " chip)";
       updateCut();
     } catch (e) { status.textContent = "Could not load a mesh file."; }
   }
@@ -267,13 +287,16 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   function setView(name) { const v = views[name]; camera.position.set(v[0], v[1], v[2]); controls.target.set(0, 0, 3); controls.update(); }
   document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
   const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener("click", () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(on)); fn(on); }); };
+  let chipOn = true, dockOn = true;
   toggle("btnLift", (on) => { chipGroup.position.y = on ? 32 : 0; updateCut(); });
+  // The dock pushes into the hanger straight toward the panel (along Z), so pulling it out moves it (and its chip) toward you.
+  toggle("btnPull", (on) => { dockGroup.position.z = on ? 25 : 0; chipGroup.position.z = on ? 25 : 0; updateCut(); });
   // Cut-away slider: snaps to 0.2 mm, the usual layer height, across the visible parts' extent on the chosen axis.
   const cutAxis = document.getElementById("cutAxis"), cut = document.getElementById("cut"), cutVal = document.getElementById("cutVal");
   const axisName = { x: "x", y: "height", z: "depth" };
   function extent(axis) {
     const box = new THREE.Box3();
-    [chipGroup, dockGroup].forEach((g) => { if (g.visible) box.expandByObject(g); });
+    [chipGroup, dockGroup, hangerGroup].forEach((g) => { if (g.visible) box.expandByObject(g); });
     return box.isEmpty() ? [0, 1] : [box.min[axis], box.max[axis]];
   }
   function updateCut() {
@@ -288,8 +311,8 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   }
   cutAxis.addEventListener("change", () => { cut.value = 1000; updateCut(); });
   cut.addEventListener("input", updateCut);
-  toggle("btnChip", (on) => { chipGroup.visible = on; updateCut(); });
-  toggle("btnDock", (on) => { dockGroup.visible = on; updateCut(); });
+  toggle("btnChip", (on) => { chipOn = on; refresh(); });
+  toggle("btnDock", (on) => { dockOn = on; refresh(); });
   toggle("btnHatch", (on) => { hatchOn = on; dockGroup.children.forEach((m) => { if (m.userData.hatch) m.visible = on; }); });
   document.getElementById("mat").addEventListener("change", refresh);
   document.getElementById("slot").addEventListener("change", refresh);
