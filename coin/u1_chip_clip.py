@@ -110,8 +110,8 @@ def _lead_in_wall(z0: float):
     return Pos(0, 0, z0) * solid
 
 
-def coin_parts(label: str, number: int):
-    """Return (body, engraving) for one filament label and copy number: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours."""
+def coin_parts(label: str, number: int | None):
+    """Return (body, engraving) for one filament label and copy number: the body has the label cut out (number=None leaves the copy number off) and the engraving fills the cut exactly, so a slicer can print them in two colours."""
     # Round end and flat end: the circle's own edge would stick out past the rectangle, so cut it at COIN_FLAT_END_Y.
     below_top = Pos(0, COIN_FLAT_END_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_FLAT_END_Y + 2 * COIN_RADIUS)
     outline = (Circle(COIN_RADIUS) + Pos(0, COIN_FLAT_END_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_FLAT_END_Y)) & below_top
@@ -125,12 +125,13 @@ def coin_parts(label: str, number: int):
     body += Rot(Z=180) * arms
 
     engrave = Pos(0, 6.0, COIN_THICKNESS) * extrude(Text(label, font_size=LABEL_FONT_SIZE), amount=-ENGRAVE_DEPTH)
-    engrave += Pos(0, 12.0, COIN_THICKNESS) * extrude(Text(str(number), font_size=NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
+    if number is not None:
+        engrave += Pos(0, 12.0, COIN_THICKNESS) * extrude(Text(str(number), font_size=NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
     return body - engrave, engrave
 
 
-def dock(slot: int):
-    """Return the placeholder dock for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), slot digit on the left lip."""
+def dock(slot: int | None):
+    """Return the placeholder dock for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), slot digit on the left lip (slot=None leaves it off)."""
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
     z_back = -DOCK_BACK_GAP - DOCK_FLOOR
@@ -152,6 +153,8 @@ def dock(slot: int):
         lip_lo, lip_hi = sorted((lip_in, sign * outer_half))
         parts += box(lip_lo, lip_hi, y_bottom, y_top, z_slot_front, z_front)  # lip over the coin edge
     parts += box(-outer_half, outer_half, y_bottom, y_bottom + DOCK_BOTTOM_THICKNESS, z_back, z_front)  # bottom stop
+    if slot is None:
+        return parts
     lip_centre_x = -(COIN_RADIUS - DOCK_LIP_OVERLAP + outer_half) / 2
     digit = Pos(lip_centre_x, (y_bottom + y_top) / 2, z_front) * extrude(Text(str(slot), font_size=DOCK_NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
     return parts - digit
@@ -170,3 +173,11 @@ if __name__ == "__main__":
         export_stl(engraving, str(out / f"{stem}_label.stl"))
     for slot in U1_SLOTS:
         export_stl(dock(slot), str(out / f"dock_slot{slot}.stl"))
+    plain = out / "nonumber"
+    plain.mkdir(exist_ok=True)
+    for material in ("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon"):
+        body, engraving = coin_parts(material, None)
+        stem = f"coin_{material.replace('+', 'plus')}"
+        export_stl(body, str(plain / f"{stem}.stl"))
+        export_stl(engraving, str(plain / f"{stem}_label.stl"))
+    export_stl(dock(None), str(plain / "dock.stl"))
