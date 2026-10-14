@@ -32,6 +32,7 @@ from build123d import (
     export_stl,
     extrude,
     loft,
+    scale,
 )
 
 # ---- fit -------------------------------------------------------------------------------------
@@ -118,9 +119,11 @@ DOCK_FUNNEL_HEIGHT = math.sqrt(COIN_END_CORNER_RADIUS ** 2 - (COIN_END_CORNER_RA
 DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the mouth opens toward the back at the rim, on the same curve; it starts above the sticker, which stays covered
 DOCK_FUNNEL_LIP_DEPTH = 0.8  # how far the lips' undersides open toward the front at the rim, on the same curve; 0.4mm of lip remains there
 FUNNEL_STEPS = 16  # slices along the arc
-HINT_WIDTH = 12.0  # orientation hint engraved in the back plate above the lower pocket: the chip's bottom with its key cut-out, and a down arrow
+HINT_WIDTH = 12.0  # widest the hint's chip may be; it shrinks if needed to fit under the back bevel
 HINT_DEPTH = 0.4  # leaves 0.8mm of back plate under the hint
 HINT_GAP = 1.0  # space between the lower pocket's top edge and the hint
+HINT_SQUAT = 0.75  # the hint's chip is this much shorter than a true-scale copy
+HINT_TOP_MARGIN = 1.0  # the hint's top stays this far below where the back plate's bevel starts
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
 # The clip is built as measured, wall A (the tallest, with the curled-over top and nub) at +ARM_BASE_Y, then turned 180 degrees about Z as one unit so wall A faces the
@@ -242,11 +245,8 @@ def file_stem(label: str) -> str:
     return label.replace("+", "plus").replace(" ", "_")
 
 
-def chip_parts(label: str):
-    """Return (body, engraving) for one filament label: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours.
-
-    There is no copy number: chips travel with spools and end up in any position. The sticker pocket is sealed inside the body (BACK_SKIN under it), filled during a print pause.
-    """
+def _chip_outline():
+    """The chip's outline as a flat face, round end up: the round end, the flat end with the key notch, and all four flat-end corners rounded (the ghost feet)."""
     # Round end and flat end: the circle's own edge would stick out past the rectangle, so cut it at COIN_FLAT_END_Y.
     below_top = Pos(0, COIN_FLAT_END_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_FLAT_END_Y + 2 * COIN_RADIUS)
     outline = (Circle(COIN_RADIUS) + Pos(0, COIN_FLAT_END_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_FLAT_END_Y)) & below_top
@@ -255,7 +255,15 @@ def chip_parts(label: str):
     key_notch = Pos(0, COIN_FLAT_END_Y - KEY_NOTCH_HEIGHT / 2 + 0.5) * Rectangle(KEY_NOTCH_WIDTH, KEY_NOTCH_HEIGHT + 1)
     face = (outline - key_notch).faces()[0]
     flat_corners = [v for v in face.vertices() if abs(v.Y - COIN_FLAT_END_Y) < 1e-6]
-    plate = Rot(Z=180) * extrude(face.fillet_2d(COIN_END_CORNER_RADIUS, flat_corners), amount=COIN_THICKNESS)
+    return Rot(Z=180) * face.fillet_2d(COIN_END_CORNER_RADIUS, flat_corners)
+
+
+def chip_parts(label: str):
+    """Return (body, engraving) for one filament label: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours.
+
+    There is no copy number: chips travel with spools and end up in any position. The sticker pocket is sealed inside the body (BACK_SKIN under it), filled during a print pause.
+    """
+    plate = extrude(_chip_outline(), amount=COIN_THICKNESS)
     sticker_pocket = Pos(0, 0, BACK_SKIN) * Cylinder(POCKET_DIAMETER / 2, POCKET_DEPTH, align=(Align.CENTER, Align.CENTER, Align.MIN))
     body = plate - sticker_pocket
 
@@ -278,21 +286,22 @@ def _funnel_section(y: float, flare: float, back: float, lip: float, inner_half:
     return plane * Polygon((-w, zb), (w, zb), (w, zs), (l, zs), (l, z_open), (-l, z_open), (-l, zs), (-w, zs), align=None)
 
 
-def _orientation_hint(y_base: float):
-    """The cut for the hint engraved into the back plate's front face, read top to bottom: a scaled silhouette of the chip's flat end (rounded corners, rounded key notch left uncut), then a down arrow under it."""
-    scale = HINT_WIDTH / (2 * COIN_RADIUS)
-    height, arrow_len, gap = 4.0, 6.0, 1.0
-    y_chip = y_base + arrow_len + gap  # silhouette's feet
-    notch_w, notch_h = KEY_NOTCH_WIDTH * scale, KEY_NOTCH_HEIGHT * scale
-    body = Pos(0, y_chip + height / 2) * Rectangle(HINT_WIDTH, height)
-    notch = Pos(0, y_chip + notch_h / 2 - 0.5) * Rectangle(notch_w, notch_h + 1)
-    face = (body - notch).faces()[0]
-    feet = [v for v in face.vertices() if abs(v.Y - y_chip) < 1e-6]
-    silhouette = face.fillet_2d(COIN_END_CORNER_RADIUS * scale, feet)
+def _orientation_hint(y_base: float, y_bevel: float):
+    """The cut for the hint engraved into the back plate's front face, read top to bottom: a small, squat copy of the whole chip outline, then a down arrow under it.
+
+    It fits between y_base (just above the lower pocket) and HINT_TOP_MARGIN below y_bevel, where the back plate starts to bevel; the chip shrinks to fit if HINT_WIDTH would not.
+    """
+    arrow_len, gap = 6.0, 1.0
+    chip_height = COIN_RADIUS + COIN_FLAT_END_Y
+    room = (y_bevel - HINT_TOP_MARGIN) - y_base - arrow_len - gap
+    factor = min(HINT_WIDTH / (2 * COIN_RADIUS), room / (chip_height * HINT_SQUAT))
+    chip = scale(_chip_outline(), by=(factor, factor * HINT_SQUAT, 1))
+    bb = chip.bounding_box()
+    chip = Pos(-(bb.min.X + bb.max.X) / 2, y_base + arrow_len + gap - bb.min.Y) * chip
     tip = y_base  # the arrow points down, toward the lower pocket
     arrow = Polygon(*_ccw([(0, tip), (1.6, tip + 2.0), (0.5, tip + 2.0), (0.5, tip + arrow_len), (-0.5, tip + arrow_len), (-0.5, tip + 2.0), (-1.6, tip + 2.0)]), align=None)
     z_face = -DOCK_BACK_GAP
-    return Pos(0, 0, z_face - HINT_DEPTH) * (extrude(silhouette, amount=HINT_DEPTH + 0.01) + extrude(arrow, amount=HINT_DEPTH + 0.01))
+    return Pos(0, 0, z_face - HINT_DEPTH) * (extrude(chip, amount=HINT_DEPTH + 0.01) + extrude(arrow, amount=HINT_DEPTH + 0.01))
 
 
 def dock_parts(slot: int | None) -> dict[str, object]:
@@ -345,7 +354,7 @@ def dock_parts(slot: int | None) -> dict[str, object]:
     above = _funnel_section(y_rim + 1, DOCK_FUNNEL_FLARE, DOCK_FUNNEL_BACK_DEPTH, DOCK_FUNNEL_LIP_DEPTH, inner_half, lip_in, z_slot_front, z_open)
     funnel = loft(sections, ruled=True) + loft([sections[-1], above], ruled=True)
     back_plate -= funnel
-    back_plate -= _orientation_hint(cover_top + HINT_GAP)
+    back_plate -= _orientation_hint(cover_top + HINT_GAP, y_top)
     channels -= funnel
 
     lower_pocket = _box(-inner_half, inner_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate

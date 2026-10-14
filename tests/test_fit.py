@@ -113,11 +113,15 @@ def test_orientation_hint_is_engraved_and_shallow():
     face = -M.DOCK_BACK_GAP
     y_chip = y_base + 7.0  # silhouette above, arrow below
     in_arrow = [0, y_base + 4.0, face - M.HINT_DEPTH / 2]
-    in_silhouette = [-M.HINT_WIDTH / 4, y_chip + 2.0, face - M.HINT_DEPTH / 2]
+    in_silhouette = [0, y_chip + 6.0, face - M.HINT_DEPTH / 2]  # the squat chip's middle
     in_notch = [0, y_chip + 0.3, face - M.HINT_DEPTH / 2]
     assert not dock.contains([in_arrow, in_silhouette]).any()
     assert dock.contains([in_notch])[0]
     assert M.DOCK_FLOOR - M.HINT_DEPTH >= 0.6
+    # Nothing is engraved within HINT_TOP_MARGIN of where the back plate starts to bevel (y_top), across the hint's width.
+    y_bevel = M.COIN_RADIUS - M.DOCK_COIN_PROTRUSION
+    probes = [[x, y, face - M.HINT_DEPTH / 2] for x in np.linspace(-M.HINT_WIDTH / 2, M.HINT_WIDTH / 2, 25) for y in np.linspace(y_bevel - M.HINT_TOP_MARGIN + 0.05, y_bevel - 0.05, 5)]
+    assert dock.contains(probes).all()
 
 
 def test_back_plate_covers_the_whole_sticker():
