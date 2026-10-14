@@ -211,12 +211,14 @@ def chip_parts(label: str):
     # Round end and flat end: the circle's own edge would stick out past the rectangle, so cut it at COIN_FLAT_END_Y.
     below_top = Pos(0, COIN_FLAT_END_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_FLAT_END_Y + 2 * COIN_RADIUS)
     outline = (Circle(COIN_RADIUS) + Pos(0, COIN_FLAT_END_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_FLAT_END_Y)) & below_top
-    face = outline.faces()[0]
+    # The key notch is cut before the turn, at +Y, and all four corners along the flat end (two outer, two at the notch) get the same rounding,
+    # so the flat end reads like a little ghost's feet.
+    key_notch = Pos(0, COIN_FLAT_END_Y - KEY_NOTCH_HEIGHT / 2 + 0.5) * Rectangle(KEY_NOTCH_WIDTH, KEY_NOTCH_HEIGHT + 1)
+    face = (outline - key_notch).faces()[0]
     flat_corners = [v for v in face.vertices() if abs(v.Y - COIN_FLAT_END_Y) < 1e-6]
     plate = Rot(Z=180) * extrude(face.fillet_2d(COIN_END_CORNER_RADIUS, flat_corners), amount=COIN_THICKNESS)
     sticker_pocket = Pos(0, 0, BACK_SKIN) * Cylinder(POCKET_DIAMETER / 2, POCKET_DEPTH, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    key_notch = _box(-KEY_NOTCH_WIDTH / 2, KEY_NOTCH_WIDTH / 2, -COIN_FLAT_END_Y - 1, -COIN_FLAT_END_Y + KEY_NOTCH_HEIGHT, -1, COIN_THICKNESS + 1)
-    body = plate - sticker_pocket - key_notch
+    body = plate - sticker_pocket
 
     arms = _lead_in_wall(COIN_THICKNESS)
     arms += _s_bend_wall(1, 2, COIN_THICKNESS)
@@ -238,21 +240,19 @@ def _funnel_section(y: float, flare: float, back: float, lip: float, inner_half:
 
 
 def _orientation_hint(y_base: float):
-    """The cut for the hint engraved into the back plate's front face: a silhouette of the chip's flat end (rounded corners, key notch left uncut) with a down arrow above it."""
+    """The cut for the hint engraved into the back plate's front face: a scaled silhouette of the chip's flat end (rounded corners, rounded key notch left uncut) with a down arrow above it."""
     scale = HINT_WIDTH / (2 * COIN_RADIUS)
-    half, height, r = HINT_WIDTH / 2, 4.0, COIN_END_CORNER_RADIUS * scale
-    notch_half, notch_h = KEY_NOTCH_WIDTH * scale / 2, KEY_NOTCH_HEIGHT * scale
-    corner = [(-half + r - r * math.sin(a), y_base + r - r * math.cos(a)) for a in (math.pi / 2 * i / 8 for i in range(9))][::-1]
-    silhouette = [(-half, y_base + height)] + corner + [(-notch_half, y_base), (-notch_half, y_base + notch_h), (notch_half, y_base + notch_h), (notch_half, y_base)]
-    silhouette += [(-x, y) for x, y in reversed(corner)] + [(half, y_base + height)]
+    height = 4.0
+    notch_w, notch_h = KEY_NOTCH_WIDTH * scale, KEY_NOTCH_HEIGHT * scale
+    body = Pos(0, y_base + height / 2) * Rectangle(HINT_WIDTH, height)
+    notch = Pos(0, y_base + notch_h / 2 - 0.5) * Rectangle(notch_w, notch_h + 1)
+    face = (body - notch).faces()[0]
+    feet = [v for v in face.vertices() if abs(v.Y - y_base) < 1e-6]
+    silhouette = face.fillet_2d(COIN_END_CORNER_RADIUS * scale, feet)
     tip = y_base + height + 1.0
-    arrow = [(0, tip), (1.6, tip + 2.0), (0.5, tip + 2.0), (0.5, tip + 6.0), (-0.5, tip + 6.0), (-0.5, tip + 2.0), (-1.6, tip + 2.0)]
+    arrow = Polygon(*_ccw([(0, tip), (1.6, tip + 2.0), (0.5, tip + 2.0), (0.5, tip + 6.0), (-0.5, tip + 6.0), (-0.5, tip + 2.0), (-1.6, tip + 2.0)]), align=None)
     z_face = -DOCK_BACK_GAP
-    cut = None
-    for outline in (silhouette, arrow):
-        piece = Pos(0, 0, z_face - HINT_DEPTH) * extrude(Polygon(*_ccw(outline), align=None), amount=HINT_DEPTH + 0.01)
-        cut = piece if cut is None else cut + piece
-    return cut
+    return Pos(0, 0, z_face - HINT_DEPTH) * (extrude(silhouette, amount=HINT_DEPTH + 0.01) + extrude(arrow, amount=HINT_DEPTH + 0.01))
 
 
 def dock_parts(slot: int | None) -> dict[str, object]:
