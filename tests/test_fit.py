@@ -56,7 +56,9 @@ def test_dock_parts_are_watertight_and_disjoint(slot):
     parts = [_mesh(f"dock_slot{slot}_{name}.stl") for name in ("back_plate", "channels", "lower_pocket")]
     assert dock.is_watertight and all(p.is_watertight for p in parts)
     assert sum(p.volume for p in parts) == pytest.approx(dock.volume, abs=0.5)
-    assert _overlap(_mesh(f"dock_slot{slot}_digit.stl"), dock) == pytest.approx(0, abs=1e-3)
+    accent = _mesh(f"dock_slot{slot}_accent.stl")
+    assert accent.is_watertight
+    assert _overlap(accent, dock) == pytest.approx(0, abs=0.01)  # the inlay's curved faces coincide with the recess; meshing leaves ~0.002mm3 of noise
 
 
 @pytest.mark.parametrize("material", MATERIALS)
@@ -106,9 +108,9 @@ def test_top_rim_is_one_flat_plane():
     assert np.allclose(near_top[:, 1], top, atol=1e-4)
 
 
-def test_orientation_hint_is_engraved_and_shallow():
-    """The hint is cut into the back plate's face above the lower pocket, and the plate behind it stays at least 0.6mm thick."""
-    dock = _mesh("dock_slot3.stl")
+def test_orientation_hint_is_an_accent_inlay():
+    """The hint is cut into the back plate's face above the lower pocket and filled by the accent part; the plate behind it stays at least 0.6mm thick."""
+    dock, accent = _mesh("dock_slot3.stl"), _mesh("dock_slot3_accent.stl")
     y_base = M.ARM_Y_HOOK_TIP - M.COVER_HOOK_CLEARANCE + M.HINT_GAP
     face = -M.DOCK_BACK_GAP
     y_chip = y_base + 7.0  # silhouette above, arrow below
@@ -116,6 +118,7 @@ def test_orientation_hint_is_engraved_and_shallow():
     in_silhouette = [0, y_chip + 6.0, face - M.HINT_DEPTH / 2]  # the squat chip's middle
     in_notch = [0, y_chip + 0.3, face - M.HINT_DEPTH / 2]
     assert not dock.contains([in_arrow, in_silhouette]).any()
+    assert accent.contains([in_arrow, in_silhouette]).all()
     assert dock.contains([in_notch])[0]
     assert M.DOCK_FLOOR - M.HINT_DEPTH >= 0.6
     # Nothing is engraved within HINT_TOP_MARGIN of where the back plate starts to bevel (y_top), across the hint's width.
@@ -127,7 +130,8 @@ def test_orientation_hint_is_engraved_and_shallow():
 def test_back_plate_covers_the_whole_sticker():
     dock = _mesh("dock_slot3.stl")
     r = M.POCKET_DIAMETER / 2
-    probes = np.array([[x, y, -M.DOCK_BACK_GAP - M.DOCK_FLOOR / 2] for x in np.linspace(-r, r, 9) for y in np.linspace(-r, r, 9) if x * x + y * y <= r * r])
+    z_inside = -M.DOCK_BACK_GAP - M.DOCK_FLOOR + 0.2  # within the plate that stays behind the hint's inlay
+    probes = np.array([[x, y, z_inside] for x in np.linspace(-r, r, 9) for y in np.linspace(-r, r, 9) if x * x + y * y <= r * r])
     assert dock.contains(probes).all()
 
 

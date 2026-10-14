@@ -14,6 +14,7 @@
   --channel: #c8373a;
   --plate: #9aa3a0;
   --chip: #3d64b8;
+  --dockbody: #6f7f93;
   --label: #e5b62a;
   --sev-high: #b3261e;
   --sev-med: #a4660b;
@@ -26,13 +27,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #151918; --panel: #1d2221; --ink: #e6ebe8; --muted: #9aa6a1; --rule: #2e3533;
-    --accent: #6fb3d4; --viewer-bg: #222827; --sev-high: #f2867e; --sev-med: #e3a64a; --sev-low: #9fb0cc;
+    --accent: #6fb3d4; --viewer-bg: #222827; --sev-high: #f2867e; --sev-med: #e3a64a; --sev-low: #9fb0cc; --dockbody: #7d8ca0;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #151918; --panel: #1d2221; --ink: #e6ebe8; --muted: #9aa6a1; --rule: #2e3533;
-  --accent: #6fb3d4; --viewer-bg: #222827; --sev-high: #f2867e; --sev-med: #e3a64a; --sev-low: #9fb0cc;
+  --accent: #6fb3d4; --viewer-bg: #222827; --sev-high: #f2867e; --sev-med: #e3a64a; --sev-low: #9fb0cc; --dockbody: #7d8ca0;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -92,6 +93,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
       <button id="btnLift" aria-pressed="false">Lift chip out</button>
       <button id="btnChip" aria-pressed="true">Chip</button>
       <button id="btnDock" aria-pressed="true">Dock</button>
+      <button id="btnHatch" aria-pressed="true">Mark channels</button>
     </div>
     <div class="controls">
       <button data-view="front">Front</button>
@@ -110,17 +112,16 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
       <span class="num" id="cutVal">whole model</span>
     </div>
     <div class="legend">
-      <span><i class="sw" style="background:var(--pocket)"></i>lower pocket + bottom stop + key post</span>
-      <span><i class="sw" style="background:var(--channel)"></i>channels + funnel</span>
-      <span><i class="sw" style="background:var(--plate)"></i>back plate</span>
-      <span><i class="sw" style="background:var(--chip)"></i>chip</span>
-      <span><i class="sw" style="background:var(--label)"></i>engraving (2nd colour)</span>
+      <span><i class="sw" style="background:var(--dockbody)"></i>dock body (colour 1)</span>
+      <span><i class="sw" style="background:var(--chip)"></i>chip body (colour 1)</span>
+      <span><i class="sw" style="background:var(--label)"></i>colour 2: chip name, dock digit and hint</span>
+      <span><i class="sw" style="background:repeating-linear-gradient(45deg, var(--channel) 0 2px, transparent 2px 6px)"></i>channels, marked only here (not printed)</span>
     </div>
     <p class="verified">Use Cut away to peel the model back 0.2 mm at a time: front to back shows the chip as it prints, layer by layer (back face down, sticker pocket at 1.2 mm); top down is how the dock prints. Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
   </section>
 
   <section class="review">
-    <p class="summary">Round 2 follows your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
+    <p class="summary">Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
 
     <h2>How to print it</h2>
     <dl class="print">
@@ -218,12 +219,27 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     return loader.parse(bytes.buffer);
   }));
   const mat = (token) => new THREE.MeshStandardMaterial({ color: new THREE.Color(css(token)), roughness: 0.62, metalness: 0.0, clippingPlanes: [clip], side: THREE.DoubleSide });
+  // Cross-hatch drawn over the channels in this viewer only: two sets of diagonal stripes from world position, see-through, clipped like everything else.
+  const hatchMaterial = () => new THREE.ShaderMaterial({
+    uniforms: { color: { value: new THREE.Color(css("--channel")) } },
+    vertexShader: "#include <clipping_planes_pars_vertex>\nvarying vec3 vPos;\nvoid main() { vPos = (modelMatrix * vec4(position, 1.0)).xyz; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;\n#include <clipping_planes_vertex>\n}",
+    fragmentShader: "#include <clipping_planes_pars_fragment>\nuniform vec3 color; varying vec3 vPos;\nvoid main() {\n#include <clipping_planes_fragment>\nfloat a = step(fract((vPos.x + vPos.y) / 1.4), 0.3); float b = step(fract((vPos.x - vPos.y) / 1.4), 0.3); float m = max(a, b); if (m < 0.5) discard; gl_FragColor = vec4(color, 0.6); }",
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, clipping: true, clippingPlanes: [clip],
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+  });
   const chipGroup = new THREE.Group(), dockGroup = new THREE.Group();
+  let hatchOn = true;
   scene.add(chipGroup, dockGroup);
 
   async function setGroup(group, parts) {
-    const meshes = await Promise.all(parts.map(([path, token]) => load(path).then((g) => new THREE.Mesh(g, mat(token)))));
-    group.clear(); meshes.forEach((m) => group.add(m));
+    const meshes = await Promise.all(parts.map(([path, token, hatch]) => load(path).then((g) => {
+      const solid = new THREE.Mesh(g, mat(token));
+      if (!hatch) return [solid];
+      const overlay = new THREE.Mesh(g, hatchMaterial());
+      overlay.userData.hatch = true; overlay.visible = hatchOn; overlay.renderOrder = 1;
+      return [solid, overlay];
+    })));
+    group.clear(); meshes.flat().forEach((m) => group.add(m));
   }
   async function refresh() {
     status.textContent = "Loading meshes…";
@@ -231,7 +247,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     try {
       await Promise.all([
         setGroup(chipGroup, [["mesh/chip_" + m + ".txt", "--chip"], ["mesh/chip_" + m + "_label.txt", "--label"]]),
-        setGroup(dockGroup, [["mesh/dock_slot" + s + "_back_plate.txt", "--plate"], ["mesh/dock_slot" + s + "_lower_pocket.txt", "--pocket"], ["mesh/dock_slot" + s + "_channels.txt", "--channel"], ["mesh/dock_slot" + s + "_digit.txt", "--label"]]),
+        setGroup(dockGroup, [["mesh/dock_slot" + s + "_back_plate.txt", "--dockbody"], ["mesh/dock_slot" + s + "_lower_pocket.txt", "--dockbody"], ["mesh/dock_slot" + s + "_channels.txt", "--dockbody", true], ["mesh/dock_slot" + s + "_accent.txt", "--label"]]),
       ]);
       status.textContent = "Chip " + document.getElementById("mat").selectedOptions[0].text + " in slot " + s + " dock";
       updateCut();
@@ -264,12 +280,13 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   cut.addEventListener("input", updateCut);
   toggle("btnChip", (on) => { chipGroup.visible = on; updateCut(); });
   toggle("btnDock", (on) => { dockGroup.visible = on; updateCut(); });
+  toggle("btnHatch", (on) => { hatchOn = on; dockGroup.children.forEach((m) => { if (m.userData.hatch) m.visible = on; }); });
   document.getElementById("mat").addEventListener("change", refresh);
   document.getElementById("slot").addEventListener("change", refresh);
 
   function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
   new ResizeObserver(resize).observe(stage);
-  const recolor = () => { [chipGroup, dockGroup].forEach((g) => g.children.forEach((m) => m.material.needsUpdate = true)); refresh(); };
+  const recolor = () => refresh();
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", recolor);
   // The chip list comes from the build (mesh/manifest.json), so new filament names appear without editing this page.
   const label = (stem) => stem.replace(/plus/g, "+").replace(/_/g, " ");

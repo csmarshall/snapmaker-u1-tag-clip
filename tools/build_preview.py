@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "coin" / "out"
 STAGE = OUT / "preview"
-DOCK_PARTS = ("back_plate", "channels", "lower_pocket", "digit")
+DOCK_PARTS = ("back_plate", "channels", "lower_pocket", "accent")
 
 
 def main() -> int:

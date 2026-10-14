@@ -120,7 +120,7 @@ DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the mouth opens toward the back at the r
 DOCK_FUNNEL_LIP_DEPTH = 0.8  # how far the lips' undersides open toward the front at the rim, on the same curve; 0.4mm of lip remains there
 FUNNEL_STEPS = 16  # slices along the arc
 HINT_WIDTH = 12.0  # widest the hint's chip may be; it shrinks if needed to fit under the back bevel
-HINT_DEPTH = 0.4  # leaves 0.8mm of back plate under the hint
+HINT_DEPTH = ENGRAVE_DEPTH  # the hint is an inlay in the accent colour; it leaves 0.6mm of back plate behind it
 HINT_GAP = 1.0  # space between the lower pocket's top edge and the hint
 HINT_SQUAT = 0.75  # the hint's chip is this much shorter than a true-scale copy
 HINT_TOP_MARGIN = 1.0  # the hint's top stays this far below where the back plate's bevel starts
@@ -305,7 +305,9 @@ def _orientation_hint(y_base: float, y_bevel: float):
 
 
 def dock_parts(slot: int | None) -> dict[str, object]:
-    """Return the named parts of the dock for one U1 slot: back_plate, channels, lower_pocket, digit (None when slot is None), and dock, their union.
+    """Return the named parts of the dock for one U1 slot: back_plate, channels, lower_pocket, accent (the slot digit and the hint, inlaid flush), and dock, the body's union.
+
+    For two colours, print dock (body colour) together with accent (number colour); they share one origin.
 
     The parts touch but do not overlap, so they can be coloured or printed in different filaments. The channels (rails, the band walls beside the lower pocket's top,
     and the lips) run from the open top to TRACK_INTO_POCKET below the lower pocket's top edge; a lofted funnel bevels the back plate, rails and lips evenly into one
@@ -354,7 +356,9 @@ def dock_parts(slot: int | None) -> dict[str, object]:
     above = _funnel_section(y_rim + 1, DOCK_FUNNEL_FLARE, DOCK_FUNNEL_BACK_DEPTH, DOCK_FUNNEL_LIP_DEPTH, inner_half, lip_in, z_slot_front, z_open)
     funnel = loft(sections, ruled=True) + loft([sections[-1], above], ruled=True)
     back_plate -= funnel
-    back_plate -= _orientation_hint(cover_top + HINT_GAP, y_top)
+    hint_cut = _orientation_hint(cover_top + HINT_GAP, y_top)
+    hint = back_plate & hint_cut  # the inlay fills the recess exactly, flush with the back plate's face
+    back_plate -= hint_cut
     channels -= funnel
 
     lower_pocket = _box(-inner_half, inner_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate
@@ -364,17 +368,20 @@ def dock_parts(slot: int | None) -> dict[str, object]:
     lower_pocket += _box(-outer_half, outer_half, y_bottom, y_stop, -DOCK_BACK_GAP, z_cover_out)  # bottom stop, full depth so the pocket is closed at the bottom
     lower_pocket += _box(-KEY_POST_WIDTH / 2, KEY_POST_WIDTH / 2, y_stop - 0.01, y_stop + KEY_POST_HEIGHT, -DOCK_BACK_GAP, z_cover_in)  # key post
 
-    digit = None
+    accent = hint
     if slot is not None:
         unit_height = Text(str(slot), font_size=1.0).bounding_box().size.Y
         digit_size = (cover_top - y_bottom - 2 * COVER_DIGIT_MARGIN) / unit_height
         digit = Pos(0, (y_bottom + cover_top) / 2, z_cover_out) * extrude(Text(str(slot), font_size=digit_size), amount=-ENGRAVE_DEPTH)
         lower_pocket -= digit
-    return {"back_plate": back_plate, "channels": channels, "lower_pocket": lower_pocket, "digit": digit, "dock": back_plate + channels + lower_pocket}
+        accent = accent + digit
+    return {"back_plate": back_plate, "channels": channels, "lower_pocket": lower_pocket, "accent": accent, "dock": back_plate + channels + lower_pocket}
 
 
 if __name__ == "__main__":
     from pathlib import Path
+
+    from OCP.BRepTools import BRepTools
 
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
@@ -387,6 +394,8 @@ if __name__ == "__main__":
     for slot in U1_SLOTS:
         parts = dock_parts(slot)
         for name, shape in parts.items():
+            # OCC keeps a triangulation on each face, and the parts share faces with the whole dock; clear it so every export meshes its own faces.
+            BRepTools.Clean_s(shape.wrapped)
             export_stl(shape, str(out / (f"dock_slot{slot}.stl" if name == "dock" else f"dock_slot{slot}_{name}.stl")))
         export_step(parts["dock"], str(out / f"dock_slot{slot}.step"))
     print(f"chip: pause at {PAUSE_HEIGHT:.2f} mm (start of that layer) and drop the sticker in; print back-down")
