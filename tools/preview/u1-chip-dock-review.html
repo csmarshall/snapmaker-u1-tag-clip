@@ -53,6 +53,8 @@ select, button { font: inherit; font-size: 0.85rem; color: var(--ink); backgroun
 button { cursor: pointer; }
 button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cut input[type="range"] { flex: 1 1 160px; min-width: 0; accent-color: var(--accent); }
+.cut .num { color: var(--muted); font-size: 0.8rem; min-width: 11ch; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
@@ -99,6 +101,16 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
       <button data-view="angle">Angled</button>
       <button data-view="top">From above</button>
     </div>
+    <div class="controls cut">
+      <label for="cutAxis">Cut away <select id="cutAxis">
+        <option value="none">off</option>
+        <option value="z">front to back</option>
+        <option value="y">top down</option>
+        <option value="x">side to side</option>
+      </select></label>
+      <input type="range" id="cut" min="0" max="1000" value="1000" step="1" disabled aria-label="Cut position">
+      <span class="num" id="cutVal">whole model</span>
+    </div>
     <div class="legend">
       <span><i class="sw" style="background:var(--pocket)"></i>lower pocket + bottom stop + key post</span>
       <span><i class="sw" style="background:var(--channel)"></i>channels + funnel</span>
@@ -106,7 +118,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
       <span><i class="sw" style="background:var(--chip)"></i>chip</span>
       <span><i class="sw" style="background:var(--label)"></i>engraving (2nd colour)</span>
     </div>
-    <p class="verified">Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
+    <p class="verified">Use Cut away to peel the model back 0.2 mm at a time: front to back shows the chip as it prints, layer by layer (back face down, sticker pocket at 1.2 mm); top down is how the dock prints. Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
   </section>
 
   <section class="review">
@@ -185,6 +197,9 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   if (!window.THREE || !THREE.STLLoader || !THREE.OrbitControls) { status.textContent = "3D libraries did not load."; return; }
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.localClippingEnabled = true;
+  // One cutting plane shared by every part; it keeps what lies on the near side of the slider's position.
+  const clip = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1e6);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   stage.prepend(renderer.domElement);
   const scene = new THREE.Scene();
@@ -204,7 +219,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return loader.parse(bytes.buffer);
   }));
-  const mat = (token) => new THREE.MeshStandardMaterial({ color: new THREE.Color(css(token)), roughness: 0.62, metalness: 0.0 });
+  const mat = (token) => new THREE.MeshStandardMaterial({ color: new THREE.Color(css(token)), roughness: 0.62, metalness: 0.0, clippingPlanes: [clip], side: THREE.DoubleSide });
   const chipGroup = new THREE.Group(), dockGroup = new THREE.Group();
   scene.add(chipGroup, dockGroup);
 
@@ -221,15 +236,36 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
         setGroup(dockGroup, [["mesh/dock_slot" + s + "_back_plate.txt", "--plate"], ["mesh/dock_slot" + s + "_lower_pocket.txt", "--pocket"], ["mesh/dock_slot" + s + "_channels.txt", "--channel"], ["mesh/dock_slot" + s + "_digit.txt", "--label"]]),
       ]);
       status.textContent = "Chip " + document.getElementById("mat").selectedOptions[0].text + " in slot " + s + " dock";
+      updateCut();
     } catch (e) { status.textContent = "Could not load a mesh file."; }
   }
   const views = { front: [0, 2, 95], side: [95, 2, 8], angle: [-55, 35, 70], top: [0, 95, 20] };
   function setView(name) { const v = views[name]; camera.position.set(v[0], v[1], v[2]); controls.target.set(0, 0, 3); controls.update(); }
   document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
   const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener("click", () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(on)); fn(on); }); };
-  toggle("btnLift", (on) => { chipGroup.position.y = on ? 32 : 0; });
-  toggle("btnChip", (on) => { chipGroup.visible = on; });
-  toggle("btnDock", (on) => { dockGroup.visible = on; });
+  toggle("btnLift", (on) => { chipGroup.position.y = on ? 32 : 0; updateCut(); });
+  // Cut-away slider: snaps to 0.2 mm, the usual layer height, across the visible parts' extent on the chosen axis.
+  const cutAxis = document.getElementById("cutAxis"), cut = document.getElementById("cut"), cutVal = document.getElementById("cutVal");
+  const axisName = { x: "x", y: "height", z: "depth" };
+  function extent(axis) {
+    const box = new THREE.Box3();
+    [chipGroup, dockGroup].forEach((g) => { if (g.visible) box.expandByObject(g); });
+    return box.isEmpty() ? [0, 1] : [box.min[axis], box.max[axis]];
+  }
+  function updateCut() {
+    const axis = cutAxis.value;
+    cut.disabled = axis === "none";
+    if (axis === "none") { clip.set(new THREE.Vector3(0, 0, -1), 1e6); cutVal.textContent = "whole model"; return; }
+    const [lo, hi] = extent(axis);
+    const at = Math.round((lo + (hi - lo) * cut.value / 1000) / 0.2) * 0.2;
+    const normal = new THREE.Vector3(axis === "x" ? -1 : 0, axis === "y" ? -1 : 0, axis === "z" ? -1 : 0);
+    clip.set(normal, at);
+    cutVal.textContent = axisName[axis] + " \u2264 " + at.toFixed(1) + " mm";
+  }
+  cutAxis.addEventListener("change", () => { cut.value = 1000; updateCut(); });
+  cut.addEventListener("input", updateCut);
+  toggle("btnChip", (on) => { chipGroup.visible = on; updateCut(); });
+  toggle("btnDock", (on) => { dockGroup.visible = on; updateCut(); });
   document.getElementById("mat").addEventListener("change", refresh);
   document.getElementById("slot").addEventListener("change", refresh);
 
