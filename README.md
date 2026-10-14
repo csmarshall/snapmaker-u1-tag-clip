@@ -14,24 +14,42 @@ The U1 only reads a tag when the auto feeder first engages, so put the coin in t
 
 | Path | What |
 |---|---|
-| `coin/u1_chip_clip.py` | Parametric build123d model of the chip (sticker pocket on the back, clip arms and engraved label on the front) and four numbered placeholder docks (U1 slots 1 to 4). All dimensions are named constants at the top. Run it with `uv run --with build123d python coin/u1_chip_clip.py`; output goes to `coin/out/` (not committed). |
+| `coin/u1_chip_clip.py` | Parametric build123d model of the chip (sealed sticker pocket, clip arms and engraved label) and four numbered docks (U1 slots 1 to 4), each exported whole and as named parts. All dimensions are named constants at the top. Output goes to `coin/out/` (not committed). |
+| `tests/test_fit.py` | Fit and consistency checks on the built files, plus a comparison of the clip with Extrutim's original (skipped when that file is absent). |
+| `tools/build_preview.py`, `tools/preview/` | Stages the rotatable 3D review page and its meshes in `coin/out/preview/` for publishing as an artifact. |
 | `fixtures/` | Test prints for finding where and through how much plastic the U1's reader still sees a sticker: a standoff strip (0.4 to 2.0mm floors) and a handled coin-finder puck. `fixtures/u1_fixtures.py` regenerates them. |
 | `install_onshape_mcp.sh` | Optional helper that registers an Onshape MCP server for Claude Code (dry run by default). |
 | `TOOLS-INSTALLED.md` | What was installed while working on this and how to remove it. |
+
+## Build, check, preview
+
+```sh
+uv run --with build123d python coin/u1_chip_clip.py
+uv run --with build123d --with trimesh --with manifold3d --with pytest --with rtree --with shapely --with networkx --with scipy python -m pytest -q tests
+uv run python tools/build_preview.py
+```
+
+## Printing
+
+- **Chip:** back face down. Pause at the layer that starts at 1.20mm (`PAUSE_HEIGHT`), drop the sticker into its pocket, resume. For two colours, load `chip_<material>.stl` and `chip_<material>_label.stl` together as one object.
+- **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. For two colours, load `dock_slot<n>.stl` with `dock_slot<n>_digit.stl`.
+- Every sliding gap derives from `FIT_CLEARANCE` (0.3mm). Change that one number after a fit test.
 
 ## Parts and terms
 
 | Term | What it is |
 |---|---|
-| chip | The clip coin: round end up, flat end down with rounded corners, sticker pocket on the back, engraved material name only on the front. |
+| chip | The clip coin: round end up, flat end down with rounded corners and a centre key notch, sticker sealed inside, engraved material name only on the front. |
 | clip arms | The three walls on the chip that hold the filament end, traced from Extrutim's clip and turned 180 degrees as one unit. |
 | hook finger | The tallest clip arm (wall A, curled top and a small centre nub). Deliberately 2mm taller than the original (`WALL_A_EXTRA_HEIGHT`) so it stands proud of the dock's lower pocket and a thumb run up the pocket face catches it and lifts the chip out. |
 | dock | The holder the chip drops into, one per U1 slot, numbered 1 to 4 left to right with a big engraved digit. |
 | lower pocket | The wide plate and walls over the clip arms, at the flat end of the chip. Its top edge stops just past the hook finger; its side faces are closed. |
 | channels | The straight side rails and lips (the tracks in the code) that guide the chip from the dock's open top. They run 7.5mm past the lower pocket's top edge (`TRACK_INTO_POCKET`) and stop; the bottom of the pocket has only its own walls. |
-| back plate, bottom stop | The wall behind the chip (over the sticker) and the ledge the flat end rests on. |
+| back plate, bottom stop | The wall behind the chip (over the sticker) and the full-depth ledge the flat end rests on, which closes the lower pocket at the bottom. |
+| key post | A 5mm post on the bottom stop that fits the chip's notch. Put in upside down, the chip's round end lands on it and sits about 5mm high. |
+| funnel | The flared mouth on top of the channels. All walls end on one flat top rim. |
 
-With the side faces closed the filament cannot leave straight sideways; it leaves over the lower pocket's open top edge. `DOCK_FILAMENT_SLOTS` brings back narrow side slots.
+The clip is empty while the chip is docked (the filament end has gone into the feeder), so the lower pocket's sides are closed.
 
 ## Open questions
 

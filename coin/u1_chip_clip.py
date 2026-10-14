@@ -1,17 +1,19 @@
-"""Filament-clip coin for the Snapmaker U1 tag holder, plus a placeholder coin dock.
+"""Clip chip for the Snapmaker U1 tag dock, plus four numbered docks (one per U1 slot).
 
-The coin carries a 25mm NTAG215 sticker in a pocket on its back, and three spring arms on its front that
-pinch the filament end, with the material name engraved below the arms. The dock is a top-open slot that
-takes the coin sticker-side first, with a thin back wall between the sticker and the printer panel.
+The chip carries a 25mm NTAG215 sticker sealed inside it (dropped in during a print pause), a clip on its front that holds the
+filament end while the spool is on the shelf, and the material name engraved under its round end. The dock is a top-open slot
+that takes the chip flat end first; its parts use the terms in the README: back plate, channels (with a funnel on top), lower
+pocket (with the big slot digit), bottom stop and key post.
 
-Clip arm proportions (wall thickness, wall height, channel gaps, S-bend offsets, lead-in lip) were
-measured from Extrutim's Clip-Classic.stl (Printables 24371, CC BY-NC-SA) at 1.75mm filament and
-re-drawn here from those numbers; the dock's snap fingers come from remmulegguh's holder
-(Printables 1625982, CC BY-NC-SA). The coin idea (sticker coin per filament) follows A-Jey
-(Thingiverse 7268905, CC BY-NC-SA). Files made from this script carry the same licence.
+The clip arms are a close trace of Extrutim's Clip-Classic.stl (Printables 24371, CC BY-NC-SA), turned 180 degrees as one unit,
+with the hook finger (wall A) made 2mm taller on purpose. The dock is to be attached to remmulegguh's snap-in plate (Printables
+1625982, CC BY-NC-SA); the sticker-chip idea follows A-Jey (Thingiverse 7268905, CC BY-NC-SA). Files made from this script carry
+the same licence; SOURCES.md has the details.
 
-Coin frame: X = width, Y = up (coin slides down -Y into the dock, flat end first), Z = front (arms side), back face at Z=0.
-The round end is up with the label under it, upright; the flat end holds the clip arms and seats on the dock's bottom stop.
+Chip frame: X = width, Y = up (the chip slides down -Y into the dock, flat end first), Z = front (arms side), back face at Z=0.
+
+Printing: the chip prints back-down and pauses at PAUSE_HEIGHT for the sticker; the dock prints standing on its bottom stop
+(flat end down), so nothing on it bridges or overhangs more than 45 degrees.
 """
 import math
 
@@ -29,25 +31,35 @@ from build123d import (
     export_step,
     export_stl,
     extrude,
+    loft,
 )
 
-# ---- sticker and coin body (mm) -------------------------------------------------------------
-STICKER_DIAMETER = 25.0
-STICKER_CLEARANCE = 0.3  # per side
-POCKET_DEPTH = 0.6  # sticker is ~0.4mm thick; the dock wall closes the pocket
-COIN_THICKNESS = 2.0  # plate behind the arms; 1.4mm remains in front of the pocket
-COIN_RADIUS = 16.0  # half-width of the coin, and radius of its rounded bottom
-TOP_MARGIN = 1.5  # space between the last arm wall and the flat end
+# ---- fit -------------------------------------------------------------------------------------
+FIT_CLEARANCE = 0.3  # every sliding gap between chip and dock derives from this; tune it with a fit test
 
-# ---- clip arms, measured from Clip-Classic.stl at x=-8.5 and x=0 (y across the arms, z up) ------
+# ---- sticker and chip body (mm) ---------------------------------------------------------------
+STICKER_DIAMETER = 25.0
+STICKER_CLEARANCE = 0.3  # per side, so the sticker drops into its pocket during the pause
+BACK_SKIN = 0.6  # plastic between the sticker and the chip's back face (three 0.2mm layers)
+POCKET_DEPTH = 0.6  # sealed sticker pocket; the sticker is about 0.4mm thick (not yet measured)
+COIN_THICKNESS = 2.4  # plate behind the arms; leaves 0.6mm between the engraved label's floor and the pocket ceiling
+COIN_RADIUS = 16.0  # half-width of the chip, and radius of its round end
+TOP_MARGIN = 1.5  # space between the last arm wall and the start of the key extension
+KEY_FLAT_END_EXTENSION = 6.0  # extra flat end below the clip arms that carries the key notch
+KEY_POST_WIDTH = 4.0
+KEY_POST_HEIGHT = 5.0  # an upside-down chip's round end lands on the post and sits this much too high
+COIN_END_CORNER_RADIUS = 5.0  # rounds the flat end's two corners so the chip is nearly pill-shaped
+PAUSE_HEIGHT = BACK_SKIN + POCKET_DEPTH  # pause the chip print at the layer that starts here and drop the sticker in
+
+# ---- clip arms, measured from Clip-Classic.stl (y across the arms, z up) ------------------------
 ARM_WALL_THICKNESS = 1.2
 ARM_WALL_HEIGHT = 3.0  # wall A, B and C stand this high above the plate
 ARM_LIP_HEIGHT = 2.02  # extra height of the curved-over lead-in on wall A (total clip height 5.92 - 0.9 base = 5.02)
 # Wall A's top curls toward the channel. Rows are (height above the straight part, outer-face shift, inner-face shift) in mm, measured from Clip-Classic.stl at x=-5.
 WALL_A_LIP = ((0.0, 0.0, 0.0), (0.1, 0.02, 0.0), (0.3, 0.05, 0.01), (0.5, 0.11, 0.03), (0.7, 0.18, 0.05), (0.9, 0.26, 0.09), (1.1, 0.35, 0.15),
               (1.3, 0.46, 0.21), (1.5, 0.58, 0.29), (1.7, 0.71, 0.38), (1.9, 0.86, 0.48), (2.02, 0.94, 0.45))
-# A small nub on wall A's inner face at the clip's centre (x=0), cosine-shaped, running the wall's full height; measured at x=0 and x=+-0.2..1.5.
 WALL_A_EXTRA_HEIGHT = 2.0  # the one deliberate change to Extrutim's clip, asked for by Charles: the hook finger (wall A) is this much taller so it stands proud of the pocket
+# A small nub on wall A's inner face at the clip's centre (x=0), cosine-shaped, running the wall's full height; measured at x=0 and x=+-0.2..1.5.
 A_NUB_AMPLITUDE = 0.48
 A_NUB_HALF_WIDTH = 1.5
 A_NUB_HEIGHT = 4.9
@@ -69,48 +81,44 @@ S_BEND = (
 C_CATCH_X = (8.7, 8.95)
 C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 
-# ---- label ---------------------------------------------------------------------------------
-COIN_END_CORNER_RADIUS = 5.0  # rounds the flat end's two corners so the coin is nearly pill-shaped
+# ---- engraving ---------------------------------------------------------------------------------
 LABEL_FONT_SIZE = 9.0
 LABEL_EDGE_MARGIN = 1.5  # the engraved name stays this far inside the chip's edge
-LABEL_Y = 8.0  # label centre above the sticker pocket centre, in the round end
-COVER_DIGIT_MARGIN = 1.2  # gap between the slot digit and the cover's edges; the digit is scaled to fill the cover height minus this
-U1_SLOTS = (1, 2, 3, 4)  # one dock per U1 filament position, numbered as Charles labels them
-ENGRAVE_DEPTH = 0.6  # deep enough to paint or fill, per Charles
+LABEL_Y = 8.0  # label centre above the sticker centre, in the round end
+COVER_DIGIT_MARGIN = 1.2  # gap between the slot digit and the lower pocket's edges; the digit is scaled to fill the height minus this
+U1_SLOTS = (1, 2, 3, 4)  # one dock per U1 filament position, numbered left to right
+ENGRAVE_DEPTH = 0.6  # deep enough to paint or fill, or to print in a second colour
 
-# ---- placeholder dock (in the coin frame) --------------------------------------------------
-DOCK_BACK_GAP = 0.2  # air between the coin's back face and the dock's back wall
-DOCK_FLOOR = 1.2  # plastic between sticker and printer panel, tune from the standoff-strip test
-DOCK_SLOT_CLEARANCE = 0.3  # per side, coin edge to rail
+# ---- dock (in the chip frame) ------------------------------------------------------------------
+DOCK_BACK_GAP = FIT_CLEARANCE  # air between the chip's back face and the back plate
+DOCK_SLOT_CLEARANCE = FIT_CLEARANCE  # per side, chip edge to channel wall, and chip front to lip
+DOCK_FLOOR = 1.2  # back plate thickness: plastic between the chip and the printer panel, to be tuned from the standoff-strip test
 DOCK_RAIL_WIDTH = 3.0
-DOCK_LIP_OVERLAP = 2.0  # rail lip over the coin's front-plate edge
+DOCK_LIP_OVERLAP = 2.0  # how far the lips reach over the chip's edge
 DOCK_LIP_THICKNESS = 1.2
 DOCK_BOTTOM_THICKNESS = 2.0
-COVER_ARM_CLEARANCE = 0.3  # air between the tops of walls B and C and the cover's inside face
+COVER_ARM_CLEARANCE = 2 * FIT_CLEARANCE  # air between the tops of walls B and C and the lower pocket's inside face
 COVER_PLATE_THICKNESS = 1.2
-COVER_HOOK_CLEARANCE = 0.3  # the cover's top edge stops this far beyond the hook finger's curled tip
-FILAMENT_DIAMETER = 1.75
-FILAMENT_SLOT_CLEARANCE = 0.5  # per side, around the filament where it leaves the clip sideways
-DOCK_FUNNEL_HEIGHT = 4.0  # flared mouth added on top of the whole channels, so the chip is easy to aim into the dock
-DOCK_FUNNEL_FLARE = 2.0  # how far each side of the slot mouth opens outward at the very top
-DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the back plate's front face slopes away from the chip at the very top; the slope starts above the sticker, which stays covered
-DOCK_FILAMENT_SLOTS = False  # True cuts a narrow slot through each side wall at the two clip channels so filament can leave sideways; False leaves the side faces closed
-TRACK_INTO_POCKET = 7.5  # the tracks (rails and lips) run this far down past the lower pocket's top edge (5 to 10mm per Charles) and stop; below that only the pocket's own walls remain
-DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
+COVER_HOOK_CLEARANCE = FIT_CLEARANCE  # the lower pocket's top edge stops this far beyond the hook finger's curled tip
+TRACK_INTO_POCKET = 7.5  # the channels run this far down past the lower pocket's top edge and stop (5 to 10mm per Charles)
+DOCK_COIN_PROTRUSION = 3.0  # how far the chip's round end would stand above the channels; the funnel sits on top of them
+DOCK_FUNNEL_HEIGHT = 4.0  # the flared mouth on top of the whole channels
+DOCK_FUNNEL_FLARE = 2.0  # how far the mouth opens sideways at the top rim, each side
+DOCK_FUNNEL_BACK_DEPTH = 0.8  # how far the mouth opens toward the back at the rim; it starts above the sticker, which stays covered
+DOCK_FUNNEL_LIP_DEPTH = 0.8  # how far the lips' undersides open toward the front at the rim; 0.4mm of lip remains there
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
-# The clip is built as measured, wall A (the tallest, with the curled-over top and nub) at +ARM_BASE_Y, then turned 180 degrees about Z as one unit so wall A faces the chip's centre
-# and the S-bend end sits in the flat end. Nothing inside the clip changes.
+# The clip is built as measured, wall A (the tallest, with the curled-over top and nub) at +ARM_BASE_Y, then turned 180 degrees about Z as one unit so wall A faces the
+# chip's centre and the S-bend end sits in the flat end. Nothing inside the clip changes.
 ARM_BASE_Y = 3.0
 ARM_SHIFT_Y = ARM_BASE_Y - WALL_A_Y[0]  # applied before the turn
-COIN_FLAT_END_Y = S_BEND[0][4] + ARM_SHIFT_Y + TOP_MARGIN  # distance from the pocket centre to the flat end
-ARM_Y_NEAR = -ARM_BASE_Y  # after the turn: arm edge nearest the sticker pocket (wall A's outer face)
-ARM_Y_FAR = -(S_BEND[0][4] + ARM_SHIFT_Y)
+COIN_FLAT_END_Y = S_BEND[0][4] + ARM_SHIFT_Y + TOP_MARGIN + KEY_FLAT_END_EXTENSION  # distance from the sticker centre to the flat end
+ARM_Y_FAR = -(S_BEND[0][4] + ARM_SHIFT_Y)  # after the turn: arm edge nearest the flat end
 ARM_WALL_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT  # tops of walls B and C, and of wall A's straight part
 ARM_TOP_Z = ARM_WALL_TOP_Z + WALL_A_EXTRA_HEIGHT + ARM_LIP_HEIGHT  # the hook finger's top
 ARM_Y_HOOK_TIP = -(WALL_A_Y[1] + ARM_SHIFT_Y + max(row[2] for row in WALL_A_LIP))  # how far the hook's curled tip reaches toward the flat end, after the turn
-# Where the filament runs through the clip at the arm ends (y of each channel centre, before the S-bend moves it).
-CLIP_CHANNEL_Y = tuple(-((near + far) / 2 + ARM_SHIFT_Y) for near, far in ((WALL_A_Y[1], WALL_B_Y[0]), (WALL_B_Y[1], WALL_C_Y[0])))
+KEY_NOTCH_WIDTH = KEY_POST_WIDTH + 2 * FIT_CLEARANCE
+KEY_NOTCH_HEIGHT = KEY_POST_HEIGHT + 2 * FIT_CLEARANCE  # one clearance for the seat gap under the chip, one above the post
 
 
 def _cosine_bump(x: float, half_width: float) -> float:
@@ -126,10 +134,14 @@ def _ccw(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
     return points if area > 0 else points[::-1]
 
 
+def _box(x0: float, x1: float, y0: float, y1: float, z0: float, z1: float):
+    """Axis-aligned box from its two corners."""
+    return Pos((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2) * Box(x1 - x0, y1 - y0, z1 - z0)
+
+
 def _s_bend_wall(lower_col: int, upper_col: int, z0: float):
     """Wall B (columns 1, 2 of S_BEND) or wall C (3, 4): plan outline from the traced S-bend table, standing ARM_WALL_HEIGHT high from z0."""
-    rows = [row for row in S_BEND]
-    half = [(row[0], row[lower_col], row[upper_col]) for row in rows]
+    half = [(row[0], row[lower_col], row[upper_col]) for row in S_BEND]
     xs = [-ARM_LENGTH / 2] + [-x for x, _, _ in reversed(half)] + [x for x, _, _ in half[1:]] + [ARM_LENGTH / 2]
     lo = [half[-1][1]] + [lo_y for _, lo_y, _ in reversed(half)] + [lo_y for _, lo_y, _ in half[1:]] + [half[-1][1]]
     hi = [half[-1][2]] + [hi_y for _, _, hi_y in reversed(half)] + [hi_y for _, _, hi_y in half[1:]] + [half[-1][2]]
@@ -153,12 +165,12 @@ def _c_catches(z0: float):
 
 
 def _lead_in_wall(z0: float):
-    """Wall A: a straight wall whose top curls toward the channel (WALL_A_LIP), extruded along X from a side profile in (y, z), plus the centre nub on its inner face."""
+    """Wall A, the hook finger: a straight wall whose top curls toward the channel (WALL_A_LIP), extruded along X from a side profile in (y, z), plus the centre nub on its inner face."""
     outer, inner = WALL_A_Y
     rows = [(ARM_WALL_HEIGHT + WALL_A_EXTRA_HEIGHT + dz, outer + d_out, inner + d_in) for dz, d_out, d_in in WALL_A_LIP]
     profile = [(outer, 0.0), (inner, 0.0)] + [(y_in, z) for z, _, y_in in rows] + [(y_out, z) for z, y_out, _ in reversed(rows)]
     section = Polygon(*[(y + ARM_SHIFT_Y, z) for y, z in profile], align=None)
-    # Polygon is drawn in XY; rotate so its Y becomes Z and its X becomes the coin's Y, then extrude along X.
+    # Polygon is drawn in XY; rotate so its Y becomes Z and its X becomes the chip's Y, then extrude along X.
     solid = extrude(Plane.YZ * section, amount=ARM_LENGTH / 2, both=True)
     xs = [-A_NUB_HALF_WIDTH + 2 * A_NUB_HALF_WIDTH * i / 30 for i in range(31)]
     y_face = inner + ARM_SHIFT_Y
@@ -171,8 +183,7 @@ def _label_font_size(label: str) -> float:
     limit = COIN_RADIUS - LABEL_EDGE_MARGIN
     size = LABEL_FONT_SIZE
     while size > 2.0:
-        box = Pos(0, LABEL_Y, 0) * Text(label, font_size=size)
-        bb = box.bounding_box()
+        bb = (Pos(0, LABEL_Y, 0) * Text(label, font_size=size)).bounding_box()
         corner = math.hypot(max(abs(bb.min.X), abs(bb.max.X)), max(abs(bb.min.Y), abs(bb.max.Y)))
         if corner <= limit:
             return size
@@ -180,16 +191,20 @@ def _label_font_size(label: str) -> float:
     return size
 
 
-def coin_parts(label: str):
-    """Return (body, engraving) for one filament label: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours. There is no copy number: chips travel with spools and end up in any position."""
+def chip_parts(label: str):
+    """Return (body, engraving) for one filament label: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours.
+
+    There is no copy number: chips travel with spools and end up in any position. The sticker pocket is sealed inside the body (BACK_SKIN under it), filled during a print pause.
+    """
     # Round end and flat end: the circle's own edge would stick out past the rectangle, so cut it at COIN_FLAT_END_Y.
     below_top = Pos(0, COIN_FLAT_END_Y / 2 - COIN_RADIUS) * Rectangle(4 * COIN_RADIUS, COIN_FLAT_END_Y + 2 * COIN_RADIUS)
     outline = (Circle(COIN_RADIUS) + Pos(0, COIN_FLAT_END_Y / 2) * Rectangle(2 * COIN_RADIUS, COIN_FLAT_END_Y)) & below_top
     face = outline.faces()[0]
     flat_corners = [v for v in face.vertices() if abs(v.Y - COIN_FLAT_END_Y) < 1e-6]
     plate = Rot(Z=180) * extrude(face.fillet_2d(COIN_END_CORNER_RADIUS, flat_corners), amount=COIN_THICKNESS)
-    pocket = Pos(0, 0, -0.01) * Cylinder(POCKET_DIAMETER / 2, POCKET_DEPTH + 0.01, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    body = plate - pocket
+    sticker_pocket = Pos(0, 0, BACK_SKIN) * Cylinder(POCKET_DIAMETER / 2, POCKET_DEPTH, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    key_notch = _box(-KEY_NOTCH_WIDTH / 2, KEY_NOTCH_WIDTH / 2, -COIN_FLAT_END_Y - 1, -COIN_FLAT_END_Y + KEY_NOTCH_HEIGHT, -1, COIN_THICKNESS + 1)
+    body = plate - sticker_pocket - key_notch
 
     arms = _lead_in_wall(COIN_THICKNESS)
     arms += _s_bend_wall(1, 2, COIN_THICKNESS)
@@ -201,64 +216,75 @@ def coin_parts(label: str):
     return body - engrave, engrave
 
 
-def dock_parts(slot: int | None):
-    """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a full-width lower pocket over the clip-arm area carrying the big slot digit.
+def _funnel_section(y: float, flare: float, back: float, lip: float, inner_half: float, lip_in: float, z_slot_front: float, z_open: float):
+    """Cross-section of the chip's path at height y, as one T-shaped face in X-Z: the slot the chip fills plus the opening between the lips, grown by the given flares."""
+    w, l = inner_half + flare, lip_in + flare
+    zb, zs = -DOCK_BACK_GAP - back, z_slot_front + lip
+    # z_dir (0,-1,0) makes the plane's local y point along global +Z, so the points read as (x, z).
+    plane = Plane(origin=(0, y, 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
+    return plane * Polygon((-w, zb), (w, zb), (w, zs), (l, zs), (l, z_open), (-l, z_open), (-l, zs), (-w, zs), align=None)
 
-    The lower pocket is a full-width plate just above the arm walls B and C, on full side walls; inside it the lips are left out because the cover holds the coin. Its top edge stops just past the curled tip of the tall hook finger (wall A), which stands proud above the edge, so a thumb run up the cover face catches it and lifts the coin out. Above the pocket the rails and lips form the tracks, whole from y_top to TRACK_INTO_POCKET below the pocket's top edge, and they do not run to the bottom; a flared mouth of DOCK_FUNNEL_HEIGHT sits on top of them, bevelled on all sides (back plate, sides, lips) as one funnel; a narrow slot through the rail, lip and wall at each clip channel lets filament leave straight out sideways, while the tracks otherwise run unbroken from the open top to the bottom stop. digit is None when slot is None.
+
+def dock_parts(slot: int | None) -> dict[str, object]:
+    """Return the named parts of the dock for one U1 slot: back_plate, channels, lower_pocket, digit (None when slot is None), and dock, their union.
+
+    The parts touch but do not overlap, so they can be coloured or printed in different filaments. The channels (rails, the band walls beside the lower pocket's top,
+    and the lips) run from the open top to TRACK_INTO_POCKET below the lower pocket's top edge; a lofted funnel bevels the back plate, rails and lips evenly into one
+    flat top rim. The lower pocket (side walls, cover plate, full-depth bottom stop and key post) carries the slot digit; its top edge stops just past the hook
+    finger, which stands proud of it so a thumb run up the cover catches it and lifts the chip out.
     """
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
+    lip_in = COIN_RADIUS - DOCK_LIP_OVERLAP
     z_back = -DOCK_BACK_GAP - DOCK_FLOOR
-    z_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE + DOCK_LIP_THICKNESS
-    y_bottom = -COIN_FLAT_END_Y - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
-    y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION  # where the whole channels end and the funnel begins
-    y_funnel_top = y_top + DOCK_FUNNEL_HEIGHT
-    cover_top = ARM_Y_HOOK_TIP - COVER_HOOK_CLEARANCE
-    slot_top_z = COIN_THICKNESS + FILAMENT_DIAMETER + 2 * FILAMENT_SLOT_CLEARANCE
-    slot_half = FILAMENT_DIAMETER / 2 + FILAMENT_SLOT_CLEARANCE
+    z_slot_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE
+    z_front = z_slot_front + DOCK_LIP_THICKNESS
     z_cover_in = ARM_WALL_TOP_Z + COVER_ARM_CLEARANCE
     z_cover_out = z_cover_in + COVER_PLATE_THICKNESS
+    y_bottom = -COIN_FLAT_END_Y - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
+    y_stop = y_bottom + DOCK_BOTTOM_THICKNESS
+    y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION  # where the whole channels end and the funnel begins
+    y_rim = y_top + DOCK_FUNNEL_HEIGHT
+    cover_top = ARM_Y_HOOK_TIP - COVER_HOOK_CLEARANCE
+    track_end = cover_top - TRACK_INTO_POCKET
 
-    def box(x0: float, x1: float, y0: float, y1: float, z0: float, z1: float):
-        return Pos((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2) * Box(x1 - x0, y1 - y0, z1 - z0)
+    back_plate = _box(-outer_half, outer_half, y_bottom, y_rim, z_back, -DOCK_BACK_GAP)
 
-    z_slot_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE
-    parts = box(-outer_half, outer_half, y_bottom, y_funnel_top, z_back, -DOCK_BACK_GAP)  # back wall
+    channels = None
     for sign in (-1, 1):
         x_in, x_out = sorted((sign * inner_half, sign * outer_half))
-        parts += box(x_in, x_out, cover_top - TRACK_INTO_POCKET, y_funnel_top, z_back, z_front)  # rail, part of the channel
-        lip_in = sign * (COIN_RADIUS - DOCK_LIP_OVERLAP)
-        lip_lo, lip_hi = sorted((lip_in, sign * outer_half))
-        parts += box(lip_lo, lip_hi, cover_top - TRACK_INTO_POCKET, y_funnel_top, z_slot_front, z_front)  # lip over the coin edge; deeper in the lower pocket the cover holds the coin instead
-    parts += box(-outer_half, outer_half, y_bottom, y_bottom + DOCK_BOTTOM_THICKNESS, z_back, z_front)  # bottom stop
-    # Flared mouth above the whole channels: the rails open outward in plan and the lips ramp up and open outward, so a chip that is a little off still finds the slot.
-    ramp = (z_front - z_slot_front) / DOCK_FUNNEL_HEIGHT
-    lip_ramp = Polygon(*_ccw([(y_top, z_slot_front), (y_funnel_top + 1, z_slot_front), (y_funnel_top + 1, z_front + ramp)]), align=None)
-    parts -= extrude(Plane.YZ * lip_ramp, amount=outer_half + 1, both=True)
-    back_slope = DOCK_FUNNEL_BACK_DEPTH * (DOCK_FUNNEL_HEIGHT + 1) / DOCK_FUNNEL_HEIGHT
-    back_ramp = Polygon(*_ccw([(y_top, -DOCK_BACK_GAP), (y_funnel_top + 1, -DOCK_BACK_GAP), (y_funnel_top + 1, -DOCK_BACK_GAP - back_slope)]), align=None)
-    parts -= extrude(Plane.YZ * back_ramp, amount=outer_half + 1, both=True)  # back plate bevel, meeting the side flares and lip ramps as one funnel
-    for sign in (-1, 1):
-        x_mouth = sign * (inner_half + DOCK_FUNNEL_FLARE)
-        for x_start, z0 in ((sign * inner_half, z_back), (sign * (COIN_RADIUS - DOCK_LIP_OVERLAP), z_slot_front)):
-            mouth = Polygon(*_ccw([(x_start, y_top), (x_mouth, y_funnel_top), (x_mouth, y_funnel_top + 1), (x_start, y_funnel_top + 1)]), align=None)
-            parts -= Pos(0, 0, z0) * extrude(mouth, amount=z_front - z0 + 1)
+        rail = _box(x_in, x_out, cover_top, y_rim, -DOCK_BACK_GAP, z_front)
+        band_wall = _box(x_in, x_out, track_end, cover_top, -DOCK_BACK_GAP, z_cover_out)  # beside the lower pocket's top, as tall as the pocket
+        # Lip with a 45 degree lower end, so it prints without support when the dock stands on its bottom stop.
+        lip_profile = Polygon(*_ccw([(track_end + DOCK_LIP_THICKNESS, z_slot_front), (y_rim, z_slot_front), (y_rim, z_front), (track_end, z_front)]), align=None)
+        lip_x0, lip_x1 = sorted((sign * lip_in, sign * inner_half))
+        lip = Pos((lip_x0 + lip_x1) / 2, 0, 0) * extrude(Plane.YZ * lip_profile, amount=(lip_x1 - lip_x0) / 2, both=True)
+        piece = rail + band_wall + lip
+        channels = piece if channels is None else channels + piece
+
+    # The funnel: a ruled loft from the chip's path at y_top to the flared mouth at the rim, extended past the rim so the cut leaves one flat top face.
+    z_open = z_cover_out + 1
+    lower = _funnel_section(y_top, 0, 0, 0, inner_half, lip_in, z_slot_front, z_open)
+    rim = _funnel_section(y_rim, DOCK_FUNNEL_FLARE, DOCK_FUNNEL_BACK_DEPTH, DOCK_FUNNEL_LIP_DEPTH, inner_half, lip_in, z_slot_front, z_open)
+    above = _funnel_section(y_rim + 1, DOCK_FUNNEL_FLARE, DOCK_FUNNEL_BACK_DEPTH, DOCK_FUNNEL_LIP_DEPTH, inner_half, lip_in, z_slot_front, z_open)
+    funnel = loft([lower, rim], ruled=True) + loft([rim, above], ruled=True)
+    back_plate -= funnel
+    channels -= funnel
+
+    lower_pocket = _box(-inner_half, inner_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate
     for sign in (-1, 1):
         x_in, x_out = sorted((sign * inner_half, sign * outer_half))
-        parts += box(x_in, x_out, y_bottom, cover_top, z_back, z_cover_out)  # side wall of the lower pocket, carrying the cover; it does not climb beside the tracks
-    track_end_y = cover_top - TRACK_INTO_POCKET
-    parts += box(-outer_half, outer_half, y_bottom, track_end_y, z_cover_in, z_cover_out)  # cover plate, full dock width below where the tracks end
-    parts += box(-inner_half, inner_half, track_end_y, cover_top, z_cover_in, z_cover_out)  # cover plate between the channel walls, which show beside it running down into the pocket
-    for channel_y in CLIP_CHANNEL_Y if DOCK_FILAMENT_SLOTS else ():
-        for sign in (-1, 1):
-            x0, x1 = sorted((sign * ARM_LENGTH / 2, sign * (outer_half + 1)))
-            parts -= box(x0, x1, channel_y - slot_half, channel_y + slot_half, COIN_THICKNESS, slot_top_z)  # filament exit slot
-    if slot is None:
-        return parts, None
-    unit_height = Text(str(slot), font_size=1.0).bounding_box().size.Y
-    digit_size = (cover_top - y_bottom - 2 * COVER_DIGIT_MARGIN) / unit_height
-    digit = Pos(0, (y_bottom + cover_top) / 2, z_cover_out) * extrude(Text(str(slot), font_size=digit_size), amount=-ENGRAVE_DEPTH)
-    return parts - digit, digit
+        lower_pocket += _box(x_in, x_out, y_bottom, track_end, -DOCK_BACK_GAP, z_cover_out)  # side wall
+    lower_pocket += _box(-outer_half, outer_half, y_bottom, y_stop, -DOCK_BACK_GAP, z_cover_out)  # bottom stop, full depth so the pocket is closed at the bottom
+    lower_pocket += _box(-KEY_POST_WIDTH / 2, KEY_POST_WIDTH / 2, y_stop - 0.01, y_stop + KEY_POST_HEIGHT, -DOCK_BACK_GAP, z_cover_in)  # key post
+
+    digit = None
+    if slot is not None:
+        unit_height = Text(str(slot), font_size=1.0).bounding_box().size.Y
+        digit_size = (cover_top - y_bottom - 2 * COVER_DIGIT_MARGIN) / unit_height
+        digit = Pos(0, (y_bottom + cover_top) / 2, z_cover_out) * extrude(Text(str(slot), font_size=digit_size), amount=-ENGRAVE_DEPTH)
+        lower_pocket -= digit
+    return {"back_plate": back_plate, "channels": channels, "lower_pocket": lower_pocket, "digit": digit, "dock": back_plate + channels + lower_pocket}
 
 
 if __name__ == "__main__":
@@ -267,12 +293,15 @@ if __name__ == "__main__":
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
     for material in ("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon"):
-        body, engraving = coin_parts(material)
-        stem = f"coin_{material.replace('+', 'plus')}"
+        body, engraving = chip_parts(material)
+        stem = f"chip_{material.replace('+', 'plus')}"
         export_stl(body, str(out / f"{stem}.stl"))
         export_step(body, str(out / f"{stem}.step"))
         export_stl(engraving, str(out / f"{stem}_label.stl"))
     for slot in U1_SLOTS:
-        dock_body, dock_digit = dock_parts(slot)
-        export_stl(dock_body, str(out / f"dock_slot{slot}.stl"))
-        export_stl(dock_digit, str(out / f"dock_slot{slot}_digit.stl"))
+        parts = dock_parts(slot)
+        for name, shape in parts.items():
+            export_stl(shape, str(out / (f"dock_slot{slot}.stl" if name == "dock" else f"dock_slot{slot}_{name}.stl")))
+        export_step(parts["dock"], str(out / f"dock_slot{slot}.step"))
+    print(f"chip: pause at {PAUSE_HEIGHT:.2f} mm (start of that layer) and drop the sticker in; print back-down")
+    print("dock: print standing on its bottom stop (flat end down)")

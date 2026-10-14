@@ -1,0 +1,243 @@
+<title>U1 Chip Dock Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: workbench split. A sticky 3D viewer of the real STLs on the left, the ranked review on the right; stacks on phones. */
+:root {
+  --bg: #f3f4f2;
+  --panel: #ffffff;
+  --ink: #1d2321;
+  --muted: #5d6763;
+  --rule: #d9ddd9;
+  --accent: #2f6f8f;
+  --pocket: #2e9a4c;
+  --channel: #c8373a;
+  --plate: #9aa3a0;
+  --chip: #3d64b8;
+  --label: #e5b62a;
+  --sev-high: #b3261e;
+  --sev-med: #a4660b;
+  --sev-low: #50607a;
+  --viewer-bg: #e6e9e6;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151918; --panel: #1d2221; --ink: #e6ebe8; --muted: #9aa6a1; --rule: #2e3533;
+    --accent: #6fb3d4; --viewer-bg: #222827; --sev-high: #f2867e; --sev-med: #e3a64a; --sev-low: #9fb0cc;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151918; --panel: #1d2221; --ink: #e6ebe8; --muted: #9aa6a1; --rule: #2e3533;
+  --accent: #6fb3d4; --viewer-bg: #222827; --sev-high: #f2867e; --sev-med: #e3a64a; --sev-low: #9fb0cc;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { padding-inline: 20px; padding-block: 24px 48px; max-width: 1360px; margin: 0 auto; display: grid; gap: 28px; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); padding-inline: 16px; } }
+header.top { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--rule); padding-bottom: 14px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.75rem; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.meta { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+.viewer-col { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (max-width: 900px) { .viewer-col { position: static; } }
+.stage { position: relative; width: 100%; aspect-ratio: 4 / 3.2; max-width: 100%; background: var(--viewer-bg); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.status { position: absolute; left: 12px; bottom: 10px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.controls label { font-size: 0.8rem; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+select, button { font: inherit; font-size: 0.85rem; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 5px 9px; }
+button { cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.review { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.summary { font-size: 1rem; max-width: 65ch; margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 6px 0 0; }
+.finding { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 14px; padding-block: 14px; border-top: 1px solid var(--rule); }
+.finding h3 { margin: 0; font-size: 1rem; font-weight: 600; text-wrap: balance; }
+.finding p { margin: 4px 0 0; max-width: 65ch; }
+.finding .fix { color: var(--muted); }
+.finding .fix b { color: var(--ink); font-weight: 600; }
+.sev { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 3px; }
+.sev.high { color: var(--sev-high); } .sev.med { color: var(--sev-med); } .sev.low { color: var(--sev-low); }
+.sev.done { color: var(--pocket); }
+.print { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 0.9rem; max-width: 65ch; }
+.print dt { color: var(--muted); }
+.print dd { margin: 0; }
+code, .num { font-family: var(--font-mono); font-size: 0.85em; font-variant-numeric: tabular-nums; }
+.verified { font-size: 0.85rem; color: var(--muted); max-width: 65ch; border-left: 3px solid var(--rule); padding-left: 12px; }
+ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; max-width: 65ch; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>U1 Chip Dock Review</h1>
+    <div class="meta">repo u1-rfid-chip-clip · round 2 · 2026-10-14 · nothing printed yet</div>
+  </header>
+
+  <section class="viewer-col" aria-label="3D model">
+    <div class="stage" id="stage"><div class="status" id="status">Loading meshes…</div></div>
+    <div class="controls">
+      <label for="mat">Chip <select id="mat">
+        <option>PLA</option><option value="PLAplus">PLA+</option><option selected>PETG</option><option>ASA</option><option>ABS</option><option>TPU</option><option>Nylon</option>
+      </select></label>
+      <label for="slot">Dock slot <select id="slot"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
+      <button id="btnLift" aria-pressed="false">Lift chip out</button>
+      <button id="btnChip" aria-pressed="true">Chip</button>
+      <button id="btnDock" aria-pressed="true">Dock</button>
+    </div>
+    <div class="controls">
+      <button data-view="front">Front</button>
+      <button data-view="side">Side</button>
+      <button data-view="angle">Angled</button>
+      <button data-view="top">From above</button>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--pocket)"></i>lower pocket + bottom stop + key post</span>
+      <span><i class="sw" style="background:var(--channel)"></i>channels + funnel</span>
+      <span><i class="sw" style="background:var(--plate)"></i>back plate</span>
+      <span><i class="sw" style="background:var(--chip)"></i>chip</span>
+      <span><i class="sw" style="background:var(--label)"></i>engraving (2nd colour)</span>
+    </div>
+    <p class="verified">Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
+  </section>
+
+  <section class="review">
+    <p class="summary">Round 2 follows your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
+
+    <h2>How to print it</h2>
+    <dl class="print">
+      <dt>Chip</dt><dd>Back face down. Pause at the layer that starts at <span class="num">1.20 mm</span>, drop the sticker in, resume. The chip is <span class="num">2.4 mm</span> thick, with <span class="num">0.6 mm</span> of plastic under the sticker.</dd>
+      <dt>Dock</dt><dd>Standing on its bottom stop (flat end down), so the cover, lips and funnel are all vertical or slope upward.</dd>
+      <dt>Two colours</dt><dd>Body plus label STL for each chip, and dock plus digit STL for each slot, sharing one origin.</dd>
+    </dl>
+
+    <h2>Review findings and what changed</h2>
+
+    <article class="finding">
+      <div class="sev high">Open</div>
+      <div>
+        <h3>Mount and read range still unknown</h3>
+        <p>The dock doesn't attach to the U1 yet, and nobody has measured how much plastic the reader sees through. Sealing the sticker inside the chip adds <span class="num">0.6 mm</span>, so the sticker now sits behind <span class="num">1.8 mm</span> of plastic plus a <span class="num">0.3 mm</span> gap.</p>
+        <p class="fix"><b>Next:</b> print the standoff strip, the coin-finder puck, one chip and one dock. If the reader is marginal, the back plate (<code>DOCK_FLOOR</code>) or the skin under the sticker (<code>BACK_SKIN</code>) gets thinner.</p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="sev done">Fixed</div>
+      <div>
+        <h3>The top rim is one flat plane</h3>
+        <p>The notches came from separate wedge cuts at different depths. The mouth is now one ruled loft from the chip's path up to a flared opening, cut from every part at once, so the back plate, channels and lips all end on the same flat rim with an even bevel inside. A test checks that every point near the top sits at one height.</p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="sev done">Fixed</div>
+      <div>
+        <h3>Printable without bridges</h3>
+        <p>The sticker sits in a sealed pocket filled at a pause, so its ceiling prints on top of the sticker. The dock prints upright. The lips have <span class="num">45°</span> lower ends, and the lower pocket is closed at the bottom by a full-depth bottom stop.</p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="sev done">Fixed</div>
+      <div>
+        <h3>Upside-down chips can't seat</h3>
+        <p>The flat end is <span class="num">6 mm</span> longer with a centre notch, and a <span class="num">5 mm</span> key post stands on the bottom stop. Put in round end first, the chip lands on the post and sits about <span class="num">5 mm</span> high; a test sweeps a flipped chip down to confirm it.</p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="sev done">Fixed</div>
+      <div>
+        <h3>One clearance, named parts, checks in the repo</h3>
+        <p>Every sliding gap derives from <code>FIT_CLEARANCE</code> (<span class="num">0.3 mm</span>; <span class="num">0.6 mm</span> over the clip arms). The dock is built as back plate, channels and lower pocket, and these are exported as separate files, which this viewer loads directly. The side-slot code is gone, since the clip is empty when docked. Thirty-one checks are now in <code>tests/test_fit.py</code>, including the comparison with Extrutim's clip.</p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="sev low">Open</div>
+      <div>
+        <h3>Smaller items</h3>
+        <p>Label sizes still vary by material (auto-fit). The thin <span class="num">0.4 mm</span> lip edge at the rim may print ragged. Sticker thickness is unmeasured, and the <span class="num">0.6 mm</span> pocket assumes about <span class="num">0.4 mm</span>. Two-colour import into Snapmaker Orca hasn't been tried.</p>
+      </div>
+    </article>
+
+    <h2>What the checks do and don't show</h2>
+    <p class="verified">Passing: watertight parts that add up to the dock; no chip overlaps its dock; a chip lowered from 30 mm seats without touching; chips 1.8 mm off-centre, 0.4 mm forward or 0.6 mm back drop into the funnel; a flipped chip stops on the key post; the back plate covers the whole sticker; the sticker pocket is sealed; labels stay inside the edge; the hook finger stands at least 2 mm proud of the lower pocket. The clip matches Extrutim's original within 0.1 mm wherever it was sampled. All but that last check use numbers from the same script that builds the parts. They show the files agree with themselves, not that anything fits a printer or a real sticker.</p>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" integrity="sha384-wagZhIFgY4hD+7awjQjR4e2E294y6J2HSnd8eTNc15ZubTeQeVRZwhQJ+W6hnBsf" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js" integrity="sha384-QF8EmP6pyNE+i7WmcltzC4ddzFVKDxfn5WD5gXyKTSE4SCw0R25TI+q0LUlnf7tq" crossorigin="anonymous"></script>
+<script>
+(function () {
+  const stage = document.getElementById("stage");
+  const status = document.getElementById("status");
+  if (!window.THREE || !THREE.STLLoader || !THREE.OrbitControls) { status.textContent = "3D libraries did not load."; return; }
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  stage.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 1000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.target.set(0, 0, 3);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8c958f, 0.85));
+  const key = new THREE.DirectionalLight(0xffffff, 0.75); key.position.set(-40, 60, 80); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.35); rim.position.set(50, -20, -60); scene.add(rim);
+
+  const loader = new THREE.STLLoader();
+  const cache = {};
+  // Meshes ship as base64 text (artifacts do not serve .stl); decode and hand the bytes to the STL parser.
+  const load = (path) => cache[path] || (cache[path] = fetch(path).then((r) => { if (!r.ok) throw new Error(path); return r.text(); }).then((b64) => {
+    const bin = atob(b64.replace(/\s+/g, "")); const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return loader.parse(bytes.buffer);
+  }));
+  const mat = (token) => new THREE.MeshStandardMaterial({ color: new THREE.Color(css(token)), roughness: 0.62, metalness: 0.0 });
+  const chipGroup = new THREE.Group(), dockGroup = new THREE.Group();
+  scene.add(chipGroup, dockGroup);
+
+  async function setGroup(group, parts) {
+    const meshes = await Promise.all(parts.map(([path, token]) => load(path).then((g) => new THREE.Mesh(g, mat(token)))));
+    group.clear(); meshes.forEach((m) => group.add(m));
+  }
+  async function refresh() {
+    status.textContent = "Loading meshes…";
+    const m = document.getElementById("mat").value, s = document.getElementById("slot").value;
+    try {
+      await Promise.all([
+        setGroup(chipGroup, [["mesh/chip_" + m + ".txt", "--chip"], ["mesh/chip_" + m + "_label.txt", "--label"]]),
+        setGroup(dockGroup, [["mesh/dock_slot" + s + "_back_plate.txt", "--plate"], ["mesh/dock_slot" + s + "_lower_pocket.txt", "--pocket"], ["mesh/dock_slot" + s + "_channels.txt", "--channel"], ["mesh/dock_slot" + s + "_digit.txt", "--label"]]),
+      ]);
+      status.textContent = "Chip " + document.getElementById("mat").selectedOptions[0].text + " in slot " + s + " dock";
+    } catch (e) { status.textContent = "Could not load a mesh file."; }
+  }
+  const views = { front: [0, 2, 95], side: [95, 2, 8], angle: [-55, 35, 70], top: [0, 95, 20] };
+  function setView(name) { const v = views[name]; camera.position.set(v[0], v[1], v[2]); controls.target.set(0, 0, 3); controls.update(); }
+  document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
+  const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener("click", () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(on)); fn(on); }); };
+  toggle("btnLift", (on) => { chipGroup.position.y = on ? 32 : 0; });
+  toggle("btnChip", (on) => { chipGroup.visible = on; });
+  toggle("btnDock", (on) => { dockGroup.visible = on; });
+  document.getElementById("mat").addEventListener("change", refresh);
+  document.getElementById("slot").addEventListener("change", refresh);
+
+  function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage);
+  const recolor = () => { [chipGroup, dockGroup].forEach((g) => g.children.forEach((m) => m.material.needsUpdate = true)); refresh(); };
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", recolor);
+  resize(); setView("angle"); refresh();
+  (function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+})();
+</script>
