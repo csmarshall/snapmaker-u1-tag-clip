@@ -5,6 +5,7 @@ Artifacts do not serve .stl, so each mesh is written as base64 text that the pag
 import base64
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -32,6 +33,8 @@ def main() -> int:
     for name in names:
         (mesh_dir / f"{name}.txt").write_text(base64.b64encode((OUT / f"{name}.stl").read_bytes()).decode())
     (mesh_dir / "manifest.json").write_text(json.dumps({"chips": stems}))
+    orientation = STAGE / "print_orientation.png"
+    subprocess.run([sys.executable, str(ROOT / "tools" / "print_orientation.py"), str(orientation)], check=True)
     shutil.copy(ROOT / "tools" / "preview" / "u1-chip-dock-review.html", STAGE / "u1-chip-dock-review.html")
     print(f"staged {len(names)} meshes and the page in {STAGE}")
     return 0

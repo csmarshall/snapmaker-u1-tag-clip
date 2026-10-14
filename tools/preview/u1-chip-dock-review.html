@@ -73,6 +73,9 @@ h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.05rem; tex
 .print { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 0.9rem; max-width: 65ch; }
 .print dt { color: var(--muted); }
 .print dd { margin: 0; }
+.orient { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.orient img { width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 4px; background: #fff; }
+.orient figcaption { font-size: 0.85rem; color: var(--muted); max-width: 65ch; }
 code, .num { font-family: var(--font-mono); font-size: 0.85em; font-variant-numeric: tabular-nums; }
 .verified { font-size: 0.85rem; color: var(--muted); max-width: 65ch; border-left: 3px solid var(--rule); padding-left: 12px; }
 ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; max-width: 65ch; }
@@ -123,6 +126,12 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
 
   <section class="review">
     <p class="summary">New: the socket-clip mount. Its back plate carries on up to the spool-holder socket, and remmulegguh's snap fingers (traced) go into the socket behind it, so the sticker sits 38mm below the socket axis, inside the antenna loop that the official coil-replacement guide shows ringing each socket. The flat-back VHB version is the other choice in Mount. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
+
+    <h2>Printing the clip dock</h2>
+    <figure class="orient">
+      <img src="print_orientation.png" alt="The clip dock drawn on a print bed upright and upside down, with faces that need support in red" width="1120" height="960">
+      <figcaption>Red faces overhang by more than 45° and need support; blue faces sit on the bed. Upright, almost all of the red is the underside of the two snap fingers, which stick 30mm out of the back about 60mm above the bed. Upside down the fingers sit on the bed, but more small overhangs appear around the dock.</figcaption>
+    </figure>
 
     <h2>How to print it</h2>
     <dl class="print">
