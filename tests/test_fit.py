@@ -143,11 +143,14 @@ def test_label_stays_inside_the_chip(material):
 
 @pytest.mark.parametrize("material", MATERIALS)
 def test_label_is_centred_on_the_visible_face(material):
-    """Docked, you see the chip from the hook finger's top up to the chip's top, between the lips; the label is centred there and clear of the lips."""
+    """Docked, you see the chip from the hook finger's top up to the chip's top, between the lips; the label sits on that shape's area centroid and clear of the lips."""
     label = _mesh(f"chip_{material}_label.stl")
     (x0, y0, _), (x1, y1, _) = label.bounds
+    # Independent estimate of the visible face's centroid: sample a grid of points and keep those on the chip, above the hook, between the lips.
+    xs, ys = np.meshgrid(np.linspace(-16, 16, 641), np.linspace(-M.ARM_BASE_Y, M.COIN_RADIUS, 381))
+    inside = (np.abs(xs) <= M.COIN_RADIUS - M.DOCK_LIP_OVERLAP) & ((ys <= 0) | (xs ** 2 + ys ** 2 <= M.COIN_RADIUS ** 2))
     assert (x0 + x1) / 2 == pytest.approx(0, abs=0.05)
-    assert (y0 + y1) / 2 == pytest.approx((-M.ARM_BASE_Y + M.COIN_RADIUS) / 2, abs=0.05)
+    assert (y0 + y1) / 2 == pytest.approx(ys[inside].mean(), abs=0.1)
     assert max(abs(x0), abs(x1)) <= M.COIN_RADIUS - M.DOCK_LIP_OVERLAP - M.LABEL_EDGE_MARGIN + 0.05
 
 

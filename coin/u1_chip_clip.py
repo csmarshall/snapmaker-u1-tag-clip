@@ -121,9 +121,27 @@ ARM_Y_FAR = -(S_BEND[0][4] + ARM_SHIFT_Y)  # after the turn: arm edge nearest th
 ARM_WALL_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT  # tops of walls B and C, and of wall A's straight part
 ARM_TOP_Z = ARM_WALL_TOP_Z + WALL_A_EXTRA_HEIGHT + ARM_LIP_HEIGHT  # the hook finger's top
 ARM_Y_HOOK_TIP = -(WALL_A_Y[1] + ARM_SHIFT_Y + max(row[2] for row in WALL_A_LIP))  # how far the hook's curled tip reaches toward the flat end, after the turn
-LABEL_Y = (-ARM_BASE_Y + COIN_RADIUS) / 2  # centre of the face you see when the chip is docked: between the hook finger's top and the chip's top
 KEY_NOTCH_WIDTH = KEY_POST_WIDTH + 2 * FIT_CLEARANCE
 KEY_NOTCH_HEIGHT = KEY_POST_HEIGHT + 2 * FIT_CLEARANCE  # one clearance for the seat gap under the chip, one above the post
+
+
+def _visible_face_centroid_y(steps: int = 4000) -> float:
+    """Height of the area centroid of the chip face you see when it is docked: from the hook finger's top to the chip's top, between the dock's lips.
+
+    The round top makes that shape bottom-heavy, so its visual centre sits below the middle of its bounding box.
+    """
+    y0, y1, lip_x = -ARM_BASE_Y, COIN_RADIUS, COIN_RADIUS - DOCK_LIP_OVERLAP
+    area = moment = 0.0
+    for i in range(steps):
+        y = y0 + (y1 - y0) * (i + 0.5) / steps
+        half = COIN_RADIUS if y <= 0 else math.sqrt(max(COIN_RADIUS ** 2 - y * y, 0.0))
+        width = 2 * min(lip_x, half)
+        area += width
+        moment += width * y
+    return moment / area
+
+
+LABEL_Y = _visible_face_centroid_y()  # the label is centred on the visual centre of the docked chip's visible face
 
 
 def _cosine_bump(x: float, half_width: float) -> float:
