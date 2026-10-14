@@ -56,6 +56,8 @@ WALL_SAMPLES = 49  # points along each wavy wall
 # ---- label ---------------------------------------------------------------------------------
 LABEL_FONT_SIZE = 7.0
 NUMBER_FONT_SIZE = 4.5
+DOCK_NUMBER_FONT_SIZE = 5.0  # slot digit engraved on the dock's left lip
+U1_SLOTS = (1, 2, 3, 4)  # one dock per U1 filament position, numbered as Charles labels them
 ENGRAVE_DEPTH = 0.6  # deep enough to paint or fill, per Charles
 
 # ---- placeholder dock (in the coin frame) --------------------------------------------------
@@ -127,8 +129,8 @@ def coin(label: str, number: int):
     return body - engrave
 
 
-def dock():
-    """Return the placeholder dock: back wall, side rails with lips, and a bottom stop, top open (+Y)."""
+def dock(slot: int):
+    """Return the placeholder dock for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), slot digit on the left lip."""
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
     z_back = -DOCK_BACK_GAP - DOCK_FLOOR
@@ -150,7 +152,9 @@ def dock():
         lip_lo, lip_hi = sorted((lip_in, sign * outer_half))
         parts += box(lip_lo, lip_hi, y_bottom, y_top, z_slot_front, z_front)  # lip over the coin edge
     parts += box(-outer_half, outer_half, y_bottom, y_bottom + DOCK_BOTTOM_THICKNESS, z_back, z_front)  # bottom stop
-    return parts
+    lip_centre_x = -(COIN_RADIUS - DOCK_LIP_OVERLAP + outer_half) / 2
+    digit = Pos(lip_centre_x, (y_bottom + y_top) / 2, z_front) * extrude(Text(str(slot), font_size=DOCK_NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
+    return parts - digit
 
 
 if __name__ == "__main__":
@@ -163,4 +167,5 @@ if __name__ == "__main__":
         stem = f"coin_{material.replace('+', 'plus')}_{index}"
         export_stl(shape, str(out / f"{stem}.stl"))
         export_step(shape, str(out / f"{stem}.step"))
-    export_stl(dock(), str(out / "dock_placeholder.stl"))
+    for slot in U1_SLOTS:
+        export_stl(dock(slot), str(out / f"dock_slot{slot}.stl"))
