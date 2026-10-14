@@ -94,7 +94,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <div class="controls">
       <label for="mat">Chip <select id="mat"><option value="PETG" selected>PETG</option></select></label>
       <label for="mount">Show <select id="mount">
-        <optgroup label="Assembled"><option value="asm_hanger" selected>chip in dock, in hanger</option><option value="asm_vhb">chip in dock (taped)</option></optgroup>
+        <optgroup label="Assembled"><option value="asm_hanger" selected>chip in dock, hanger: dock below socket</option><option value="asm_hanger_above">chip in dock, hanger turned: dock above socket</option><option value="asm_vhb">chip in dock (taped)</option></optgroup>
         <optgroup label="Each piece on its own"><option value="chip">chip</option><option value="dock">dock</option><option value="hanger">hanger</option><option value="cover">blank cover</option></optgroup>
       </select></label>
       <label for="slot">Dock slot <select id="slot"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
@@ -131,19 +131,19 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   </section>
 
   <section class="review">
-    <p class="summary">New: the dock is one print whichever way it mounts. Tape it to the panel over the antenna, or push it into the hanger, which snaps into the spool-holder socket with remmulegguh's fingers and holds the dock 38mm below the socket on two flexing side arms. A blank cover closes sockets you aren't using. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
+    <p class="summary">New: the chip's feet are 2mm shorter, and the hanger grips the dock's middle band with a tongue in a groove on each side, so one print holds the dock below the socket or, turned 180°, above it. The dock is one print whichever way it mounts. Tape it to the panel over the antenna, or push it into the hanger, which snaps into the spool-holder socket with remmulegguh's fingers. A blank cover closes sockets you aren't using. Current state: the dock prints in two colours, a body plus a second colour for the slot digit and the chip-and-arrow hint inlaid in the back, and the chip prints in body and label colours. The cross-hatch marks the channels for discussion only. Since round 2 the funnel curves like the chip's corners, the chip has ghost feet, names share one letter line above the hook, and twenty filament names are built. Round 2 followed your answers: the dock is rebuilt from named parts with one flat top rim and a lofted funnel, both parts are laid out to print without bridges, the sticker is sealed in at a pause, and the orientation key is in. The mount and read range are still unknown, so the next step is a test print.</p>
 
-    <h2>Proposed: one hanger, two positions</h2>
+    <h2>New: shorter feet, and one hanger for above or below</h2>
     <figure class="orient">
-      <img src="hanger_concept.png" alt="Sketch of a one-arm hanger holding the dock below the socket, and the same hanger turned 180 degrees holding it above" width="990" height="720">
-      <figcaption>Not built yet. The hanger becomes one arm from the socket plate that meets the dock's side; the dock gets the same connector on both edges. Turned 180 degrees in the socket, the same print holds the dock above the socket instead of below. The dock stays upright either way. The antenna loop is drawn at an estimated size, not measured.</figcaption>
+      <img src="revision_compare.png" alt="Front views of the previous and new chip and dock, with the dock's middle grip band shaded" width="1164" height="499">
+      <figcaption>Left, the previous version; right, this one. The chip's feet are <span class="num">4 mm</span> instead of <span class="num">6 mm</span> and the key post <span class="num">3 mm</span> instead of <span class="num">5 mm</span>, so the chip and dock are <span class="num">2 mm</span> shorter. The shaded band is what is left of the dock once the lower pocket's height comes off both ends: <span class="num">6.64 mm</span>, up from <span class="num">4.64 mm</span>, centred on the dock's mid-height. Each side face has a groove there, and the hanger's arms end in tongues that snap into it. The outer corners of the feet keep their <span class="num">5 mm</span> rounding, the same arc the funnel at the top of the slot follows.</figcaption>
     </figure>
 
     <h2>How the pieces go together</h2>
     <dl class="print">
       <dt>Chip</dt><dd>Clips onto the spool's filament end on the shelf; drops into the dock from above when you load that spool.</dd>
       <dt>Dock</dt><dd>One print for both mounts. Its flat back goes against the panel over the antenna.</dd>
-      <dt>Hanger</dt><dd>Snaps into the spool-holder socket. Two arms run down either side of the dock, and their snap ridges hook over the dock's front side edges. Feet sit under its bottom corners. Push the dock straight in toward the panel and the arms flex out and click over it ("Pull dock out of hanger" shows the motion). It touches only the dock's sides and front edges, never its back, so the sticker is as close to the antenna as when taped.</dd>
+      <dt>Hanger</dt><dd>Snaps into the spool-holder socket. Two arms run beside the dock to its middle band, where a tongue on each arm snaps into a groove in the dock's side. Push the dock straight in toward the panel: the tongues' sloped fronts spread the arms and they click into the grooves ("Pull dock out of hanger" shows the motion). The grooves lock it up, down and away from the panel. Because the band is centred on the dock, the same print turned 180° in the socket holds the dock above it instead (sticker <span class="num">38 mm</span> below the socket axis, or <span class="num">41.3 mm</span> above it). It never touches the dock's back, so the sticker is as close to the antenna as when taped.</dd>
       <dt>Blank cover</dt><dd>The same snap fingers with a plain round plate and the slot number, for a socket you aren't using.</dd>
     </dl>
 
@@ -191,7 +191,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
       <div class="sev done">Fixed</div>
       <div>
         <h3>Upside-down chips can't seat</h3>
-        <p>The flat end is <span class="num">6 mm</span> longer with a centre notch, and a <span class="num">5 mm</span> key post stands on the bottom stop. Put in round end first, the chip lands on the post and sits about <span class="num">5 mm</span> high; a test sweeps a flipped chip down to confirm it.</p>
+        <p>The flat end is <span class="num">4 mm</span> longer with a centre notch (the ghost feet), and a <span class="num">3 mm</span> key post stands on the bottom stop. Put in round end first, the chip lands on the post and sits about <span class="num">3 mm</span> high; a test sweeps a flipped chip down to confirm it.</p>
       </div>
     </article>
 
@@ -212,7 +212,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     </article>
 
     <h2>What the checks do and don't show</h2>
-    <p class="verified">Passing: watertight parts that add up to the dock; no chip overlaps its dock; a chip lowered from 30 mm seats without touching; chips 1.8 mm off-centre, 0.4 mm forward or 0.6 mm back drop into the funnel; a flipped chip stops on the key post; the back plate covers the whole sticker; the sticker pocket is sealed; labels stay inside the edge; the hook finger stands at least 2 mm proud of the lower pocket. The clip matches Extrutim's original within 0.1 mm wherever it was sampled. All but that last check use numbers from the same script that builds the parts. They show the files agree with themselves, not that anything fits a printer or a real sticker.</p>
+    <p class="verified">Passing: watertight parts that add up to the dock; no chip overlaps its dock; a chip lowered from 30 mm seats without touching; chips 1.8 mm off-centre, 0.4 mm forward or 0.6 mm back drop into the funnel; a flipped chip stops on the key post; the back plate covers the whole sticker; the sticker pocket is sealed; labels stay inside the edge; the hook finger stands at least 2 mm proud of the lower pocket. With the hanger in either position, below or turned above the socket: the chip still slides in from above without touching it, the dock seats without touching it, pushing the dock in from the front meets only the tongues and only inside the grooves, and a seated dock moved 1 mm up, down or away from the panel runs into the tongues. The clip matches Extrutim's original within 0.1 mm wherever it was sampled. All but that last check use numbers from the same script that builds the parts. They show the files agree with themselves, not that anything fits a printer or a real sticker.</p>
   </section>
 </div>
 
@@ -278,13 +278,14 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
       await Promise.all([
         setGroup(chipGroup, [["mesh/chip_" + m + ".txt", "--chip"], ["mesh/chip_" + m + "_label.txt", "--label"]]),
         setGroup(dockGroup, [["mesh/dock_slot" + s + "_back_plate.txt", "--dockbody"], ["mesh/dock_slot" + s + "_lower_pocket.txt", "--dockbody"], ["mesh/dock_slot" + s + "_channels.txt", "--dockbody", true], ["mesh/dock_slot" + s + "_accent.txt", "--label"]]),
-        setGroup(hangerGroup, show === "cover" ? [["mesh/cover_slot" + s + ".txt", "--hanger"], ["mesh/cover_slot" + s + "_accent.txt", "--label"]] : [["mesh/hanger.txt", "--hanger"]]),
+        setGroup(hangerGroup, show === "cover" ? [["mesh/cover_slot" + s + ".txt", "--hanger"], ["mesh/cover_slot" + s + "_accent.txt", "--label"]] : [[show === "asm_hanger_above" ? "mesh/hanger_pose_above.txt" : "mesh/hanger.txt", "--hanger"]]),
       ]);
       // What each choice shows: a single piece, or the pieces put together.
-      chipGroup.visible = ["asm_hanger", "asm_vhb", "chip"].includes(show) && chipOn;
-      dockGroup.visible = ["asm_hanger", "asm_vhb", "dock"].includes(show) && dockOn;
-      hangerGroup.visible = ["asm_hanger", "hanger", "cover"].includes(show);
-      document.getElementById("btnPull").disabled = show !== "asm_hanger";
+      const inHanger = show === "asm_hanger" || show === "asm_hanger_above";
+      chipGroup.visible = (inHanger || ["asm_vhb", "chip"].includes(show)) && chipOn;
+      dockGroup.visible = (inHanger || ["asm_vhb", "dock"].includes(show)) && dockOn;
+      hangerGroup.visible = inHanger || ["hanger", "cover"].includes(show);
+      document.getElementById("btnPull").disabled = !inHanger;
       status.textContent = document.getElementById("mount").selectedOptions[0].text + " (slot " + s + ", " + document.getElementById("mat").selectedOptions[0].text + " chip)";
       updateCut();
     } catch (e) { status.textContent = "Could not load a mesh file."; }

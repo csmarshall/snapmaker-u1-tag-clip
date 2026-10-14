@@ -70,13 +70,10 @@ def test_chip_seats_without_touching(material):
     assert _overlap(chip, dock) == pytest.approx(0, abs=1e-3)
 
 
-@pytest.mark.parametrize("with_hanger", [False, True])
-def test_chip_slides_in_from_above(with_hanger):
+def test_chip_slides_in_from_above():
     chip, dock = _mesh("chip_PETG.stl"), _mesh("dock_slot3.stl")
-    if with_hanger:
-        dock = trimesh.util.concatenate([dock, _mesh("hanger.stl")])
     worst = 0.0
-    for dy in np.arange(45.0, -0.01, -0.5):  # from well above, past the hanger's plate
+    for dy in np.arange(45.0, -0.01, -0.5):
         moved = chip.copy()
         moved.apply_translation([0, dy, 0])
         worst = max(worst, _overlap(moved, dock))
@@ -210,25 +207,63 @@ def test_clip_matches_extrutim():
     assert worst <= 0.1
 
 
-def test_hanger_holds_the_dock_without_touching_it():
-    hanger, dock = _mesh("hanger.stl"), _mesh("dock_slot3.stl")
+HANGER_POSES = ["hanger.stl", "hanger_pose_above.stl"]  # the same print, dock below the socket and turned 180 degrees with the dock above
+
+
+@pytest.mark.parametrize("pose", HANGER_POSES)
+def test_chip_slides_in_from_above_past_the_hanger(pose):
+    chip, dock = _mesh("chip_PETG.stl"), trimesh.util.concatenate([_mesh("dock_slot3.stl"), _mesh(pose)])
+    worst = 0.0
+    for dy in np.arange(45.0, -0.01, -0.5):  # from well above, past the hanger's plate when it is above the dock
+        moved = chip.copy()
+        moved.apply_translation([0, dy, 0])
+        worst = max(worst, _overlap(moved, dock))
+    assert worst == pytest.approx(0, abs=1e-3)
+
+
+@pytest.mark.parametrize("pose", HANGER_POSES)
+def test_hanger_holds_the_dock_without_touching_it(pose):
+    hanger, dock = _mesh(pose), _mesh("dock_slot3.stl")
     assert hanger.is_watertight
     assert _overlap(hanger, dock) == pytest.approx(0, abs=0.01)
 
 
-def test_dock_pushes_into_the_hanger_from_the_front_past_the_ridges_only():
-    """Pushed straight in toward the panel, the dock only ever meets the snap ridges, which the arms flex outward to pass; it never meets the plate, yoke or feet."""
-    hanger, dock = _mesh("hanger.stl"), _mesh("dock_slot3.stl")
-    outer = M.COIN_RADIUS + M.DOCK_SLOT_CLEARANCE + M.DOCK_RAIL_WIDTH
+@pytest.mark.parametrize("pose", HANGER_POSES)
+@pytest.mark.parametrize("shift", [(0, 1.0, 0), (0, -1.0, 0), (0, 0, 1.0)])
+def test_tongues_lock_the_dock_up_down_and_away_from_the_panel(pose, shift):
+    """Seated, the dock cannot move 1mm up, down or out from the panel without running into the tongues (sideways is the other arm's job)."""
+    hanger, dock = _mesh(pose), _mesh("dock_slot3.stl")
+    dock.apply_translation(shift)
+    assert _overlap(hanger, dock) > 0.05
+
+
+def test_grip_band_is_centred_and_matches_the_pocket():
+    """The band is what is left of the dock's length once the lower pocket's height comes off both ends, so the 180 degree turn maps it onto itself."""
+    d = M._dock_extents()
+    pocket = d["cover_top"] - d["y_bottom"]
+    y0, y1 = d["band"]
+    assert y1 - y0 == pytest.approx((d["y_rim"] - d["y_bottom"]) - 2 * pocket)
+    assert (y0 + y1) / 2 == pytest.approx(d["y_mid"])
+    g0, g1 = d["groove_y"]
+    assert (g0 + g1) / 2 == pytest.approx(d["y_mid"])
+
+
+@pytest.mark.parametrize("pose", HANGER_POSES)
+def test_dock_pushes_into_the_hanger_from_the_front_past_the_tongues_only(pose):
+    """Pushed straight in toward the panel, the dock only ever meets the tongues, which the arms flex outward to pass; it never meets the plate or yoke."""
+    hanger, dock = _mesh(pose), _mesh("dock_slot3.stl")
+    d = M._dock_extents()
+    engage = M.HANGER_GROOVE_DEPTH - M.FIT_CLEARANCE
     touched = False
-    for dz in np.arange(12.0, 0.01, -0.5):
+    for dz in np.arange(12.0, 0.01, -0.25):
         moved = dock.copy()
         moved.apply_translation([0, 0, dz])
         inter = trimesh.boolean.intersection([moved, hanger], engine="manifold")
         if len(inter.vertices) and inter.volume > 1e-3:
             touched = True
-            assert np.abs(inter.vertices[:, 0]).min() >= outer - M.HANGER_RIDGE_REACH - 0.05
-    assert touched  # the ridges do catch it: that is the snap
+            assert np.abs(inter.vertices[:, 0]).min() >= d["outer_half"] - engage - 0.05
+            assert d["groove_y"][0] - 0.05 <= inter.vertices[:, 1].min() and inter.vertices[:, 1].max() <= d["groove_y"][1] + 0.05
+    assert touched  # the tongues do catch it: that is the snap
 
 
 def test_hanger_and_cover_stand_on_one_flat_face_for_printing():

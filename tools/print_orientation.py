@@ -19,7 +19,7 @@ LIGHT = np.array([-0.3, 0.6, 0.75]) / np.linalg.norm([-0.3, 0.6, 0.75])
 
 
 # Chip frame (X width, Y up the dock, Z out from the panel) to printer frame (Z up from the bed), as proper rotations (rows are the printer axes).
-UPRIGHT = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)  # arms' feet on the bed
+UPRIGHT = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)  # arms' ends on the bed
 UPSIDE_DOWN = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]], float)  # the plate's flat top and the fingers' top face on the bed
 
 
@@ -67,7 +67,7 @@ def main() -> int:
     upv = np.cross(cam, right)
     below = np.array([right, upv, cam])
     fig, axs = plt.subplots(2, 2, figsize=(14, 12))
-    for col, (rotation, name) in enumerate(((UPRIGHT, "Upright: arms' feet on the bed"), (UPSIDE_DOWN, "Upside down: plate's flat top and fingers on the bed (use this)"))):
+    for col, (rotation, name) in enumerate(((UPRIGHT, "Upright: arms' ends on the bed"), (UPSIDE_DOWN, "Upside down: plate's flat top and fingers on the bed (use this)"))):
         m = orient(dock, rotation)
         out_of_panel = rotation @ [0, 0, 1]  # the chip's front direction in the printer frame, drawn to the right
         side = np.array([out_of_panel, [0, 0, 1], np.cross(out_of_panel, [0, 0, 1])], float)
