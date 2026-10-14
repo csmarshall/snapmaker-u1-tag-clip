@@ -56,7 +56,7 @@ WALL_SAMPLES = 49  # points along each wavy wall
 # ---- label ---------------------------------------------------------------------------------
 LABEL_FONT_SIZE = 7.0
 NUMBER_FONT_SIZE = 4.5
-DOCK_NUMBER_FONT_SIZE = 5.0  # slot digit engraved on the dock's left lip
+COVER_DIGIT_FONT_SIZE = 11.0  # slot digit engraved on the dock's front cover
 U1_SLOTS = (1, 2, 3, 4)  # one dock per U1 filament position, numbered as Charles labels them
 ENGRAVE_DEPTH = 0.6  # deep enough to paint or fill, per Charles
 
@@ -68,6 +68,10 @@ DOCK_RAIL_WIDTH = 3.0
 DOCK_LIP_OVERLAP = 2.0  # rail lip over the coin's front-plate edge
 DOCK_LIP_THICKNESS = 1.2
 DOCK_BOTTOM_THICKNESS = 2.0
+COVER_ARM_CLEARANCE = 1.0  # air between the tallest clip-arm point and the cover's inside face
+COVER_PLATE_THICKNESS = 1.5
+COVER_TOP_MARGIN = 4.0  # how far the cover's top edge sits above where the clip arms start
+FILAMENT_RELIEF_MARGIN = 0.5  # the rails and lips are notched this much beyond the arms so filament can leave sideways
 DOCK_COIN_PROTRUSION = 3.0  # how far the round end stands above the dock so it can be gripped; the dock still covers the whole sticker pocket
 
 POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
@@ -75,6 +79,9 @@ POCKET_DIAMETER = STICKER_DIAMETER + 2 * STICKER_CLEARANCE
 ARM_BASE_Y = 3.0
 ARM_SHIFT_Y = ARM_BASE_Y - WALL_A_Y[0]
 COIN_FLAT_END_Y = WALL_C_Y[1] + WALL_C_BUMP + ARM_SHIFT_Y + TOP_MARGIN
+ARM_Y_NEAR = -ARM_BASE_Y  # arm edge nearest the sticker pocket, after the 180 degree turn
+ARM_Y_FAR = -(WALL_C_Y[1] + WALL_C_BUMP + ARM_SHIFT_Y)
+ARM_TOP_Z = COIN_THICKNESS + ARM_WALL_HEIGHT + ARM_LIP_HEIGHT
 
 
 def _bump(x: float) -> float:
@@ -130,16 +137,22 @@ def coin_parts(label: str, number: int | None):
     return body - engrave, engrave
 
 
-def dock(slot: int | None):
-    """Return the placeholder dock for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), slot digit on the left lip (slot=None leaves it off)."""
+def dock_parts(slot: int | None):
+    """Return (dock, digit) for one U1 slot: back wall, side rails with lips, a bottom stop, top open (+Y), and a full-width cover over the clip-arm area carrying the big slot digit.
+
+    The cover stands off the dock front on four posts so it clears the arms; the rails and lips are notched across the arm band so filament can leave sideways. digit is None when slot is None.
+    """
     inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
     z_back = -DOCK_BACK_GAP - DOCK_FLOOR
     z_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE + DOCK_LIP_THICKNESS
     y_bottom = -COIN_FLAT_END_Y - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
     y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION
-    height = y_top - y_bottom
-    depth = z_front - z_back
+    band_top = ARM_Y_NEAR + FILAMENT_RELIEF_MARGIN
+    band_bottom = ARM_Y_FAR - FILAMENT_RELIEF_MARGIN
+    cover_top = ARM_Y_NEAR + COVER_TOP_MARGIN
+    z_cover_in = ARM_TOP_Z + COVER_ARM_CLEARANCE
+    z_cover_out = z_cover_in + COVER_PLATE_THICKNESS
 
     def box(x0: float, x1: float, y0: float, y1: float, z0: float, z1: float):
         return Pos((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2) * Box(x1 - x0, y1 - y0, z1 - z0)
@@ -153,11 +166,16 @@ def dock(slot: int | None):
         lip_lo, lip_hi = sorted((lip_in, sign * outer_half))
         parts += box(lip_lo, lip_hi, y_bottom, y_top, z_slot_front, z_front)  # lip over the coin edge
     parts += box(-outer_half, outer_half, y_bottom, y_bottom + DOCK_BOTTOM_THICKNESS, z_back, z_front)  # bottom stop
+    parts -= box(-outer_half - 1, outer_half + 1, band_bottom, band_top, COIN_THICKNESS, z_front + 1)  # filament relief
+    for sign in (-1, 1):
+        x_in, x_out = sorted((sign * inner_half, sign * outer_half))
+        for y0, y1 in ((band_top, cover_top), (y_bottom, band_bottom)):
+            parts += box(x_in, x_out, y0, y1, z_front, z_cover_out)  # post carrying the cover
+    parts += box(-outer_half, outer_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate
     if slot is None:
-        return parts
-    lip_centre_x = -(COIN_RADIUS - DOCK_LIP_OVERLAP + outer_half) / 2
-    digit = Pos(lip_centre_x, (y_bottom + y_top) / 2, z_front) * extrude(Text(str(slot), font_size=DOCK_NUMBER_FONT_SIZE), amount=-ENGRAVE_DEPTH)
-    return parts - digit
+        return parts, None
+    digit = Pos(0, (y_bottom + cover_top) / 2, z_cover_out) * extrude(Text(str(slot), font_size=COVER_DIGIT_FONT_SIZE), amount=-ENGRAVE_DEPTH)
+    return parts - digit, digit
 
 
 if __name__ == "__main__":
@@ -172,7 +190,9 @@ if __name__ == "__main__":
         export_step(body, str(out / f"{stem}.step"))
         export_stl(engraving, str(out / f"{stem}_label.stl"))
     for slot in U1_SLOTS:
-        export_stl(dock(slot), str(out / f"dock_slot{slot}.stl"))
+        dock_body, dock_digit = dock_parts(slot)
+        export_stl(dock_body, str(out / f"dock_slot{slot}.stl"))
+        export_stl(dock_digit, str(out / f"dock_slot{slot}_digit.stl"))
     plain = out / "nonumber"
     plain.mkdir(exist_ok=True)
     for material in ("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon"):
@@ -180,4 +200,4 @@ if __name__ == "__main__":
         stem = f"coin_{material.replace('+', 'plus')}"
         export_stl(body, str(plain / f"{stem}.stl"))
         export_stl(engraving, str(plain / f"{stem}_label.stl"))
-    export_stl(dock(None), str(plain / "dock.stl"))
+    export_stl(dock_parts(None)[0], str(plain / "dock.stl"))
