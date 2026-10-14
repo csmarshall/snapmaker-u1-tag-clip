@@ -71,7 +71,8 @@ C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 
 # ---- label ---------------------------------------------------------------------------------
 COIN_END_CORNER_RADIUS = 5.0  # rounds the flat end's two corners so the coin is nearly pill-shaped
-LABEL_FONT_SIZE = 7.0
+LABEL_FONT_SIZE = 9.0
+LABEL_EDGE_MARGIN = 1.5  # the engraved name stays this far inside the chip's edge
 LABEL_Y = 8.0  # label centre above the sticker pocket centre, in the round end
 COVER_DIGIT_MARGIN = 1.2  # gap between the slot digit and the cover's edges; the digit is scaled to fill the cover height minus this
 U1_SLOTS = (1, 2, 3, 4)  # one dock per U1 filament position, numbered as Charles labels them
@@ -162,6 +163,20 @@ def _lead_in_wall(z0: float):
     return Pos(0, 0, z0) * (solid + extrude(nub_outline, amount=A_NUB_HEIGHT + WALL_A_EXTRA_HEIGHT))
 
 
+def _label_font_size(label: str) -> float:
+    """Largest font size up to LABEL_FONT_SIZE whose bounding box corners stay LABEL_EDGE_MARGIN inside the round end, so long names shrink instead of running off the chip."""
+    limit = COIN_RADIUS - LABEL_EDGE_MARGIN
+    size = LABEL_FONT_SIZE
+    while size > 2.0:
+        box = Pos(0, LABEL_Y, 0) * Text(label, font_size=size)
+        bb = box.bounding_box()
+        corner = math.hypot(max(abs(bb.min.X), abs(bb.max.X)), max(abs(bb.min.Y), abs(bb.max.Y)))
+        if corner <= limit:
+            return size
+        size -= 0.1
+    return size
+
+
 def coin_parts(label: str):
     """Return (body, engraving) for one filament label: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours. There is no copy number: chips travel with spools and end up in any position."""
     # Round end and flat end: the circle's own edge would stick out past the rectangle, so cut it at COIN_FLAT_END_Y.
@@ -179,7 +194,7 @@ def coin_parts(label: str):
     arms += _c_catches(COIN_THICKNESS)
     body += Rot(Z=180) * arms
 
-    engrave = Pos(0, LABEL_Y, COIN_THICKNESS) * extrude(Text(label, font_size=LABEL_FONT_SIZE), amount=-ENGRAVE_DEPTH)
+    engrave = Pos(0, LABEL_Y, COIN_THICKNESS) * extrude(Text(label, font_size=_label_font_size(label)), amount=-ENGRAVE_DEPTH)
     return body - engrave, engrave
 
 
