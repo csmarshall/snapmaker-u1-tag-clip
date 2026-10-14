@@ -82,7 +82,16 @@ C_CATCH_X = (8.7, 8.95)
 C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 
 # ---- engraving ---------------------------------------------------------------------------------
-FILAMENTS = ("PLA", "PLA+", "PETG", "ASA", "ABS", "TPU", "Nylon")  # the known names; their letters all share one line on the chip
+# The known names; their letters all share one line on the chip. Beyond the original set, these come from a 2026 survey of common filaments a U1 can print
+# (Snapmaker, Bambu Lab, Polymaker, eSun listings); high-temperature lines (PAHT-CF, PPS-CF) are left out, and nylon keeps the "Nylon" spelling.
+FILAMENTS = (
+    "PLA", "PLA+", "PLA Silk", "PLA Matte", "PLA-CF",
+    "PETG", "PETG+", "PETG HF", "PETG-CF", "PCTG",
+    "ASA", "ABS", "PC",
+    "TPU", "TPU 95A", "TPU 90A",
+    "Nylon", "Nylon CF", "Nylon GF",
+    "PVA",
+)
 LABEL_FONT_SIZE = 9.0
 LABEL_EDGE_MARGIN = 1.5  # the engraved name stays this far inside the chip's edge
 LABEL_HOOK_GAP = 1.5  # space between the top of the hook finger and the bottom of the label
@@ -228,6 +237,11 @@ def _label_line() -> float:
 LABEL_LINE_Y = _label_line()
 
 
+def file_stem(label: str) -> str:
+    """File-name-safe form of a filament name: "PLA+" -> "PLAplus", "Nylon CF" -> "Nylon_CF"."""
+    return label.replace("+", "plus").replace(" ", "_")
+
+
 def chip_parts(label: str):
     """Return (body, engraving) for one filament label: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours.
 
@@ -357,7 +371,7 @@ if __name__ == "__main__":
     out.mkdir(exist_ok=True)
     for material in FILAMENTS:
         body, engraving = chip_parts(material)
-        stem = f"chip_{material.replace('+', 'plus')}"
+        stem = f"chip_{file_stem(material)}"
         export_stl(body, str(out / f"{stem}.stl"))
         export_step(body, str(out / f"{stem}.step"))
         export_stl(engraving, str(out / f"{stem}_label.stl"))

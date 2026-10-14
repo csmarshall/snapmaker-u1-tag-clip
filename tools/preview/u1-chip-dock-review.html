@@ -87,9 +87,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   <section class="viewer-col" aria-label="3D model">
     <div class="stage" id="stage"><div class="status" id="status">Loading meshes…</div></div>
     <div class="controls">
-      <label for="mat">Chip <select id="mat">
-        <option>PLA</option><option value="PLAplus">PLA+</option><option selected>PETG</option><option>ASA</option><option>ABS</option><option>TPU</option><option>Nylon</option>
-      </select></label>
+      <label for="mat">Chip <select id="mat"><option value="PETG" selected>PETG</option></select></label>
       <label for="slot">Dock slot <select id="slot"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
       <button id="btnLift" aria-pressed="false">Lift chip out</button>
       <button id="btnChip" aria-pressed="true">Chip</button>
@@ -273,7 +271,15 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
   new ResizeObserver(resize).observe(stage);
   const recolor = () => { [chipGroup, dockGroup].forEach((g) => g.children.forEach((m) => m.material.needsUpdate = true)); refresh(); };
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", recolor);
-  resize(); setView("angle"); refresh();
+  // The chip list comes from the build (mesh/manifest.json), so new filament names appear without editing this page.
+  const label = (stem) => stem.replace(/plus/g, "+").replace(/_/g, " ");
+  fetch("mesh/manifest.json").then((r) => r.json()).then((m) => {
+    const sel = document.getElementById("mat");
+    sel.innerHTML = "";
+    m.chips.forEach((stem) => { const o = document.createElement("option"); o.value = stem; o.textContent = label(stem); if (stem === "PETG") o.selected = true; sel.appendChild(o); });
+    refresh();
+  }).catch(() => refresh());
+  resize(); setView("angle");
   (function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
 })();
 </script>

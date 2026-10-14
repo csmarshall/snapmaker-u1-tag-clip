@@ -13,7 +13,6 @@ import trimesh
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "coin" / "out"
-MATERIALS = ("PLA", "PLAplus", "PETG", "ASA", "ABS", "TPU", "Nylon")
 # Extrutim's Clip-Classic.stl from Printables 24371; not redistributed here, so the comparison skips when it is absent.
 CLIP_CLASSIC = ROOT / "thingiverse" / "printables24371_clip" / "Clips" / "Clip-Classic.stl"
 CLIP_CLASSIC_SHA256_PREFIX = "5cb545de106921d3"
@@ -29,6 +28,7 @@ def _load_model():
 
 
 M = _load_model()
+MATERIALS = tuple(M.file_stem(name) for name in M.FILAMENTS)
 
 
 def _mesh(name: str) -> trimesh.Trimesh:
@@ -152,7 +152,7 @@ def test_label_is_centred_and_clear_of_the_lips(material):
 def test_labels_share_one_line_above_the_hook():
     """All-capital names (no descenders) have their letters centred at the same height; no name's ink comes closer than LABEL_HOOK_GAP to the hook, and the lowest one sits right at it."""
     bounds = {m: _mesh(f"chip_{m}_label.stl").bounds for m in MATERIALS}
-    caps_only = [m for m in MATERIALS if m.upper() == m]
+    caps_only = [M.file_stem(n) for n in M.FILAMENTS if n.upper() == n]
     centres = [(bounds[m][0][1] + bounds[m][1][1]) / 2 for m in caps_only]
     assert max(centres) - min(centres) <= 0.15  # round letters (S, G, U) overshoot the baseline by about 0.1mm, as fonts do
     floor = -M.ARM_BASE_Y + M.LABEL_HOOK_GAP
