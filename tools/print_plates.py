@@ -38,7 +38,7 @@ PARTS = (
     (1, "Chip, PETG label", "Back face down, no pause. The recess ceiling bridges about 26mm. Press the sticker into the recess afterwards.", FLAT, [(OUT / "chip_PETG.stl", "chip"), (OUT / "chip_PETG_label.stl", "label")]),
 )
 # Plate number -> (title, filament).
-PLATES = {1: ("Fit set", "PLA")}
+PLATES = {1: ("Fit set", "PETG")}
 
 
 def split_overhang(mesh: trimesh.Trimesh, sealed_pocket_centre: np.ndarray | None = None) -> tuple[trimesh.Trimesh, trimesh.Trimesh | None]:

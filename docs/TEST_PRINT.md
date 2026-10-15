@@ -1,6 +1,6 @@
 # Test print plan
 
-One plate, in PLA: `coin/out/u1_test_print.3mf` (built by `tools/make_3mf.py`). Bodies use filament 1 and inlays (label, digit, hint) filament 2. The blank cover has supports turned on, and nothing needs a pause. The file carries no printer settings: pick the Snapmaker U1 (0.4 nozzle) presets after opening.
+One plate, in PETG: `coin/out/u1_test_print.3mf` (built by `tools/make_3mf.py`). Bodies use filament 1 and inlays (label, digit, hint) filament 2. The blank cover has supports turned on, and nothing needs a pause. The file carries no printer settings: pick the Snapmaker U1 (0.4 nozzle) presets after opening.
 
 There is no separate reader-range round. The coil is a loop about 126mm across around each socket (estimated from Snapmaker's photos, see `docs/ANTENNA.md`), and the sticker sits 28.6mm above the socket axis on the socket adapter, well inside it. The sticker is only the dock's 1.2mm back plate away from the panel, and the advice online is to keep the tag within 1 to 3cm. So the first read of a docked chip is the test. If it fails, the coil-finder puck and standoff strip in `fixtures/` are there to find out why.
 
