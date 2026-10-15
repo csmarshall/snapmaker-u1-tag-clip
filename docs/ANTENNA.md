@@ -15,6 +15,21 @@ Snapmaker's own coil-replacement guide (see below) shows each reader coil as one
 
 The tag hangs from the hook, so its centre is somewhat further out than the hook tip. The exact offset depends on the tag and wasn't measured.
 
+## The reader hardware (online research, 2026-10-15)
+
+Nobody has published a measured read range, coil size or inductance for the U1. What is known:
+
+| Fact | Source |
+|---|---|
+| Reader IC is an FM175XX (FM17550 named in the forum), close to the MFRC522; 13.56 MHz, ISO 14443 A/B only | [SnapmakerResearchGroup/RFID](https://github.com/SnapmakerResearchGroup/RFID); [forum: U1 and RFID standard](https://forum.snapmaker.com/t/u1-and-rfid-standard/39948) |
+| Coils are large, with thick wire and few turns; JST-GH 2-pin, ~20cm unshielded leads; left reader on the mainboard, right on an extension board; the antenna is a tuned LC circuit, so extending the leads past ~+40cm stops it working | [forum: how to extend RFID coils](https://forum.snapmaker.com/t/how-to-extend-rfid-coils/41020) |
+| Stock spools read at any rotation | [forum: extended RFID sensor](https://forum.snapmaker.com/t/how-to-make-an-extended-rfid-sensor/42333) |
+| Tag "within 1-3cm of reader antenna" (practical advice, not a spec) | [paxx12 firmware docs](https://snapmakeru1-extended-firmware.pages.dev/rfid_support) |
+| Best results when the tag touches the side panel | [MakerWorld 3094579 (SpoolBox RFID mod)](https://makerworld.com/en/models/3094579) |
+| RGB LED strips nearby caused misses; metal dry boxes need shielding | [forum: spool detection hardly ever works](https://forum.snapmaker.com/t/spool-detection-hardly-ever-works/41480) |
+
+What this implies: plastic is transparent at 13.56 MHz, so only the distance from the sticker to the coil counts. Our 1.8mm of plastic plus the panel is well inside the 1 to 3cm advice, so the standoff strip is probably a formality. The open question is the coil's outline: a small tag reads well anywhere inside a large loop, but poorly where it straddles the wire. The coil-finder puck answers that, or the coil's diameter could be measured from the photos in Snapmaker's coil-replacement guide (its wiki blocks automated fetching, so read it in a browser).
+
 ## Working assumption
 
 The antenna is a loop around each socket, so a sticker inside the loop and close to the panel should read. The tested positions, about 25 to 45mm from the socket axis, are all inside it. A sticker anywhere in that band, at least below the socket or up and to the right of it, should read through the side panel.
