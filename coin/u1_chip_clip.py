@@ -18,7 +18,7 @@ Printing: the chip prints back-down, with the sticker recess open on the bed sid
 import math
 from typing import Any
 
-from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE
+from socket_fingers import FINGER_HEIGHT, spread_outline
 from build123d import (
     Align,
     Box,
@@ -145,6 +145,7 @@ SOCKET_COVER_THICKNESS = 3.0  # the blank cover's plate, as thick as remmulegguh
 # Measured, not derivable: the width of 1waynger1's plug where it meets the panel (26.87mm), the best figure we have for the socket bore until one is measured on the printer.
 SOCKET_BORE_DIAMETER = 26.9
 SOCKET_COVER_OVERLAP = 1.5  # how far the blank cover's plate reaches past the bore's top edge
+COVER_LABEL_MAX_WIDTH = 0.7 * 2 * SOCKET_PLATE_RADIUS  # a free-text label on the cover (the spread sweep's +1.0) shrinks to fit this width
 SOCKET_COVER_FLAT = SOCKET_BORE_DIAMETER / 2 + SOCKET_COVER_OVERLAP  # the cover's flat top above the axis: it stands on this when printed, the fingers on supports
 MOUNT_TONGUE_LENGTH = 30.0  # how far the dock mount's tongue reaches down into the slot
 MOUNT_RISER = 3.0  # the crossbar resting on the adapter's top edge, under the dock
@@ -459,15 +460,16 @@ def _dock_extents() -> dict[str, Any]:
     }
 
 
-def _socket_fingers(axis_y: float, z_back: float):
+def _socket_fingers(axis_y: float, z_back: float, spread: float = 0.0):
     """remmulegguh's snap fingers, going into the socket from the panel at z_back, centred on a socket axis at axis_y.
 
     Fingers come from coin/socket_fingers.py, mapped from his frame (socket axis along x, +z down) into this one: sideways stays sideways, depth goes to -Z,
     down goes to -Y. That mapping is a proper rotation (determinant +1), so nothing is mirrored.
+    `spread` (mm per side, default 0 = the traced outline exactly) moves the arms and hooks outward with the root fixed; see socket_fingers.spread_outline.
     """
     # The outline is (depth into the socket, sideways); on a plane whose local x is this X and local y is -Z, a point is (sideways, depth - z_back).
     finger_plane = Plane(origin=(0, axis_y - FINGER_HEIGHT / 2, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
-    return extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in FINGER_OUTLINE]), align=None), amount=FINGER_HEIGHT)
+    return extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in spread_outline(spread)]), align=None), amount=FINGER_HEIGHT)
 
 
 def _band_clamp(sign: int, y_lo: float, y_hi: float):
@@ -571,21 +573,26 @@ def sticker_above_axis(adapter: str) -> float:
     return -_adapter_frame(adapter)["axis_y"]
 
 
-def cover_parts(slot: int | None) -> dict[str, object]:
+def cover_parts(slot: int | None, spread: float = 0.0, label: str | None = None) -> dict[str, object]:
     """The blank cover for an unused socket: the snap fingers and a round plate covering the whole bore (flat across its top, to stand on when printed), with the slot digit inlaid in the accent colour (none when slot is None).
 
     It sits on the same socket axis as the socket adapter, so the two can be compared in place.
+    `spread` (mm per side, default 0 = exactly the traced fingers) widens the fingers outward for the grip sweep (docs/FINGER_SPREAD.md). `label` engraves that text in place of the slot digit, scaled down if it would run wider than the plate allows.
     """
     assert SOCKET_COVER_FLAT < SOCKET_PLATE_RADIUS, "the cover's flat top would cut the plate off above its round edge"
     f = _adapter_frame("socket")
     axis_y, z_back, r = f["axis_y"], f["z_back"], SOCKET_PLATE_RADIUS
     below_flat = Pos(0, axis_y + SOCKET_COVER_FLAT - 2 * r) * Rectangle(4 * r, 4 * r)
     plate = Pos(0, 0, z_back) * extrude(((Pos(0, axis_y) * Circle(r)) & below_flat).faces()[0], amount=SOCKET_COVER_THICKNESS)
-    cover = plate + _socket_fingers(axis_y, z_back)
+    cover = plate + _socket_fingers(axis_y, z_back, spread)
     accent = None
-    if slot is not None:
-        size = 2 * r * 0.55 / Text(str(slot), font_size=1.0).bounding_box().size.Y
-        accent = Pos(0, axis_y - 2, z_back + SOCKET_COVER_THICKNESS) * extrude(Text(str(slot), font_size=size), amount=-ENGRAVE_DEPTH)
+    if slot is not None or label is not None:
+        text = str(slot) if label is None else label
+        unit = Text(text, font_size=1.0).bounding_box().size
+        size = 2 * r * 0.55 / unit.Y
+        if label is not None:
+            size = min(size, COVER_LABEL_MAX_WIDTH / unit.X)
+        accent = Pos(0, axis_y - 2, z_back + SOCKET_COVER_THICKNESS) * extrude(Text(text, font_size=size), amount=-ENGRAVE_DEPTH)
         cover -= accent
     return {"cover": cover, "accent": accent}
 

@@ -65,3 +65,31 @@ FINGER_OUTLINE = (
     (1.85, -9.339), (1.628, -9.421), (1.175, -9.553), (0.712, -9.641), (0.478, -9.669), (0.006, -9.691),
     (0.006, -14.991), (-0.3, -14.991), (-0.3, 15.009),
 )
+
+ROOT_DEPTH = 0.006  # the outline's points at or in front of this depth are the root (the tab and the fuse with the plate); a spread never moves them
+SPREAD_RAMP = 10.0  # mm of depth over which a spread builds up from nothing at the root to its full value; past it the arms and hooks sit rigidly shifted
+
+
+def spread_outline(spread: float = 0.0) -> tuple[tuple[float, float], ...]:
+    """FINGER_OUTLINE with the arms and hooks moved outward by `spread` mm per side, the root fixed.
+
+    Every point behind the root moves sideways away from the axis by spread * s(t), where t = (depth - ROOT_DEPTH) / SPREAD_RAMP clamped to 0..1 and s is the smoothstep 3t^2 - 2t^3.
+    Moving the inner and outer faces together keeps the arms' thickness and the hooks' shape, and the ramp (zero slope at the root, at most about 1.5 * spread / SPREAD_RAMP afterwards)
+    bends the arms out from the root instead of shearing them off it, so the corner where an arm leaves the tab is not made sharper. A spread of 0 returns the traced outline itself.
+    """
+    if spread == 0:
+        return FINGER_OUTLINE
+    moved = []
+    for depth, side in FINGER_OUTLINE:
+        t = min(max((depth - ROOT_DEPTH) / SPREAD_RAMP, 0.0), 1.0)
+        shift = spread * t * t * (3 - 2 * t)
+        moved.append((depth, side + shift if side > 0 else side - shift if side < 0 else side))
+    return tuple(moved)
+
+
+HOOK_FROM_DEPTH = 26.0  # the hooks are the outline's points this deep or deeper (the straight arms end at 25.006 and the hook's step starts at 27.006)
+
+
+def hook_half_width(spread: float = 0.0) -> float:
+    """Half-width of the hooks, the widest part of the fingers inside the socket (11.009 mm traced), at this spread."""
+    return max(abs(side) for depth, side in spread_outline(spread) if depth >= HOOK_FROM_DEPTH)
