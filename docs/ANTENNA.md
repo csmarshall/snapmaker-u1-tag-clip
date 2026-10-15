@@ -48,3 +48,7 @@ What this does not tell us:
 - **Check before trusting it:** the coil-finder puck and the standoff strip (issue #3) settle the band and the plastic thickness.
 
 All of this is human-directed and AI-assisted. The measurements come from the community files listed in `SOURCES.md`, and nothing here has been tested on a printer.
+
+## Coil size from Snapmaker's photos (2026-10-15)
+
+The coil-replacement guide's photos (`u1_rfid_coil_right_tape.jpg`, `u1_rfid_coil_left_tape.jpg`) show each coil as a single round loop of a few turns, centred on its socket boss and taped inside a moulded ring. Scaled against the boss (its outside diameter assumed 31mm, since it surrounds the 26.9mm bore), the loop is about 126mm across: 110 to 143mm if the boss is 27 to 35mm. That puts the wire roughly 55 to 72mm from the socket axis. A 25mm sticker centred 28.6mm above the axis (our socket adapter) lies wholly inside the loop with room to spare; at 43 to 47mm (1waynger1's hub adapter) its far edge comes within a few mm of the wire at the small end of that range. This is an estimate from a tilted photo, not a measurement.
