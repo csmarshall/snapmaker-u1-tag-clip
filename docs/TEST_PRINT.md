@@ -6,6 +6,8 @@ Two rounds. Round 1 answers where the reader sees a sticker, and through how muc
 
 Print both in PLA. They need no supports or pauses: the sticker drops in from the top.
 
+Both rounds are in one project, `coin/out/u1_test_print.3mf` (`tools/make_3mf.py`): plate 1 is round 1, plate 2 is round 2. Inlays use filament 2, the blank cover has supports turned on, and the chip has the sticker pause. It carries no printer settings: pick the U1 0.4mm presets after opening, with a 0.2mm first layer so a layer starts exactly at 1.20mm.
+
 | Print | File | Notes |
 |---|---|---|
 | Standoff strip | `fixtures/u1_standoff_strip.stl` | Five pockets with floors of 0.4, 0.8, 1.2, 1.6 and 2.0mm. |
@@ -30,7 +32,7 @@ Print these after round 1 has set `DOCK_FLOOR`, and rebuild first: `uv run --wit
 
 | Print | File | Orientation and notes |
 |---|---|---|
-| Chip | `coin/out/chip_PLA.stl` (+ `_label`) | Back face down. Pause at 1.20mm to drop in the sticker. |
+| Chip | `coin/out/chip_PETG.stl` (+ `_label`) | Back face down. Pause at 1.20mm to drop in the sticker. |
 | Dock | `coin/out/dock_slot1.stl` (+ `_accent`) | Standing on its bottom stop. |
 | Dock mount | `coin/out/dock_mount.stl` | Upside down, on its arm ends. The crossbar bridges about 39mm. |
 | Socket adapter | `coin/out/socket_adapter.stl` | Standing on its flat top. |

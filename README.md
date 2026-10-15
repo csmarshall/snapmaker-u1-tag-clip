@@ -29,6 +29,7 @@ uv run --with build123d python coin/u1_chip_clip.py
 uv run --with build123d --with trimesh --with manifold3d --with pytest --with rtree --with shapely --with networkx --with scipy python -m pytest -q tests
 uv run python tools/build_preview.py
 uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/print_plates.py  # test-print plates, see docs/TEST_PRINT.md
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/make_3mf.py  # coin/out/u1_test_print.3mf: both plates, inlays on filament 2, sticker pause
 ```
 
 ## Printing

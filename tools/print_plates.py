@@ -30,16 +30,18 @@ STICKER_THICKNESS = 0.4  # assumed, not yet measured (see README)
 FLAT = np.eye(3)
 ON_BOTTOM_STOP = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)  # dock: its flat end (low y) on the bed
 
-# (round, name, how it prints, rotation, [(file, colour role)]); the first file is the body, the rest are inlays in the same frame.
+# (plate, name, how it prints, rotation, [(file, colour role)]); the first file is the body, the rest are inlays in the same frame.
 PARTS = (
     (1, "Standoff strip", "Flat. The sticker goes into each pocket after printing; no pause.", FLAT, [(FIXTURES / "u1_standoff_strip.stl", "fixture")]),
     (1, "Coin-finder puck", "Flat. The sticker goes into the pocket after printing; no pause.", FLAT, [(FIXTURES / "u1_coil_finder_puck.stl", "fixture")]),
-    (2, "Chip (PLA)", f"Back face down. Pause at the layer starting at {PAUSE_HEIGHT:.2f}mm, drop the sticker in, resume.", FLAT, [(OUT / "chip_PLA.stl", "chip"), (OUT / "chip_PLA_label.stl", "label")]),
     (2, "Dock, slot 1", "Standing on its bottom stop.", ON_BOTTOM_STOP, [(OUT / "dock_slot1.stl", "dock"), (OUT / "dock_slot1_accent.stl", "label")]),
     (2, "Dock mount", "Upside down on its arm ends. The crossbar bridges about 39mm.", UPSIDE_DOWN, [(OUT / "dock_mount.stl", "mount")]),
     (2, "Socket adapter", "Standing on its flat top.", UPSIDE_DOWN, [(OUT / "socket_adapter.stl", "adapter")]),
     (2, "Blank cover, slot 2", "Standing on its flat top, with slicer supports under the fingers.", UPSIDE_DOWN, [(OUT / "cover_slot2.stl", "mount"), (OUT / "cover_slot2_accent.stl", "label")]),
+    (2, "Chip, PETG label", f"Back face down. Pause at the layer starting at {PAUSE_HEIGHT:.2f}mm, drop the sticker in, resume.", FLAT, [(OUT / "chip_PETG.stl", "chip"), (OUT / "chip_PETG_label.stl", "label")]),
 )
+# Plate number -> (title, filament).
+PLATES = {1: ("Round 1: reader range", "PLA"), 2: ("Round 2: fit set", "PLA")}
 
 
 def split_overhang(mesh: trimesh.Trimesh, sealed_pocket_centre: np.ndarray | None = None) -> tuple[trimesh.Trimesh, trimesh.Trimesh | None]:
@@ -64,24 +66,19 @@ def write(mesh_dir: Path, stem: str, mesh: trimesh.Trimesh, role: str) -> dict:
     return {"file": name, "role": role}
 
 
-def main() -> int:
-    """Stage the page, meshes and layout; return a shell exit code."""
+def lay_out() -> dict[int, list[dict]]:
+    """Return each round's parts placed on the bed as printed: name, note, size, and [(source file, colour role, placed mesh)]."""
     missing = [str(f) for *_, files in PARTS for f, _ in files if not f.exists()]
     if missing:
-        print(f"missing build outputs (run the builds first): {', '.join(missing)}", file=sys.stderr)
-        return 1
-    mesh_dir = STAGE / "mesh"
-    shutil.rmtree(mesh_dir, ignore_errors=True)
-    mesh_dir.mkdir(parents=True)
-    plates = {}
+        raise FileNotFoundError(f"missing build outputs (run the builds first): {', '.join(missing)}")
+    plates: dict[int, list[dict]] = {}
     for rnd in sorted({p[0] for p in PARTS}):
         x = y = row_depth = 0.0
-        lo, hi = np.full(2, np.inf), np.full(2, -np.inf)
         items = []
         for _, name, note, rotation, files in (p for p in PARTS if p[0] == rnd):
+            assert np.isclose(np.linalg.det(rotation), 1.0)
             meshes = [trimesh.load(f, force="mesh") for f, _ in files]
             for m in meshes:
-                assert np.isclose(np.linalg.det(rotation), 1.0)
                 m.vertices = m.vertices @ rotation.T
             body = meshes[0]
             size = body.extents
@@ -90,23 +87,41 @@ def main() -> int:
             shift = np.array([x, y, 0.0]) - body.bounds[0]  # body on the bed at the cursor; inlays move with it
             for m in meshes:
                 m.apply_translation(shift)
-            lo, hi = np.minimum(lo, body.bounds[0][:2]), np.maximum(hi, body.bounds[1][:2])
             x, row_depth = x + size[0] + GAP, max(row_depth, size[1])
-            entry = {"name": name, "note": note, "size": [round(float(v), 1) for v in size], "meshes": []}
-            for (f, role), m in zip(files, meshes):
-                good, over = split_overhang(m, shift if role == "chip" else None)
+            items.append({"name": name, "note": note, "size": size, "shift": shift, "files": [(f, role, m) for (f, role), m in zip(files, meshes)]})
+        plates[rnd] = items
+    return plates
+
+
+def main() -> int:
+    """Stage the page, meshes and layout; return a shell exit code."""
+    try:
+        placed = lay_out()
+    except FileNotFoundError as e:
+        print(e, file=sys.stderr)
+        return 1
+    mesh_dir = STAGE / "mesh"
+    shutil.rmtree(mesh_dir, ignore_errors=True)
+    mesh_dir.mkdir(parents=True)
+    plates = {}
+    for rnd, parts in placed.items():
+        items = []
+        for part in parts:
+            entry = {"name": part["name"], "note": part["note"], "size": [round(float(v), 1) for v in part["size"]], "meshes": []}
+            for f, role, m in part["files"]:
+                good, over = split_overhang(m, part["shift"] if role == "chip" else None)
                 entry["meshes"].append(write(mesh_dir, f.stem, good, role))
                 if over is not None:
                     entry["meshes"].append(write(mesh_dir, f.stem + "_overhang", over, "overhang"))
                     entry["overhang_mm2"] = entry.get("overhang_mm2", 0) + round(float(over.area))
-            if files[0][1] == "chip":
+            if part["files"][0][1] == "chip":
                 # The sticker where it lies when the print resumes: on the back skin, centred on the chip (its frame origin).
                 disc = trimesh.creation.cylinder(radius=STICKER_DIAMETER / 2, height=STICKER_THICKNESS, sections=96)
-                disc.apply_translation(np.array([0, 0, BACK_SKIN + STICKER_THICKNESS / 2]) + shift)
+                disc.apply_translation(np.array([0, 0, BACK_SKIN + STICKER_THICKNESS / 2]) + part["shift"])
                 entry["meshes"].append(write(mesh_dir, "sticker", disc, "sticker"))
                 entry["pause"] = PAUSE_HEIGHT
             items.append(entry)
-        plates[str(rnd)] = {"parts": items, "centre": ((lo + hi) / 2).round(1).tolist()}
+        plates[str(rnd)] = {"title": PLATES[rnd][0], "filament": PLATES[rnd][1], "parts": items}
     layout = {"bed": BED, "pause": PAUSE_HEIGHT, "pocket": [BACK_SKIN, BACK_SKIN + POCKET_DEPTH], "sticker": [STICKER_DIAMETER, STICKER_THICKNESS], "plates": plates}
     (STAGE / "layout.json").write_text(json.dumps(layout, indent=1))
     shutil.copy(ROOT / "tools" / "preview" / "u1-test-print.html", STAGE / "u1-test-print.html")

@@ -86,10 +86,7 @@ ol.parts .flag { color: var(--overhang); }
   </header>
 
   <section class="viewer-col" aria-label="Build plate">
-    <div class="tabs" role="group" aria-label="Plate">
-      <button id="r1" type="button" aria-pressed="false">Round 1: reader range</button>
-      <button id="r2" type="button" aria-pressed="true">Round 2: fit set</button>
-    </div>
+    <div class="tabs" role="group" aria-label="Plate" id="tabs"></div>
     <div class="stage" id="stage"><div class="status" id="status">Loading…</div></div>
     <div class="layer">
       <label for="height" class="meta">Print up to</label>
@@ -106,7 +103,7 @@ ol.parts .flag { color: var(--overhang); }
 
   <section class="side">
     <div>
-      <h2 id="round-title">Round 2: fit set</h2>
+      <h2 id="round-title">Round 1: reader range</h2>
       <p class="round-intro" id="round-intro"></p>
     </div>
     <ol class="parts" id="parts"></ol>
@@ -134,8 +131,8 @@ ol.parts .flag { color: var(--overhang); }
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const ROLES = { fixture: ["--fixture", "Fixture"], chip: ["--chip", "Chip"], dock: ["--dock", "Dock"], mount: ["--mount", "Mount and cover"], adapter: ["--adapter", "Socket adapter"], label: ["--label", "Second colour"], sticker: ["--sticker", "Sticker (placed at the pause)"], overhang: ["--overhang", "Needs support"] };
   const INTRO = {
-    1: "Print these first. They show where on the side panel the reader sees a sticker, and through how much plastic. The answers set the dock's floor thickness and the sticker height before round 2 is printed.",
-    2: "Print after round 1 has set the floor thickness, then rebuild. These check the slides, clamps and snaps, then the read through the finished dock.",
+    1: "Print these first, in PLA. They show where on the side panel the reader sees a sticker, and through how much plastic. The answers set the dock's floor thickness and the sticker height before round 2 is printed.",
+    2: "Print after round 1 has set the floor thickness, then rebuild. In PLA. These check the slides, clamps and snaps, then the read through the finished dock.",
   };
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -165,7 +162,7 @@ ol.parts .flag { color: var(--overhang); }
 
   const plateGroup = new THREE.Group(); scene.add(plateGroup);
   const bedGroup = new THREE.Group(); scene.add(bedGroup);
-  let layout = null, round = 2, overhangOn = true, maxZ = 60, pauseMarker = null;
+  let layout = null, round = 1, overhangOn = true, maxZ = 60, pauseMarker = null;
 
   function drawBed() {
     bedGroup.clear();
@@ -187,11 +184,10 @@ ol.parts .flag { color: var(--overhang); }
 
   async function show(n) {
     round = n;
-    document.getElementById("r1").setAttribute("aria-pressed", String(n === 1));
-    document.getElementById("r2").setAttribute("aria-pressed", String(n === 2));
-    document.getElementById("round-title").textContent = n === 1 ? "Round 1: reader range" : "Round 2: fit set";
-    document.getElementById("round-intro").textContent = INTRO[n];
     const plate = layout.plates[String(n)];
+    document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.plate === String(n))));
+    document.getElementById("round-title").textContent = "Plate " + n + " · " + plate.title + " (" + plate.filament + ")";
+    document.getElementById("round-intro").textContent = INTRO[n] || "";
     status.textContent = "Loading meshes…";
     const meshes = await Promise.all(plate.parts.flatMap((p) => p.meshes.map((m) => load("mesh/" + m.file).then((g) => {
       const mesh = new THREE.Mesh(g, mat(m.role)); mesh.userData.role = m.role; mesh.visible = m.role !== "overhang" || overhangOn; return mesh;
@@ -243,8 +239,6 @@ ol.parts .flag { color: var(--overhang); }
     document.getElementById("height-out").textContent = top ? "all layers" : v.toFixed(2) + " mm";
   }
 
-  document.getElementById("r1").addEventListener("click", () => show(1));
-  document.getElementById("r2").addEventListener("click", () => show(2));
   document.getElementById("height").addEventListener("input", applyHeight);
   document.getElementById("to-pause").addEventListener("click", () => {
     // Just under the pause height: the pocket is still open and the sticker is in it.
@@ -267,7 +261,12 @@ ol.parts .flag { color: var(--overhang); }
     document.getElementById("pause-h").textContent = l.pause.toFixed(2) + " mm";
     document.getElementById("pause-h2").textContent = l.pause.toFixed(2) + " mm";
     document.getElementById("skin").textContent = l.pocket[0].toFixed(1) + " mm";
-    drawBed(); show(2);
+    const tabs = document.getElementById("tabs");
+    for (const [n, p] of Object.entries(l.plates)) {
+      const b = document.createElement("button"); b.type = "button"; b.dataset.plate = n; b.textContent = "Plate " + n + ": " + p.title.replace(/^Round \d: /, "");
+      b.addEventListener("click", () => show(Number(n))); tabs.append(b);
+    }
+    drawBed(); show(1);
   }).catch(() => { status.textContent = "Could not load the plate layout."; });
 })();
 </script>
