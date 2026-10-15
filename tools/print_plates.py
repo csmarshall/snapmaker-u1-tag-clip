@@ -48,6 +48,12 @@ INTEGRATED_PARTS = (
 )
 INTEGRATED_PLATES = {1: ("Integrated dock", "PETG")}
 
+# The dock with the socket fingers on its back (docs/DOCK_FINGERS.md): standing on its bottom stop like the plain dock, the fingers stick out sideways in the layer plane.
+FINGERS_PARTS = (
+    (1, "Dock with fingers, slot 1", "Standing on its bottom stop; the fingers print in-layer and need support under them (build plate only).", ON_BOTTOM_STOP, [(OUT / "dock_fingers_slot1.stl", "dock"), (OUT / "dock_fingers_slot1_accent.stl", "label")]),
+)
+FINGERS_PLATES = {1: ("Dock with fingers", "PETG")}
+
 
 def split_overhang(mesh: trimesh.Trimesh, sealed_pocket_centre: np.ndarray | None = None) -> tuple[trimesh.Trimesh, trimesh.Trimesh | None]:
     """Return (faces that print unsupported, faces facing down more steeply than 45 degrees above the bed).

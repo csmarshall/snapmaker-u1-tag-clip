@@ -577,6 +577,21 @@ def dock_integrated_parts(slot: int | None) -> dict[str, object]:
     return {"dock": parts["dock"] + stem, "accent": parts["accent"], "stem": stem}
 
 
+STICKER_CENTRE_Y = 0.0  # the chip frame's origin is the sticker's centre (the recess is centred on it), so this is also the dock's socket axis in dock_fingers_parts
+
+
+def dock_fingers_parts(slot: int | None) -> dict[str, object]:
+    """The dock with remmulegguh's snap fingers on its back, no adapter, slot, dovetail or mount (issue #8): it plugs into the spool-holder socket where a spool would sit.
+
+    The dock is dock_parts(slot, mount_grooves=False) with its back face on the panel plane (z = _dock_extents()["z_back"]) and the fingers' axis through the sticker's
+    centre, so the sticker sits on the socket axis. The fingers' 0.3 mm tab, in front of the panel face, is buried in the back plate. Returns dock (body and fingers),
+    accent (as in dock_parts) and fingers (the added geometry alone).
+    """
+    parts = dock_parts(slot, mount_grooves=False)
+    fingers = _socket_fingers(STICKER_CENTRE_Y, _dock_extents()["z_back"])
+    return {"dock": parts["dock"] + fingers, "accent": parts["accent"], "fingers": fingers}
+
+
 def socket_adapter_parts() -> dict[str, object]:
     """Our socket adapter: remmulegguh's snap fingers behind a plate with 1waynger1's slot, so the dock mount fits it as it fits his hub adapter.
 
@@ -647,6 +662,12 @@ if __name__ == "__main__":
             BRepTools.Clean_s(integrated[name].wrapped)
             export_stl(integrated[name], str(out / (f"dock_integrated_slot{slot}.stl" if name == "dock" else f"dock_integrated_slot{slot}_{name}.stl")))
         export_step(integrated["dock"], str(out / f"dock_integrated_slot{slot}.step"))
+    for slot in U1_SLOTS:
+        with_fingers = dock_fingers_parts(slot)
+        for name in ("dock", "accent"):
+            BRepTools.Clean_s(with_fingers[name].wrapped)
+            export_stl(with_fingers[name], str(out / (f"dock_fingers_slot{slot}.stl" if name == "dock" else f"dock_fingers_slot{slot}_{name}.stl")))
+        export_step(with_fingers["dock"], str(out / f"dock_fingers_slot{slot}.step"))
     for name, shape in (("dock_mount", dock_mount_parts()["dock_mount"]), ("socket_adapter", socket_adapter_parts()["socket_adapter"])):
         export_stl(shape, str(out / f"{name}.stl"))
         export_step(shape, str(out / f"{name}.step"))
@@ -654,5 +675,6 @@ if __name__ == "__main__":
     print("chip: print back-down, no pause; press the sticker into the recess in its back afterwards")
     print("dock: print standing on its bottom stop (flat end down); tape it to the panel, or push it into the dock mount")
     print("integrated dock (dovetail built in, no mount): print lying on its side face, see docs/INTEGRATED_DOCK.md")
+    print("dock with socket fingers (no adapter): print standing on its bottom stop with supports under the fingers, see docs/DOCK_FINGERS.md")
     print("dock mount: print upside down, standing on the ends of its arms; socket adapter: print standing on the plate's flat top and the fingers' top face; cover: print standing on the plate's flat top, with supports under the fingers")
     print(f"dock mount: the sticker sits {sticker_above_axis('socket'):.1f} mm above the socket axis on our socket adapter, {sticker_above_axis('hub'):.1f} mm on 1waynger1's hub adapter ({'near' if HUB_NEAR_END_UP else 'far'} end up)")
