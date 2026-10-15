@@ -10,6 +10,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import shapely
 import trimesh
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -293,14 +294,39 @@ def test_mount_is_held_by_our_socket_adapter(shift):
     _held_by(_mesh("socket_adapter.stl"), shift)
 
 
-def test_socket_adapter_and_cover_stand_on_one_flat_face_for_printing():
+def _finger_top(m: trimesh.Trimesh) -> float:
+    """The highest point of the snap fingers (everything behind the panel face)."""
+    return m.vertices[(m.vertices[:, 2] < -M.DOCK_BACK_GAP - M.DOCK_FLOOR - 0.5)][:, 1].max()
+
+
+def test_socket_adapter_stands_on_one_flat_face_for_printing():
     """Standing on its top: the plate's flat top and the fingers' top face are the highest points, level with each other."""
     top = M._adapter_frame("socket")["axis_y"] + M.SOCKET_PLATE_FLAT
-    for name in ("socket_adapter.stl", "cover_slot3.stl"):
-        m = _mesh(name)
-        assert m.bounds[1][1] == pytest.approx(top, abs=0.02)
-        finger_tops = m.vertices[(m.vertices[:, 2] < -M.DOCK_BACK_GAP - M.DOCK_FLOOR - 0.5)][:, 1]
-        assert finger_tops.max() == pytest.approx(top, abs=0.02)
+    m = _mesh("socket_adapter.stl")
+    assert m.bounds[1][1] == pytest.approx(top, abs=0.02)
+    assert _finger_top(m) == pytest.approx(top, abs=0.02)
+
+
+def test_cover_stands_on_its_flat_top_with_fingers_below_it():
+    """The cover's flat top is its highest point (it prints standing on it); the fingers stop SOCKET_PLATE_FLAT above the axis, so they print on supports."""
+    axis_y = M._adapter_frame("socket")["axis_y"]
+    m = _mesh("cover_slot3.stl")
+    assert m.bounds[1][1] == pytest.approx(axis_y + M.SOCKET_COVER_FLAT, abs=0.02)
+    assert _finger_top(m) == pytest.approx(axis_y + M.SOCKET_PLATE_FLAT, abs=0.02)
+
+
+def test_cover_plate_hides_his_plug_outline():
+    """Independent check: 1waynger1's plug, where it meets the panel (the best stand-in we have for the socket bore), lies wholly inside the cover's plate, seen from the front."""
+    his = _his_hub_base()
+    shift = M._adapter_frame("socket")["axis_y"] - M._adapter_frame("hub")["axis_y"]
+    z_back = M._adapter_frame("socket")["z_back"]
+    plug = his.section(plane_origin=[0, 0, z_back - 0.3], plane_normal=[0, 0, 1])
+    bore = shapely.unary_union([shapely.Polygon(e[:, :2] + [0, shift]) for e in plug.discrete]).convex_hull
+    plate = _mesh("cover_slot3.stl").section(plane_origin=[0, 0, z_back + 0.1], plane_normal=[0, 0, 1])
+    face = shapely.unary_union([shapely.Polygon(e[:, :2]) for e in plate.discrete]).convex_hull
+    assert bore.area > 500  # the plug's outside, not just its screw hole
+    assert face.contains(bore)
+    assert face.exterior.distance(bore) > M.SOCKET_COVER_OVERLAP - 0.5
 
 
 def test_cover_parts_are_watertight_and_disjoint():

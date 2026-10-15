@@ -1,4 +1,4 @@
-"""Draw the socket adapter and the dock mount on a print bed, each standing on its top end as printed, and mark the faces that would need support (facing down more steeply than 45 degrees, not on the bed).
+"""Draw the socket adapter, the dock mount and the blank cover on a print bed, each standing on its top end as printed, and mark the faces that would need support (facing down more steeply than 45 degrees, not on the bed).
 
 Writes a PNG for the review page. Run after the build: uv run --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/print_orientation.py <out.png>
 """
@@ -19,8 +19,8 @@ LIGHT = np.array([-0.3, 0.6, 0.75]) / np.linalg.norm([-0.3, 0.6, 0.75])
 
 
 # Chip frame (X width, Y up the dock, Z out from the panel) to printer frame (Z up from the bed), as proper rotations (rows are the printer axes).
-UPSIDE_DOWN = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]], float)  # the part's top end on the bed: the adapter's flat top and fingers, the mount's arm ends
-PIECES = (("socket_adapter.stl", "Socket adapter, standing on its flat top and the fingers' top face"), ("dock_mount.stl", "Dock mount, standing on the ends of its arms"))
+UPSIDE_DOWN = np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]], float)  # the part's top end on the bed: the adapter's flat top and fingers, the mount's arm ends, the cover's flat top
+PIECES = (("socket_adapter.stl", "Socket adapter, standing on its flat top and the fingers' top face"), ("dock_mount.stl", "Dock mount, standing on the ends of its arms"), ("cover_slot1.stl", "Blank cover, standing on the plate's flat top"))
 
 
 def orient(mesh: trimesh.Trimesh, rotation: np.ndarray) -> trimesh.Trimesh:
@@ -65,7 +65,7 @@ def main() -> int:
     right = np.cross([0, 0, 1], cam); right /= np.linalg.norm(right)
     upv = np.cross(cam, right)
     below = np.array([right, upv, cam])
-    fig, axs = plt.subplots(2, len(PIECES), figsize=(14, 12))
+    fig, axs = plt.subplots(2, len(PIECES), figsize=(7 * len(PIECES), 12))
     for col, (name, title) in enumerate(PIECES):
         m = orient(trimesh.load(OUT / name), UPSIDE_DOWN)
         out_of_panel = UPSIDE_DOWN @ [0, 0, 1]  # the chip's front direction in the printer frame, drawn to the right

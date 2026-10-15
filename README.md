@@ -35,7 +35,7 @@ uv run python tools/build_preview.py
 - **Chip:** back face down. Pause at the layer that starts at 1.20mm (`PAUSE_HEIGHT`), drop the sticker into its pocket, resume. For two colours, load `chip_<material>.stl` and `chip_<material>_label.stl` together as one object.
 - **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. The same `dock_slot<n>` either tapes to the panel over the antenna with VHB, or pushes into the dock mount. For two colours, load `dock_slot<n>.stl` (body) with `dock_slot<n>_accent.stl` (the slot digit and the orientation hint, inlaid flush).
 - **Dock mount** (`dock_mount.stl`): print upside down, standing on the ends of its arms; the crossbar bridges about 39mm between them.
-- **Socket adapter** (`socket_adapter.stl`) and **blank cover** (`cover_slot<n>.stl` plus `_accent` for the digit): print standing on the plate's flat top and the fingers' top face. Both snap into a spool-holder socket with remmulegguh's fingers. `hub_adapter_standin.stl` only stands in for 1waynger1's base in the viewer and checks; it is not a print.
+- **Socket adapter** (`socket_adapter.stl`): print standing on the plate's flat top and the fingers' top face. **Blank cover** (`cover_slot<n>.stl` plus `_accent` for the digit): print standing on the plate's flat top, with supports under the fingers; its plate is round almost to the top so it hides the whole socket bore. Both snap into a spool-holder socket with remmulegguh's fingers. `hub_adapter_standin.stl` only stands in for 1waynger1's base in the viewer and checks; it is not a print.
 - Every sliding gap derives from `FIT_CLEARANCE` (0.3mm). Change that one number after a fit test.
 
 ## Parts and terms
