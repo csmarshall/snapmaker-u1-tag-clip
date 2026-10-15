@@ -1,6 +1,6 @@
 # Where the U1's tag reader sees a sticker (working assumption)
 
-Snapmaker's own coil-replacement guide (see below) shows each reader coil as one large copper loop glued to the inside of the side panel, ringed around a spool-holder socket. Its exact size and the reading range have not been measured. This page records that and what the earlier tag holders imply, so the clip-mount dock (issue #2) and the VHB dock (issue #5) can be placed sensibly before anyone measures it. Treat it as an estimate until the coin-finder puck (issue #3) confirms or corrects it.
+Snapmaker's own coil-replacement guide (see below) shows each reader coil as one large copper loop glued to the inside of the side panel, ringed around a spool-holder socket. Its exact size and the reading range have not been measured. This page records that and what the earlier tag holders imply, so the clip-mount dock (issue #2) and the VHB dock (issue #5) can be placed sensibly before anyone measures it. Treat it as an estimate until the coil-finder puck (issue #3) confirms or corrects it.
 
 ## Evidence
 
@@ -30,6 +30,6 @@ What this does not tell us:
 - **First read test:** check the sticker reads on both adapters before printing a set.
 - **Testing a read:** `FILAMENT_DT_UPDATE CHANNEL=<0-3>` in the Fluidd console re-reads a channel (channel 1 is 0), per Snapmaker's RFID troubleshooting page.
 - **VHB mount (issue #5):** the same spot. Below the socket, the sticker centre is about 35 to 40mm from the socket's centre.
-- **Check before trusting it:** the coin-finder puck and the standoff strip (issue #3) settle the band and the plastic thickness.
+- **Check before trusting it:** the coil-finder puck and the standoff strip (issue #3) settle the band and the plastic thickness.
 
 All of this is human-directed and AI-assisted. The measurements come from the community files listed in `SOURCES.md`, and nothing here has been tested on a printer.

@@ -33,7 +33,7 @@ ON_BOTTOM_STOP = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)  # dock: it
 # (plate, name, how it prints, rotation, [(file, colour role)]); the first file is the body, the rest are inlays in the same frame.
 PARTS = (
     (1, "Standoff strip", "Flat. The sticker goes into each pocket after printing; no pause.", FLAT, [(FIXTURES / "u1_standoff_strip.stl", "fixture")]),
-    (1, "Coin-finder puck", "Flat. The sticker goes into the pocket after printing; no pause.", FLAT, [(FIXTURES / "u1_coil_finder_puck.stl", "fixture")]),
+    (1, "Coil-finder puck", "Flat. The sticker goes into the pocket after printing; no pause.", FLAT, [(FIXTURES / "u1_coil_finder_puck.stl", "fixture")]),
     (2, "Dock, slot 1", "Standing on its bottom stop.", ON_BOTTOM_STOP, [(OUT / "dock_slot1.stl", "dock"), (OUT / "dock_slot1_accent.stl", "label")]),
     (2, "Dock mount", "Upside down on its arm ends. The crossbar bridges about 39mm.", UPSIDE_DOWN, [(OUT / "dock_mount.stl", "mount")]),
     (2, "Socket adapter", "Standing on its flat top.", UPSIDE_DOWN, [(OUT / "socket_adapter.stl", "adapter")]),

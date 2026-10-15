@@ -18,7 +18,7 @@ The U1 only reads a tag when the auto feeder first engages, so put the coin in t
 | `tests/test_fit.py` | Fit and consistency checks on the built files, plus a comparison of the clip with Extrutim's original (skipped when that file is absent). |
 | `tools/build_preview.py`, `tools/preview/` | Stages the rotatable 3D review page and its meshes in `coin/out/preview/` for publishing as an artifact. |
 | `docs/ANTENNA.md` | Where the U1's reader probably sees a sticker, worked out from earlier tag holders (an estimate until measured). |
-| `fixtures/` | Test prints for finding where and through how much plastic the U1's reader still sees a sticker: a standoff strip (0.4 to 2.0mm floors) and a handled coin-finder puck. `fixtures/u1_fixtures.py` regenerates them. |
+| `fixtures/` | Test prints for finding where and through how much plastic the U1's reader still sees a sticker: a standoff strip (0.4 to 2.0mm floors) and a handled coil-finder puck. `fixtures/u1_fixtures.py` regenerates them. |
 | `install_onshape_mcp.sh` | Optional helper that registers an Onshape MCP server for Claude Code (dry run by default). |
 | `TOOLS-INSTALLED.md` | What was installed while working on this and how to remove it. |
 

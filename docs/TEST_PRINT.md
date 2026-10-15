@@ -11,7 +11,7 @@ Both rounds are in one project, `coin/out/u1_test_print.3mf` (`tools/make_3mf.py
 | Print | File | Notes |
 |---|---|---|
 | Standoff strip | `fixtures/u1_standoff_strip.stl` | Five pockets with floors of 0.4, 0.8, 1.2, 1.6 and 2.0mm. |
-| Coin-finder puck | `fixtures/u1_coil_finder_puck.stl` | A 0.6mm floor, a handle, and a mark hole at the sticker centre. |
+| Coil-finder puck | `fixtures/u1_coil_finder_puck.stl` | A 0.6mm floor, a handle, and a mark hole at the sticker centre. |
 
 For each check, write a tag with the app, put it in the fixture, hold the fixture floor-down against the outside of the side panel, and run `FILAMENT_DT_UPDATE CHANNEL=<0-3>`.
 
