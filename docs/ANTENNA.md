@@ -28,7 +28,7 @@ Nobody has published a measured read range, coil size or inductance for the U1. 
 | Best results when the tag touches the side panel | [MakerWorld 3094579 (SpoolBox RFID mod)](https://makerworld.com/en/models/3094579) |
 | RGB LED strips nearby caused misses; metal dry boxes need shielding | [forum: spool detection hardly ever works](https://forum.snapmaker.com/t/spool-detection-hardly-ever-works/41480) |
 
-What this implies: plastic is transparent at 13.56 MHz, so only the distance from the sticker to the coil counts. Our 1.8mm of plastic plus the panel is well inside the 1 to 3cm advice, so the standoff strip is probably a formality. The open question is the coil's outline: a small tag reads well anywhere inside a large loop, but poorly where it straddles the wire. The coil-finder puck answers that, or the coil's diameter could be measured from the photos in Snapmaker's coil-replacement guide (its wiki blocks automated fetching, so read it in a browser).
+What this implies: plastic is transparent at 13.56 MHz, so only the distance from the sticker to the coil counts. With the sticker in an open recess on the chip's back, only the dock's 1.2mm back plate and a little clearance separate it from the panel, well inside the 1 to 3cm advice. The other question is the coil's outline: a small tag reads well anywhere inside a large loop, but poorly where it straddles the wire. The next section estimates it from Snapmaker's photos.
 
 ## Working assumption
 
@@ -36,7 +36,7 @@ The antenna is a loop around each socket, so a sticker inside the loop and close
 
 What this does not tell us:
 - How far the band really extends inwards and outwards, or whether every angle works (only two have been seen).
-- How much plastic and air the reader tolerates. The earlier holders put the tag almost against the panel, whereas our sticker sits behind 1.8mm of plastic plus a 0.3mm gap, and VHB tape would add more.
+- How much plastic and air the reader tolerates. The earlier holders put the tag almost against the panel, whereas our sticker sits behind the dock's 1.2mm back plate plus up to 0.5mm of gap, and VHB tape would add more.
 - Whether the two sides of the printer (slots 1 and 2 versus 3 and 4) mirror each other.
 
 ## What follows for the design
@@ -45,7 +45,7 @@ What this does not tell us:
 - **First read test:** check the sticker reads on both adapters before printing a set.
 - **Testing a read:** `FILAMENT_DT_UPDATE CHANNEL=<0-3>` in the Fluidd console re-reads a channel (channel 1 is 0), per Snapmaker's RFID troubleshooting page.
 - **VHB mount (issue #5):** the same spot. Below the socket, the sticker centre is about 35 to 40mm from the socket's centre.
-- **Check before trusting it:** the coil-finder puck and the standoff strip (issue #3) settle the band and the plastic thickness.
+- **Check before trusting it:** the first read of a docked chip on the socket adapter is the test (docs/TEST_PRINT.md). The coil-finder puck and standoff strip in `fixtures/` remain for diagnosing a failed read.
 
 All of this is human-directed and AI-assisted. The measurements come from the community files listed in `SOURCES.md`, and nothing here has been tested on a printer.
 

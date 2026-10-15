@@ -4,7 +4,7 @@ The day-to-day loop this design is meant to support, and what it depends on. Sou
 
 ## The loop
 
-1. **Library:** each spool in the library has its own coin clipped to the filament end. The coin's NTAG215 sticker (sealed inside the chip during printing) is paired to that spool in Spoolman (by UID, or written by an app, see below).
+1. **Library:** each spool in the library has its own coin clipped to the filament end. The coin's NTAG215 sticker (pressed into the recess in the chip's back) is paired to that spool in Spoolman (by UID, or written by an app, see below).
 2. **Load:** take the coin off the spool, drop it into the holder on the printer (sticker side toward the panel), then feed the filament. The U1 reads the tag and takes vendor, material, variant and colour from it or from Spoolman. In the Filament Manager (`http://<printer-ip>/filament/`) the "Read spool tags" button re-reads all four channels, which may save re-feeding after a swap. From the Fluidd console, `FILAMENT_DT_UPDATE CHANNEL=<0-3>` re-reads one channel (channel 1 is 0), per Snapmaker's wiki.
 3. **Print:** Moonraker tracks the active spool, so Spoolman can update remaining weight as the print runs. Slice in Snapmaker Orca with the detected filament.
 4. **Unload:** remove the filament, take the coin out of the holder and clip it back onto the spool's end, then shelve the spool.

@@ -138,12 +138,19 @@ def test_back_plate_covers_the_whole_sticker():
     assert dock.contains(probes).all()
 
 
-def test_sticker_pocket_is_sealed():
-    """The pocket is inside the chip: a point in it is outside the solid, and the back face under it is solid."""
+def test_sticker_pocket_opens_on_the_back():
+    """The pocket is a recess in the back face, so the sticker goes in after printing and can be swapped: open at the back face, solid above its ceiling."""
     chip = _mesh("chip_PETG.stl")
-    assert not chip.contains([[0, 0, M.BACK_SKIN + M.POCKET_DEPTH / 2]])[0]
-    assert chip.contains([[0, 0, M.BACK_SKIN / 2]])[0]
-    assert chip.contains([[0, 0, M.PAUSE_HEIGHT + 0.1]])[0]
+    assert not chip.contains([[0, 0, 0.05]])[0]
+    assert not chip.contains([[0, 0, M.POCKET_DEPTH - 0.05]])[0]
+    assert chip.contains([[0, 0, M.POCKET_DEPTH + 0.1]])[0]
+    edge = M.POCKET_DIAMETER / 2 - 0.1
+    assert not chip.contains([[edge, 0, M.POCKET_DEPTH / 2]])[0]
+
+
+def test_sticker_sits_below_the_back_face():
+    """A sticker in the recess stays under the back face, so it never rubs the dock's back plate."""
+    assert M.POCKET_DEPTH - M.STICKER_THICKNESS >= 0.1
 
 
 @pytest.mark.parametrize("material", MATERIALS)
@@ -173,7 +180,7 @@ def test_labels_share_one_line_above_the_hook():
 
 
 def test_label_floor_clears_the_sticker_pocket():
-    assert M.COIN_THICKNESS - M.ENGRAVE_DEPTH - M.PAUSE_HEIGHT >= 0.4
+    assert M.COIN_THICKNESS - M.ENGRAVE_DEPTH - M.POCKET_DEPTH >= 0.4
 
 
 def test_hook_finger_stands_proud_of_the_lower_pocket():

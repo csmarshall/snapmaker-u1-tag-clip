@@ -12,7 +12,7 @@ the same licence; SOURCES.md has the details.
 
 Chip frame: X = width, Y = up (the chip slides down -Y into the dock, flat end first), Z = front (arms side), back face at Z=0.
 
-Printing: the chip prints back-down and pauses at PAUSE_HEIGHT for the sticker; the dock prints standing on its bottom stop
+Printing: the chip prints back-down, with the sticker recess open on the bed side (the sticker goes in afterwards); the dock prints standing on its bottom stop
 (flat end down), so nothing on it bridges or overhangs more than 45 degrees.
 """
 import math
@@ -45,17 +45,16 @@ FIT_CLEARANCE = 0.3  # every sliding gap between chip and dock derives from this
 
 # ---- sticker and chip body (mm) ---------------------------------------------------------------
 STICKER_DIAMETER = 25.0
-STICKER_CLEARANCE = 0.3  # per side, so the sticker drops into its pocket during the pause
-BACK_SKIN = 0.6  # plastic between the sticker and the chip's back face (three 0.2mm layers)
-POCKET_DEPTH = 0.6  # sealed sticker pocket; the sticker is about 0.4mm thick (not yet measured)
-COIN_THICKNESS = 2.4  # plate behind the arms; leaves 0.6mm between the engraved label's floor and the pocket ceiling
+STICKER_CLEARANCE = 0.3  # per side, so the sticker presses into its recess and peels out again
+STICKER_THICKNESS = 0.4  # NTAG215 25mm sticker; assumed, not yet measured
+POCKET_DEPTH = 0.6  # sticker recess in the back face, open so a bad sticker is swapped instead of reprinting the chip; deeper than the sticker so it never rubs the dock
+COIN_THICKNESS = 2.4  # plate behind the arms; leaves 1.2mm between the engraved label's floor and the recess ceiling
 COIN_RADIUS = 16.0  # half-width of the chip, and radius of its round end
 TOP_MARGIN = 1.5  # space between the last arm wall and the start of the key extension
 KEY_FLAT_END_EXTENSION = 4.0  # the ghost feet: extra flat end below the clip arms that carries the key notch (was 6; shorter, so the dock's middle band is wider for the hanger)
 KEY_POST_WIDTH = 4.0
 KEY_POST_HEIGHT = 3.0  # an upside-down chip's round end lands on the post and sits this much too high
 COIN_END_CORNER_RADIUS = 5.0  # rounds the flat end's two outer corners so the chip is nearly pill-shaped; the dock's funnel follows the same arc
-PAUSE_HEIGHT = BACK_SKIN + POCKET_DEPTH  # pause the chip print at the layer that starts here and drop the sticker in
 
 # ---- clip arms, measured from Clip-Classic.stl (y across the arms, z up) ------------------------
 ARM_WALL_THICKNESS = 1.2
@@ -305,10 +304,11 @@ def _chip_outline():
 def chip_parts(label: str):
     """Return (body, engraving) for one filament label: the body has the label cut out and the engraving fills the cut exactly, so a slicer can print them in two colours.
 
-    There is no copy number: chips travel with spools and end up in any position. The sticker pocket is sealed inside the body (BACK_SKIN under it), filled during a print pause.
+    There is no copy number: chips travel with spools and end up in any position. The sticker recess opens on the back face; the layer over it bridges, so it prints without supports.
     """
     plate = extrude(_chip_outline(), amount=COIN_THICKNESS)
-    sticker_pocket = Pos(0, 0, BACK_SKIN) * Cylinder(POCKET_DIAMETER / 2, POCKET_DEPTH, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    # The cutter starts below the back face so no coplanar sliver is left.
+    sticker_pocket = Pos(0, 0, -1) * Cylinder(POCKET_DIAMETER / 2, POCKET_DEPTH + 1, align=(Align.CENTER, Align.CENTER, Align.MIN))
     body = plate - sticker_pocket
 
     arms = _lead_in_wall(COIN_THICKNESS)
@@ -618,7 +618,7 @@ if __name__ == "__main__":
         export_stl(shape, str(out / f"{name}.stl"))
         export_step(shape, str(out / f"{name}.step"))
     export_stl(hub_adapter_standin()["hub_adapter"], str(out / "hub_adapter_standin.stl"))  # viewer and checks only
-    print(f"chip: pause at {PAUSE_HEIGHT:.2f} mm (start of that layer) and drop the sticker in; print back-down")
+    print("chip: print back-down, no pause; press the sticker into the recess in its back afterwards")
     print("dock: print standing on its bottom stop (flat end down); tape it to the panel, or push it into the dock mount")
     print("dock mount: print upside down, standing on the ends of its arms; socket adapter: print standing on the plate's flat top and the fingers' top face; cover: print standing on the plate's flat top, with supports under the fingers")
     print(f"dock mount: the sticker sits {sticker_above_axis('socket'):.1f} mm above the socket axis on our socket adapter, {sticker_above_axis('hub'):.1f} mm on 1waynger1's hub adapter ({'near' if HUB_NEAR_END_UP else 'far'} end up)")

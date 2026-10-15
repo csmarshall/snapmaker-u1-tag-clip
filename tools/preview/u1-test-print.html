@@ -94,7 +94,6 @@ ol.parts .flag { color: var(--overhang); }
       <output id="height-out" class="num" for="height">all layers</output>
     </div>
     <div class="controls">
-      <button id="to-pause" type="button">Stop at the chip's pause</button>
       <button id="overhang" type="button" aria-pressed="true">Mark support areas</button>
       <button id="reset" type="button">Reset view</button>
     </div>
@@ -103,19 +102,14 @@ ol.parts .flag { color: var(--overhang); }
 
   <section class="side">
     <div>
-      <h2 id="round-title">Round 1: reader range</h2>
+      <h2 id="round-title">Fit set</h2>
       <p class="round-intro" id="round-intro"></p>
     </div>
     <ol class="parts" id="parts"></ol>
     <div class="pause-box">
-      <h2>Sticker pause: chip only</h2>
-      <p>The chip seals its NTAG215 sticker inside, so it is the one print that needs a pause. The sticker sits on a <span class="num" id="skin">0.6 mm</span> back skin in a pocket that is open until the layer starting at <span class="num" id="pause-h">1.20 mm</span>.</p>
-      <ol class="steps">
-        <li>In the slicer, add a pause at the layer starting at <span class="num" id="pause-h2">1.20 mm</span> (Orca: right-click the layer slider, then Add pause).</li>
-        <li>When the printer pauses, drop the sticker in, chip side up, and press it flat.</li>
-        <li>Resume. The next layers bridge over and seal it.</li>
-      </ol>
-      <p class="meta">Drag the height slider, or press "Stop at the chip's pause", to see the open pocket. The sticker's <span class="num">0.4 mm</span> thickness is assumed, not measured. The fixtures need no pause: their stickers drop in after printing.</p>
+      <h2>Sticker: after printing</h2>
+      <p>The chip's back has an open recess, <span class="num">0.6 mm</span> deep, for the NTAG215 sticker. No pause: print the chip back face down, then press the sticker into the recess. It sits about <span class="num">0.2 mm</span> below the back face, so it doesn't rub the dock. A bad sticker peels out and gets replaced.</p>
+      <p class="meta">The recess ceiling is a straight bridge of about <span class="num">26 mm</span>, so it is not marked as a support area. The sticker's <span class="num">0.4 mm</span> thickness is assumed, not measured.</p>
     </div>
   </section>
 </div>
@@ -129,10 +123,9 @@ ol.parts .flag { color: var(--overhang); }
   const status = document.getElementById("status");
   if (!window.THREE || !THREE.STLLoader || !THREE.OrbitControls) { status.textContent = "3D libraries did not load."; return; }
   const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  const ROLES = { fixture: ["--fixture", "Fixture"], chip: ["--chip", "Chip"], dock: ["--dock", "Dock"], mount: ["--mount", "Mount and cover"], adapter: ["--adapter", "Socket adapter"], label: ["--label", "Second colour"], sticker: ["--sticker", "Sticker (placed at the pause)"], overhang: ["--overhang", "Needs support"] };
+  const ROLES = { fixture: ["--fixture", "Fixture"], chip: ["--chip", "Chip"], dock: ["--dock", "Dock"], mount: ["--mount", "Mount and cover"], adapter: ["--adapter", "Socket adapter"], label: ["--label", "Second colour"], overhang: ["--overhang", "Needs support"] };
   const INTRO = {
-    1: "Print these first, in PLA. They show where on the side panel the reader sees a sticker, and through how much plastic. The answers set the dock's floor thickness and the sticker height before round 2 is printed.",
-    2: "Print after round 1 has set the floor thickness, then rebuild. In PLA. These check the slides, clamps and snaps, then the read through the finished dock.",
+    1: "One plate in PLA, bodies in filament 1 and inlays in filament 2. It checks the slides, clamps and snaps, then the read: a chip in the dock on the socket adapter is the test of where the reader sees the sticker.",
   };
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -162,7 +155,7 @@ ol.parts .flag { color: var(--overhang); }
 
   const plateGroup = new THREE.Group(); scene.add(plateGroup);
   const bedGroup = new THREE.Group(); scene.add(bedGroup);
-  let layout = null, round = 1, overhangOn = true, maxZ = 60, pauseMarker = null;
+  let layout = null, round = 1, overhangOn = true, maxZ = 60;
 
   function drawBed() {
     bedGroup.clear();
@@ -193,17 +186,6 @@ ol.parts .flag { color: var(--overhang); }
       const mesh = new THREE.Mesh(g, mat(m.role)); mesh.userData.role = m.role; mesh.visible = m.role !== "overhang" || overhangOn; return mesh;
     }))));
     plateGroup.clear(); meshes.forEach((m) => plateGroup.add(m));
-    // The pause layer as a translucent sheet over the chip, so its height reads against the part.
-    const chip = plate.parts.find((p) => p.pause);
-    pauseMarker = null;
-    if (chip) {
-      const g = meshes.find((m) => m.userData.role === "chip").geometry; g.computeBoundingBox();
-      const b = g.boundingBox, w = b.max.x - b.min.x + 8, d = b.max.y - b.min.y + 8;
-      pauseMarker = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ color: new THREE.Color(css("--pause")), transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }));
-      pauseMarker.position.set((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, chip.pause);
-      plateGroup.add(pauseMarker);
-    }
-    document.getElementById("to-pause").hidden = !chip;
     maxZ = Math.ceil(new THREE.Box3().setFromObject(plateGroup).max.z) + 1;
     const slider = document.getElementById("height"); slider.max = maxZ; slider.value = maxZ; applyHeight();
     renderList(plate);
@@ -229,7 +211,6 @@ ol.parts .flag { color: var(--overhang); }
     const roles = [...new Set(plate.parts.flatMap((p) => p.meshes.map((m) => m.role)))];
     const key = document.getElementById("key"); key.textContent = "";
     for (const r of roles) { const s = document.createElement("span"); s.style.setProperty("--c", css(ROLES[r][0])); s.textContent = ROLES[r][1]; key.append(s); }
-    if (plate.parts.some((p) => p.pause)) { const s = document.createElement("span"); s.style.setProperty("--c", css("--pause")); s.textContent = "Pause layer"; key.append(s); }
   }
 
   function applyHeight() {
@@ -240,12 +221,6 @@ ol.parts .flag { color: var(--overhang); }
   }
 
   document.getElementById("height").addEventListener("input", applyHeight);
-  document.getElementById("to-pause").addEventListener("click", () => {
-    // Just under the pause height: the pocket is still open and the sticker is in it.
-    document.getElementById("height").value = layout.pause.toFixed(2); applyHeight();
-    const chip = plateGroup.children.find((m) => m.userData.role === "chip");
-    if (chip) { chip.geometry.computeBoundingBox(); const c = chip.geometry.boundingBox.getCenter(new THREE.Vector3()); controls.target.set(c.x, c.y, 0); camera.position.set(c.x - 25, c.y - 55, 60); controls.update(); }
-  });
   document.getElementById("overhang").addEventListener("click", (e) => {
     overhangOn = !overhangOn; e.currentTarget.setAttribute("aria-pressed", String(overhangOn));
     plateGroup.children.forEach((m) => { if (m.userData.role === "overhang") m.visible = overhangOn; });
@@ -258,14 +233,12 @@ ol.parts .flag { color: var(--overhang); }
 
   fetch("layout.json").then((r) => r.json()).then((l) => {
     layout = l;
-    document.getElementById("pause-h").textContent = l.pause.toFixed(2) + " mm";
-    document.getElementById("pause-h2").textContent = l.pause.toFixed(2) + " mm";
-    document.getElementById("skin").textContent = l.pocket[0].toFixed(1) + " mm";
     const tabs = document.getElementById("tabs");
     for (const [n, p] of Object.entries(l.plates)) {
       const b = document.createElement("button"); b.type = "button"; b.dataset.plate = n; b.textContent = "Plate " + n + ": " + p.title.replace(/^Round \d: /, "");
       b.addEventListener("click", () => show(Number(n))); tabs.append(b);
     }
+    tabs.hidden = Object.keys(l.plates).length < 2;
     drawBed(); show(1);
   }).catch(() => { status.textContent = "Could not load the plate layout."; });
 })();

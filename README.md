@@ -14,7 +14,7 @@ The U1 only reads a tag when the auto feeder first engages, so put the coin in t
 
 | Path | What |
 |---|---|
-| `coin/u1_chip_clip.py` | Parametric build123d model of the chip (sealed sticker pocket, clip arms and engraved label) and four numbered docks (U1 slots 1 to 4), each exported whole and as named parts. All dimensions are named constants at the top. Output goes to `coin/out/` (not committed). |
+| `coin/u1_chip_clip.py` | Parametric build123d model of the chip (open sticker recess in the back, clip arms and engraved label) and four numbered docks (U1 slots 1 to 4), each exported whole and as named parts. All dimensions are named constants at the top. Output goes to `coin/out/` (not committed). |
 | `tests/test_fit.py` | Fit and consistency checks on the built files, plus a comparison of the clip with Extrutim's original (skipped when that file is absent). |
 | `tools/build_preview.py`, `tools/preview/` | Stages the rotatable 3D review page and its meshes in `coin/out/preview/` for publishing as an artifact. |
 | `docs/ANTENNA.md` | Where the U1's reader probably sees a sticker, worked out from earlier tag holders (an estimate until measured). |
@@ -29,12 +29,12 @@ uv run --with build123d python coin/u1_chip_clip.py
 uv run --with build123d --with trimesh --with manifold3d --with pytest --with rtree --with shapely --with networkx --with scipy python -m pytest -q tests
 uv run python tools/build_preview.py
 uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/print_plates.py  # test-print plates, see docs/TEST_PRINT.md
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/make_3mf.py  # coin/out/u1_test_print.3mf: both plates, inlays on filament 2, sticker pause
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/make_3mf.py  # coin/out/u1_test_print.3mf: the test-print plate, inlays on filament 2
 ```
 
 ## Printing
 
-- **Chip:** back face down. Pause at the layer that starts at 1.20mm (`PAUSE_HEIGHT`), drop the sticker into its pocket, resume. For two colours, load `chip_<material>.stl` and `chip_<material>_label.stl` together as one object.
+- **Chip:** back face down, no pause. The sticker presses into the open recess in the back afterwards (`POCKET_DEPTH` 0.6mm, so it sits below the face), and a bad one is swapped without reprinting. For two colours, load `chip_<material>.stl` and `chip_<material>_label.stl` together as one object.
 - **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. The same `dock_slot<n>` either tapes to the panel over the antenna with VHB, or pushes into the dock mount. For two colours, load `dock_slot<n>.stl` (body) with `dock_slot<n>_accent.stl` (the slot digit and the orientation hint, inlaid flush).
 - **Dock mount** (`dock_mount.stl`): print upside down, standing on the ends of its arms; the crossbar bridges about 39mm between them.
 - **Socket adapter** (`socket_adapter.stl`): print standing on the plate's flat top and the fingers' top face. **Blank cover** (`cover_slot<n>.stl` plus `_accent` for the digit): print standing on the plate's flat top, with supports under the fingers; its plate is round almost to the top so it hides the whole socket bore. Both snap into a spool-holder socket with remmulegguh's fingers. `hub_adapter_standin.stl` only stands in for 1waynger1's base in the viewer and checks; it is not a print.
@@ -44,7 +44,7 @@ uv run --with build123d --with trimesh --with numpy --with matplotlib --with sci
 
 | Term | What it is |
 |---|---|
-| chip | The clip coin: round end up, flat end down with rounded corners and a centre key notch, sticker sealed inside, engraved material name only on the front. |
+| chip | The clip coin: round end up, flat end down with rounded corners and a centre key notch, sticker in an open recess in the back, engraved material name only on the front. |
 | clip arms | The three walls on the chip that hold the filament end, traced from Extrutim's clip and turned 180 degrees as one unit. |
 | hook finger | The tallest clip arm (wall A, curled top and a small centre nub). Deliberately 2mm taller than the original (`WALL_A_EXTRA_HEIGHT`) so it stands proud of the dock's lower pocket and a thumb run up the pocket face catches it and lifts the chip out. |
 | dock | The holder the chip drops into, one per U1 slot, numbered 1 to 4 left to right with a big engraved digit. |
