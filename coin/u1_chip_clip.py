@@ -149,6 +149,10 @@ SOCKET_COVER_FLAT = SOCKET_BORE_DIAMETER / 2 + SOCKET_COVER_OVERLAP  # the cover
 MOUNT_TONGUE_LENGTH = 30.0  # how far the dock mount's tongue reaches down into the slot
 MOUNT_RISER = 3.0  # the crossbar resting on the adapter's top edge, under the dock
 MOUNT_ARM_WIDTH = 3.0  # each side arm, beside the dock
+# The integrated dock (dock_integrated_parts) has no mount: its own stem carries the dovetail. The stem is the slot's section grown by this much, so it is wider than the slot
+# and its underside rests on the adapter's top edge in the same place the mount's crossbar does. Not derivable from a fit: it only has to leave a bearing ring on the plate's top
+# edge. 3 mm is the dock's own rail width, kept narrow so the ring is a short bridge when the dock prints on its tongue end.
+INTEGRATED_SHOULDER = 3.0
 # The mount grips the dock only in its middle band: the stretch of side face left once the lower pocket's height is taken off both ends, centred on the dock.
 # Each arm ends in an L clamp over the whole band: its side wall beside the dock and a front jaw over the rail's front edge, with the panel closing the C,
 # plus a tongue in a groove in the dock's side face, which stops the dock sliding up or down.
@@ -550,6 +554,26 @@ def dock_mount_parts() -> dict[str, object]:
     return {"dock_mount": mount}
 
 
+def dock_integrated_parts(slot: int | None) -> dict[str, object]:
+    """The dock with the adapter's dovetail built in, for either adapter (the slot is shared), so it slides straight into the slot with no dock mount.
+
+    The dock is dock_parts(slot) unchanged. Below its bottom end a stem spans the FIT_CLEARANCE + MOUNT_RISER gap the mount's crossbar fills: the slot's section grown by
+    INTEGRATED_SHOULDER (and kept inside the adapter plate's outline), so its underside rests on the adapter's top edge with the dock exactly where it sits on the mount.
+    Under that, the tongue is the slot's section less FIT_CLEARANCE all round for MOUNT_TONGUE_LENGTH, as in dock_mount_parts. Returns dock (body, stem and tongue), accent (as in
+    dock_parts) and stem (the added geometry alone).
+    """
+    parts = dock_parts(slot)
+    d, f = _dock_extents(), _adapter_frame("socket")
+    plane = Plane(origin=(0, f["y_top"], 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))  # local x = X, local y = Z, extruded toward -Y
+    tongue = extrude(plane * _slot_section(FIT_CLEARANCE), amount=MOUNT_TONGUE_LENGTH)
+    shoulder_plane = Plane(origin=(0, d["y_bottom"], 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
+    grown = offset(_slot_section(0), amount=INTEGRATED_SHOULDER, kind=Kind.INTERSECTION).faces()[0]
+    plate = _box(-ADAPTER_WIDTH / 2, ADAPTER_WIDTH / 2, f["y_top"], d["y_bottom"], f["z_back"], f["z_front"])
+    shoulder = extrude(shoulder_plane * grown, amount=d["y_bottom"] - f["y_top"]) & plate
+    stem = shoulder + tongue
+    return {"dock": parts["dock"] + stem, "accent": parts["accent"], "stem": stem}
+
+
 def socket_adapter_parts() -> dict[str, object]:
     """Our socket adapter: remmulegguh's snap fingers behind a plate with 1waynger1's slot, so the dock mount fits it as it fits his hub adapter.
 
@@ -614,11 +638,18 @@ if __name__ == "__main__":
         for name, shape in cover.items():
             BRepTools.Clean_s(shape.wrapped)
             export_stl(shape, str(out / (f"cover_slot{slot}.stl" if name == "cover" else f"cover_slot{slot}_{name}.stl")))
+    for slot in U1_SLOTS:
+        integrated = dock_integrated_parts(slot)
+        for name in ("dock", "accent"):
+            BRepTools.Clean_s(integrated[name].wrapped)
+            export_stl(integrated[name], str(out / (f"dock_integrated_slot{slot}.stl" if name == "dock" else f"dock_integrated_slot{slot}_{name}.stl")))
+        export_step(integrated["dock"], str(out / f"dock_integrated_slot{slot}.step"))
     for name, shape in (("dock_mount", dock_mount_parts()["dock_mount"]), ("socket_adapter", socket_adapter_parts()["socket_adapter"])):
         export_stl(shape, str(out / f"{name}.stl"))
         export_step(shape, str(out / f"{name}.step"))
     export_stl(hub_adapter_standin()["hub_adapter"], str(out / "hub_adapter_standin.stl"))  # viewer and checks only
     print("chip: print back-down, no pause; press the sticker into the recess in its back afterwards")
     print("dock: print standing on its bottom stop (flat end down); tape it to the panel, or push it into the dock mount")
+    print("integrated dock (dovetail built in, no mount): print lying on its side face, see docs/INTEGRATED_DOCK.md")
     print("dock mount: print upside down, standing on the ends of its arms; socket adapter: print standing on the plate's flat top and the fingers' top face; cover: print standing on the plate's flat top, with supports under the fingers")
     print(f"dock mount: the sticker sits {sticker_above_axis('socket'):.1f} mm above the socket axis on our socket adapter, {sticker_above_axis('hub'):.1f} mm on 1waynger1's hub adapter ({'near' if HUB_NEAR_END_UP else 'far'} end up)")
