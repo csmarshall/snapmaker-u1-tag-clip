@@ -88,7 +88,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
 <div class="wrap">
   <header class="top">
     <h1>U1 Chip Dock Review</h1>
-    <div class="meta">repo u1-rfid-chip-clip · round 2 · 2026-10-14 · nothing printed yet</div>
+    <div class="meta">repo u1-rfid-chip-clip · round 3 · 2026-10-15 · nothing printed yet</div>
   </header>
 
   <section class="viewer-col" aria-label="3D model">
@@ -131,7 +131,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
       <span><i class="sw" style="background:var(--label)"></i>colour 2: chip name, dock digit and hint</span>
       <span><i class="sw" style="background:repeating-linear-gradient(45deg, var(--channel) 0 2px, transparent 2px 6px)"></i>channels, marked only here (not printed)</span>
     </div>
-    <p class="verified">The slider does whatever the menu beside it says, and at the far left it does nothing. Explode pulls the pieces apart the way they come apart in use (chip up out of the dock, dock out toward you, the adapter down off the mount). X-ray fades everything so you can see the tongue in the slot and the clamps on the dock. Turn around spins the model. The cuts peel it back 0.2 mm at a time: front to back shows the chip as it prints, layer by layer (back face down, sticker pocket at 1.2 mm); top down is how the dock prints. Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
+    <p class="verified">The slider does whatever the menu beside it says, and at the far left it does nothing. Explode pulls the pieces apart the way they come apart in use (chip up out of the dock, dock out toward you, the adapter down off the mount). X-ray fades everything so you can see the tongue in the slot and the clamps on the dock. Turn around spins the model. The cuts peel it back 0.2 mm at a time: front to back shows the chip as it prints, layer by layer (back face down, sticker recess open in the first 0.6 mm); top down is how the dock prints. Parts come straight from the model as separate solids; a test checks they add up to the whole dock. Drag to orbit, scroll or pinch to zoom. Units are millimetres, chip frame: X width, Y up, Z toward you.</p>
   </section>
 
   <section class="review">
@@ -172,9 +172,9 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
     <article class="finding">
       <div class="sev high">Open</div>
       <div>
-        <h3>Mount and read range still unknown</h3>
-        <p>The dock doesn't attach to the U1 yet, and nobody has measured how much plastic the reader sees through. Sealing the sticker inside the chip adds <span class="num">0.6 mm</span>, so the sticker now sits behind <span class="num">1.8 mm</span> of plastic plus a <span class="num">0.3 mm</span> gap.</p>
-        <p class="fix"><b>Next:</b> print the standoff strip, the coil-finder puck, one chip and one dock. If the reader is marginal, the back plate (<code>DOCK_FLOOR</code>) or the skin under the sticker (<code>BACK_SKIN</code>) gets thinner.</p>
+        <h3>Read not yet tested on a printer</h3>
+        <p>Snapmaker's photos show each reader coil as a loop about <span class="num">126 mm</span> across (an estimate, 110 to 143) around its socket, and the advice online is to keep the tag within 1 to 3 cm. The sticker now faces the panel from an open recess in the chip's back, behind only the dock's <span class="num">1.2 mm</span> back plate, and sits <span class="num">28.6 mm</span> above the axis on our socket adapter, well inside the loop.</p>
+        <p class="fix"><b>Next:</b> print the one-plate test set (docs/TEST_PRINT.md); the first docked read is the test. If it fails, the coil-finder puck and standoff strip in <code>fixtures/</code> find out why, and the back plate (<code>DOCK_FLOOR</code>) can get thinner.</p>
       </div>
     </article>
 
@@ -214,7 +214,7 @@ ol.decide { margin: 0; padding-left: 1.2em; display: flex; flex-direction: colum
       <div class="sev low">Open</div>
       <div>
         <h3>Smaller items</h3>
-        <p>Label sizes still vary by material (auto-fit). The thin <span class="num">0.4 mm</span> lip edge at the rim may print ragged. Sticker thickness is unmeasured, and the <span class="num">0.6 mm</span> pocket assumes about <span class="num">0.4 mm</span>. Two-colour import into Snapmaker Orca hasn't been tried.</p>
+        <p>Label sizes still vary by material (auto-fit). The thin <span class="num">0.4 mm</span> lip edge at the rim may print ragged. Sticker thickness is unmeasured, and the <span class="num">0.6 mm</span> recess assumes about <span class="num">0.4 mm</span>. Two-colour import into Snapmaker Orca hasn't been tried.</p>
       </div>
     </article>
 
