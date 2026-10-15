@@ -12,6 +12,7 @@ import shapely
 import trimesh
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from build123d import export_stl  # noqa: E402
 from test_fit import ADAPTER_MESHES, M, _his_hub_base, _mesh, _overlap  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
@@ -28,18 +29,40 @@ def _part(slot: int = 1) -> trimesh.Trimesh:
     return _mesh(f"dock_integrated_slot{slot}.stl")
 
 
+def _groove_free_dock(slot: int, tmp_path) -> trimesh.Trimesh:
+    """dock_parts(slot, mount_grooves=False) built here and exported, the dock the integrated part must contain."""
+    path = tmp_path / f"dock_slot{slot}_flat.stl"
+    export_stl(M.dock_parts(slot, mount_grooves=False)["dock"], str(path))
+    return trimesh.load(path, force="mesh")
+
+
 @pytest.mark.parametrize("slot", M.U1_SLOTS)
-def test_integrated_dock_minus_the_stem_is_the_existing_dock(slot):
-    """Above the dock's bottom end the integrated part is the existing dock: same volume, and the two overlap completely."""
-    new, old = _part(slot), _mesh(f"dock_slot{slot}.stl")
+def test_integrated_dock_minus_the_stem_is_the_dock_without_grooves(slot, tmp_path):
+    """Above the dock's bottom end the integrated part is the existing dock minus only its mount grooves: same volume as the groove-free build, and the two overlap completely."""
+    new, flat = _part(slot), _groove_free_dock(slot, tmp_path)
     assert new.is_watertight
     body = trimesh.boolean.intersection([new, ABOVE_THE_STEM], engine="manifold")
-    assert body.volume == pytest.approx(old.volume, rel=1e-6)
-    assert _overlap(body, old) == pytest.approx(old.volume, rel=1e-6)
+    assert body.volume == pytest.approx(flat.volume, rel=1e-6)
+    assert _overlap(body, flat) == pytest.approx(flat.volume, rel=1e-6)
+    old = _mesh(f"dock_slot{slot}.stl")
+    assert _overlap(body, old) == pytest.approx(old.volume, rel=1e-6)  # the existing dock lies wholly inside it: the grooves are the only difference
 
 
-def test_stem_is_all_below_the_dock_and_adds_only_the_stem():
-    new, old = _part(), _mesh("dock_slot1.stl")
+def test_integrated_dock_has_flat_side_faces_and_the_default_dock_keeps_its_grooves():
+    d = M._dock_extents()
+    gy0, gy1 = d["groove_y"]
+    gz0, gz1 = d["groove_z"]
+    probe = trimesh.creation.box(bounds=[[d["outer_half"] - M.MOUNT_GROOVE_DEPTH / 2 - 0.01, gy0, gz0], [d["outer_half"] - M.MOUNT_GROOVE_DEPTH / 2 + 0.01, gy1, gz1]])
+    groove_volume = probe.volume
+    assert _overlap(_part(), probe) == pytest.approx(groove_volume, rel=1e-2)  # (STL is float32) solid where the groove would be
+    assert _overlap(_mesh("dock_slot1.stl"), probe) == pytest.approx(0, abs=1e-6)  # the default dock is cut there
+    assert M.dock_parts(1)["dock"].volume < M.dock_parts(1, mount_grooves=False)["dock"].volume
+    ys = _part().section(plane_origin=[0, (gy0 + gy1) / 2, 0], plane_normal=[0, 1, 0]).bounds
+    assert ys[1][0] == pytest.approx(d["outer_half"], abs=1e-3)  # the band's side face is at full width
+
+
+def test_stem_is_all_below_the_dock_and_adds_only_the_stem(tmp_path):
+    new, old = _part(), _groove_free_dock(1, tmp_path)
     stem = trimesh.boolean.intersection([new, BELOW_THE_DOCK], engine="manifold")
     assert stem.volume == pytest.approx(new.volume - old.volume, rel=1e-6)
     assert stem.bounds[0][1] == pytest.approx(F["y_top"] - M.MOUNT_TONGUE_LENGTH, abs=1e-3)

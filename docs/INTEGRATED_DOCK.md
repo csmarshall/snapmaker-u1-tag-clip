@@ -4,7 +4,7 @@ The first PETG test print showed the Y-shaped dock mount is the hard part: it pr
 
 ## What was added
 
-`dock_integrated_parts(slot)` in `coin/u1_chip_clip.py` returns `dock_parts(slot)` plus a stem, and nothing else changes: the body, channels, funnel, pocket, slot digit, hint and sticker position are the existing ones (the tests check that the integrated part above the dock's bottom end is the existing dock, volume and overlap, for all four slots). The stem has two sections. A shoulder spans the `FIT_CLEARANCE + MOUNT_RISER` gap the mount's crossbar fills, from the dock's bottom end down to the adapter's top edge: the slot's section grown by `INTEGRATED_SHOULDER` and clipped to the adapter plate's outline (so nothing reaches behind the panel plane or in front of the plate's front face). Below it, the tongue is `_slot_section(FIT_CLEARANCE)`, the slot's own section less the fit clearance all round, for `MOUNT_TONGUE_LENGTH`, exactly as the mount's tongue is built.
+`dock_integrated_parts(slot)` in `coin/u1_chip_clip.py` returns `dock_parts(slot, mount_grooves=False)` plus a stem. The grooves are the dock mount's grip in each side face of the back plate and channels; with no mount they are dropped, so the integrated dock keeps its full 3 mm rails (the shoulder, which is the same 3 mm, lines up with them). `dock_parts(slot)` itself still cuts them by default, and every existing output is byte-identical. Otherwise the body, channels, funnel, pocket, slot digit, hint and sticker position are the existing ones (the tests check that the integrated part above the dock's bottom end is the groove-free dock, volume and overlap, for all four slots, and that the existing dock lies wholly inside it). The stem has two sections. A shoulder spans the `FIT_CLEARANCE + MOUNT_RISER` gap the mount's crossbar fills, from the dock's bottom end down to the adapter's top edge: the slot's section grown by `INTEGRATED_SHOULDER` and clipped to the adapter plate's outline (so nothing reaches behind the panel plane or in front of the plate's front face). Below it, the tongue is `_slot_section(FIT_CLEARANCE)`, the slot's own section less the fit clearance all round, for `MOUNT_TONGUE_LENGTH`, exactly as the mount's tongue is built.
 
 ## Does it rest or hang
 
@@ -18,14 +18,14 @@ Overhang is the area of faces facing down more steeply than 45 degrees and not o
 
 | Orientation | Overhang | of which stem | Notes |
 | --- | --- | --- | --- |
-| Standing on the tongue's end | 279 mm2 | 257 | 70.6 mm tall on a 79 mm2 footprint; the section is in the layer plane (best dovetail accuracy) but it is tippy; the shelf is the dock's bottom face outside the shoulder |
-| Standing on the dock's top rim | 284 mm2 | | 27 mm2 of rim on the bed; not viable |
-| Lying on its back | 1148 mm2 | 583 | stable (1497 mm2 on the bed) but the dovetail's back-side flank is 30 degrees from flat and the dock's funnel overhangs |
-| Lying on its front | 1847 mm2 | | worst |
-| Lying on a side face (either) | 233 mm2 | 8 | 241 mm2 of side face on the bed, 38.6 mm tall |
-| Lying on its back, tilted 10 to 45 degrees about either axis | 793 to 2650 mm2 | | never better than side |
+| Standing on the tongue's end | 275 mm2 | 257 | 70.6 mm tall on a 79 mm2 footprint; the section is in the layer plane (best dovetail accuracy) but it is tippy; the shelf is the dock's bottom face outside the shoulder |
+| Standing on the dock's top rim | 280 mm2 | | 27 mm2 of rim on the bed; not viable |
+| Lying on its back | 1137 mm2 | 583 | stable (1497 mm2 on the bed) but the dovetail's back-side flank is 30 degrees from flat and the dock's funnel overhangs |
+| Lying on its front | 1836 mm2 | | worst |
+| Lying on a side face (either) | 222 mm2 | 8 | 252 mm2 of side face on the bed, 38.6 mm tall |
+| Lying on its back, tilted 10 to 45 degrees about either axis | about 790 to 2650 mm2 (measured with the grooves still in) | | never better than side |
 
-Recommended: lying on a side face (`ON_SIDE` in `tools/print_plates.py`). The stem and tongue add 8 mm2 of overhang; the remaining 225 mm2 is the dock's own detail (the largest piece is the roof of each channel, about 6 by 31 mm, a 6 mm span) and is what the old dock avoided by standing on its stop. The cost is a thin tall part (8.7 mm wide, 38.6 mm tall, 70.6 mm long), so use a brim; the dovetail's flanks are stair-stepped rather than in the layer plane, so if the fit is tight in PETG, tongue-end-down (with a brim, a tall part on a small footprint) is the alternative that prints the section most accurately. The side-face grooves left over from the mount are on the face that goes down, which is why only 241 mm2 touches the bed.
+Recommended: lying on a side face (`ON_SIDE` in `tools/print_plates.py`). The stem and tongue add 8 mm2 of overhang; the remaining 214 mm2 is the dock's own detail (the largest piece is the roof of each channel, about 6 by 31 mm, a 6 mm span) and is what the old dock avoided by standing on its stop. The cost is a thin tall part (8.7 mm wide, 38.6 mm tall, 70.6 mm long), so use a brim; the dovetail's flanks are stair-stepped rather than in the layer plane, so if the fit is tight in PETG, tongue-end-down (with a brim, a tall part on a small footprint) is the alternative that prints the section most accurately. The integrated dock has no mount grooves, so its whole side face (252 mm2 of it, the rest being the open channel) is on the bed.
 
 ## One-plate project
 

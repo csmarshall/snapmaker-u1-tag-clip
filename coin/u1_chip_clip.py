@@ -352,8 +352,10 @@ def _orientation_hint(y_base: float, y_bevel: float):
     return Pos(0, 0, z_face - HINT_DEPTH) * (extrude(chip, amount=HINT_DEPTH + 0.01) + extrude(arrow, amount=HINT_DEPTH + 0.01))
 
 
-def dock_parts(slot: int | None) -> dict[str, object]:
+def dock_parts(slot: int | None, mount_grooves: bool = True) -> dict[str, object]:
     """Return the named parts of the dock for one U1 slot: back_plate, channels, lower_pocket, accent (the slot digit and the hint, inlaid flush), and dock, the body's union.
+
+    mount_grooves=False leaves the side faces flat (full rails), for the integrated dock, which has no mount to grip them.
 
     For two colours, print dock (body colour) together with accent (number colour); they share one origin.
 
@@ -409,13 +411,14 @@ def dock_parts(slot: int | None) -> dict[str, object]:
     back_plate -= hint_cut
     channels -= funnel
     # The dock mount's grooves, one in each side face in the middle band; harmless on the taped dock.
-    ext = _dock_extents()
-    (gy0, gy1), (gz0, gz1) = ext["groove_y"], ext["groove_z"]
-    for sign in (-1, 1):
-        x0, x1 = sorted((sign * (outer_half - MOUNT_GROOVE_DEPTH), sign * (outer_half + 1)))
-        groove = _box(x0, x1, gy0, gy1, gz0, gz1)
-        back_plate -= groove
-        channels -= groove
+    if mount_grooves:
+        ext = _dock_extents()
+        (gy0, gy1), (gz0, gz1) = ext["groove_y"], ext["groove_z"]
+        for sign in (-1, 1):
+            x0, x1 = sorted((sign * (outer_half - MOUNT_GROOVE_DEPTH), sign * (outer_half + 1)))
+            groove = _box(x0, x1, gy0, gy1, gz0, gz1)
+            back_plate -= groove
+            channels -= groove
 
     lower_pocket = _box(-inner_half, inner_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate
     for sign in (-1, 1):
@@ -557,12 +560,12 @@ def dock_mount_parts() -> dict[str, object]:
 def dock_integrated_parts(slot: int | None) -> dict[str, object]:
     """The dock with the adapter's dovetail built in, for either adapter (the slot is shared), so it slides straight into the slot with no dock mount.
 
-    The dock is dock_parts(slot) unchanged. Below its bottom end a stem spans the FIT_CLEARANCE + MOUNT_RISER gap the mount's crossbar fills: the slot's section grown by
+    The dock is dock_parts(slot) without the mount's side grooves (there is no mount to grip them, so the rails stay full width). Below its bottom end a stem spans the FIT_CLEARANCE + MOUNT_RISER gap the mount's crossbar fills: the slot's section grown by
     INTEGRATED_SHOULDER (and kept inside the adapter plate's outline), so its underside rests on the adapter's top edge with the dock exactly where it sits on the mount.
     Under that, the tongue is the slot's section less FIT_CLEARANCE all round for MOUNT_TONGUE_LENGTH, as in dock_mount_parts. Returns dock (body, stem and tongue), accent (as in
     dock_parts) and stem (the added geometry alone).
     """
-    parts = dock_parts(slot)
+    parts = dock_parts(slot, mount_grooves=False)
     d, f = _dock_extents(), _adapter_frame("socket")
     plane = Plane(origin=(0, f["y_top"], 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))  # local x = X, local y = Z, extruded toward -Y
     tongue = extrude(plane * _slot_section(FIT_CLEARANCE), amount=MOUNT_TONGUE_LENGTH)
