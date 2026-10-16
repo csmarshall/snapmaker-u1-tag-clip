@@ -14,13 +14,15 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
-from print_plates import BED, PLATES, lay_out  # noqa: E402
+from print_plates import BED, FINGERS_PARTS, FINGERS_PLATES, INTEGRATED_PARTS, INTEGRATED_PLATES, PARTS, PLATES, lay_out  # noqa: E402
 
 INLAY_ROLES = {"label"}
-SUPPORTED = {"Blank cover, slot 2"}  # parts whose fingers need slicer support (see README, Printing)
+SUPPORTED = {"Blank cover, slot 2", "Dock with fingers, slot 1"}  # parts whose fingers need slicer support (see README, Printing)
 ORCA_VERSION = "01.10.01.50"  # claimed in the file; Orca refuses a 3MF from a newer version than itself
 PLATE_GAP = 0.2  # Orca's LOGICAL_PART_PLATE_GAP: plates sit one bed width plus this fraction apart
 OUT_3MF = ROOT / "coin" / "out" / "u1_test_print.3mf"
+OUT_INTEGRATED_3MF = ROOT / "coin" / "out" / "u1_dock_integrated.3mf"
+OUT_FINGERS_3MF = ROOT / "coin" / "out" / "u1_dock_fingers.3mf"
 
 
 
@@ -31,9 +33,9 @@ def mesh_xml(object_id: int, mesh) -> str:
     return f'<object id="{object_id}" type="model"><mesh><vertices>{verts}</vertices><triangles>{tris}</triangles></mesh></object>'
 
 
-def write_skeleton(path: Path) -> list[str]:
+def write_skeleton(path: Path, parts_table: tuple = PARTS, plates: dict = PLATES, title: str = "U1 chip clip test print") -> list[str]:
     """Write the geometry, parts and plates as a Bambu-format 3MF; return the part names in object order."""
-    placed = lay_out()
+    placed = lay_out(parts_table)
     head = '<?xml version="1.0" encoding="UTF-8"?>\n'
     ns = 'xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" requiredextensions="p"'
     files: dict[str, str] = {}
@@ -72,12 +74,12 @@ def write_skeleton(path: Path) -> list[str]:
             settings_objects.append(f'<object id="{object_id}"><metadata key="name" value={quoteattr(part["name"])}/><metadata key="extruder" value="1"/>{support}{"".join(parts_cfg)}</object>')
             instances.append(f'<model_instance><metadata key="object_id" value="{object_id}"/><metadata key="instance_id" value="0"/></model_instance>')
             names.append(part["name"])
-        plates_xml.append(f'<plate><metadata key="plater_id" value="{plate_no}"/><metadata key="plater_name" value={quoteattr(PLATES[plate_no][0])}/><metadata key="locked" value="false"/>{"".join(instances)}</plate>')
+        plates_xml.append(f'<plate><metadata key="plater_id" value="{plate_no}"/><metadata key="plater_name" value={quoteattr(plates[plate_no][0])}/><metadata key="locked" value="false"/>{"".join(instances)}</plate>')
     files.update({
         "[Content_Types].xml": f'{head}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="gcode" ContentType="text/x.gcode"/></Types>',
         "_rels/.rels": f'{head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>',
         "3D/_rels/3dmodel.model.rels": f'{head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">{"".join(rels)}</Relationships>',
-        "3D/3dmodel.model": f'{head}<model unit="millimeter" xml:lang="en-US" {ns}><metadata name="Application">BambuStudio-{ORCA_VERSION}</metadata><metadata name="BambuStudio:3mfVersion">1</metadata><metadata name="Title">U1 chip clip test print</metadata><resources>{"".join(resources)}</resources><build>{"".join(items)}</build></model>',
+        "3D/3dmodel.model": f'{head}<model unit="millimeter" xml:lang="en-US" {ns}><metadata name="Application">BambuStudio-{ORCA_VERSION}</metadata><metadata name="BambuStudio:3mfVersion">1</metadata><metadata name="Title">{title}</metadata><resources>{"".join(resources)}</resources><build>{"".join(items)}</build></model>',
         "Metadata/model_settings.config": f'{head}<config>{"".join(settings_objects)}{"".join(plates_xml)}</config>',
     })
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
@@ -88,7 +90,15 @@ def write_skeleton(path: Path) -> list[str]:
 
 
 def main() -> int:
-    """Write the project 3MF (geometry, parts, plates, filament per part, cover supports); return a shell exit code."""
+    """Write the project 3MF (geometry, parts, plates, filament per part, cover supports), or with --integrated the one-plate integrated-dock project; return a shell exit code."""
+    if "--fingers" in sys.argv[1:]:
+        names = write_skeleton(OUT_FINGERS_3MF, FINGERS_PARTS, FINGERS_PLATES, "U1 dock with socket fingers, slot 1 (PETG)")
+        print(f"wrote {OUT_FINGERS_3MF}: {len(names)} objects: {', '.join(names)}")
+        return 0
+    if "--integrated" in sys.argv[1:]:
+        names = write_skeleton(OUT_INTEGRATED_3MF, INTEGRATED_PARTS, INTEGRATED_PLATES, "U1 integrated dock, slot 1 (PETG)")
+        print(f"wrote {OUT_INTEGRATED_3MF}: {len(names)} objects: {', '.join(names)}")
+        return 0
     names = write_skeleton(OUT_3MF)
     print(f"wrote {OUT_3MF}: {len(names)} objects: {', '.join(names)}")
     return 0

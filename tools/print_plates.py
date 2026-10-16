@@ -40,6 +40,20 @@ PARTS = (
 # Plate number -> (title, filament).
 PLATES = {1: ("Fit set", "PLA")}
 
+# The integrated dock (docs/INTEGRATED_DOCK.md) is its own one-plate project, so the test print above stays as it was.
+# Chip X to printer -Z (its +X side face on the bed), chip Y along the bed, chip Z to printer X: a proper rotation (determinant +1). The tongue then lies flat along the bed.
+ON_SIDE = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], float)
+INTEGRATED_PARTS = (
+    (1, "Integrated dock, slot 1", "Lying on its side face; the dovetail's section stands upright.", ON_SIDE, [(OUT / "dock_integrated_slot1.stl", "dock"), (OUT / "dock_integrated_slot1_accent.stl", "label")]),
+)
+INTEGRATED_PLATES = {1: ("Integrated dock", "PETG")}
+
+# The dock with the socket fingers on its back (docs/DOCK_FINGERS.md): standing on its bottom stop like the plain dock, the fingers stick out sideways in the layer plane.
+FINGERS_PARTS = (
+    (1, "Dock with fingers, slot 1", "Standing on its bottom stop; the fingers print in-layer and need support under them (build plate only).", ON_BOTTOM_STOP, [(OUT / "dock_fingers_slot1.stl", "dock"), (OUT / "dock_fingers_slot1_accent.stl", "label")]),
+)
+FINGERS_PLATES = {1: ("Dock with fingers", "PETG")}
+
 
 def split_overhang(mesh: trimesh.Trimesh, sealed_pocket_centre: np.ndarray | None = None) -> tuple[trimesh.Trimesh, trimesh.Trimesh | None]:
     """Return (faces that print unsupported, faces facing down more steeply than 45 degrees above the bed).
@@ -63,16 +77,16 @@ def write(mesh_dir: Path, stem: str, mesh: trimesh.Trimesh, role: str) -> dict:
     return {"file": name, "role": role}
 
 
-def lay_out() -> dict[int, list[dict]]:
+def lay_out(parts_table: tuple = PARTS) -> dict[int, list[dict]]:
     """Return each round's parts placed on the bed as printed: name, note, size, and [(source file, colour role, placed mesh)]."""
-    missing = [str(f) for *_, files in PARTS for f, _ in files if not f.exists()]
+    missing = [str(f) for *_, files in parts_table for f, _ in files if not f.exists()]
     if missing:
         raise FileNotFoundError(f"missing build outputs (run the builds first): {', '.join(missing)}")
     plates: dict[int, list[dict]] = {}
-    for rnd in sorted({p[0] for p in PARTS}):
+    for rnd in sorted({p[0] for p in parts_table}):
         x = y = row_depth = 0.0
         items = []
-        for _, name, note, rotation, files in (p for p in PARTS if p[0] == rnd):
+        for _, name, note, rotation, files in (p for p in parts_table if p[0] == rnd):
             assert np.isclose(np.linalg.det(rotation), 1.0)
             meshes = [trimesh.load(f, force="mesh") for f, _ in files]
             for m in meshes:
