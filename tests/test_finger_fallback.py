@@ -24,7 +24,7 @@ import finger_fallback as FF  # noqa: E402
 import finger_fallback_plate as FP  # noqa: E402
 from print_orientation import orient  # noqa: E402
 import u1_chip_clip as M  # noqa: E402
-from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE  # noqa: E402
+from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE, FINGER_SPREAD, spread_outline  # noqa: E402
 
 FRAME = M._adapter_frame("socket")
 Z0, AXIS_Y, Y_TOP = FRAME["z_back"], FRAME["axis_y"], FRAME["y_top"]
@@ -75,11 +75,11 @@ def test_joint_constants_are_derived_from_the_fit_clearance():
 
 
 def test_finger_piece_matches_the_traced_outline(meshes):
-    """The piece's section through the fingers' mid-height, seen from the same side as the trace, is FINGER_OUTLINE, and its height is FINGER_HEIGHT centred on the socket axis."""
+    """The piece's section through the fingers' mid-height, seen from the same side as the trace, is FINGER_OUTLINE spread by FINGER_SPREAD, and its height is FINGER_HEIGHT centred on the socket axis."""
     piece = meshes["fingers"]
     section = _section(piece, AXIS_Y)
     # chip frame (X, Z) back to the trace's (depth into the socket, sideways): depth = z_back - Z. The tongues and ridges stand in front of the tab (depth < -TAB), outside the trace.
-    traced = Polygon([(side, Z0 - depth) for depth, side in FINGER_OUTLINE])
+    traced = Polygon([(side, Z0 - depth) for depth, side in spread_outline(FINGER_SPREAD)])
     behind_tab = shapely.box(-100, -100, 100, Z0 + FF.TAB_THICKNESS)
     assert section.intersection(behind_tab).symmetric_difference(traced).area < 1e-3
     assert piece.bounds[0][1] == pytest.approx(AXIS_Y - FINGER_HEIGHT / 2, abs=1e-4)

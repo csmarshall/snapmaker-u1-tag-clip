@@ -16,6 +16,9 @@ from build123d import export_stl
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_fit import M, ROOT, _mesh, _overlap  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "coin"))
+from socket_fingers import FINGER_SPREAD, spread_outline  # noqa: E402
+
 sys.path.insert(0, str(ROOT / "tools"))
 from print_orientation import OVERHANG_LIMIT  # noqa: E402
 from print_plates import BED_CONTACT, FINGERS_PARTS, ON_BOTTOM_STOP  # noqa: E402
@@ -106,19 +109,28 @@ def test_sticker_is_close_to_the_panel_plane():
 
 
 def test_finger_section_matches_the_traced_outline():
-    """A slice through the fingers behind the panel plane is the traced outline mapped as depth into -Z and sideways into X, no mirror."""
+    """A slice through the fingers' mid-height behind the panel plane is the traced outline, spread by FINGER_SPREAD, mapped as depth into -Z and sideways into X, no mirror."""
     section = _part().section(plane_origin=[0, 0.37, 0], plane_normal=[0, 1, 0])
     area = shapely.Polygon()
     for loop in section.discrete:
         area = area.symmetric_difference(shapely.Polygon(loop[:, [0, 2]]))
     behind = area.intersection(shapely.box(-100, -100, 100, Z_BACK))
-    expected = shapely.Polygon([(side, Z_BACK - depth) for depth, side in M.FINGER_OUTLINE]).intersection(shapely.box(-100, -100, 100, Z_BACK))
+    expected = shapely.Polygon([(side, Z_BACK - depth) for depth, side in spread_outline(FINGER_SPREAD)]).intersection(shapely.box(-100, -100, 100, Z_BACK))
     assert expected.area > 100
     assert behind.symmetric_difference(expected).area < 0.005 * expected.area
 
 
+def _traced_part() -> trimesh.Trimesh:
+    """The finger dock built with spread 0, so the traced fingers themselves can be compared with his."""
+    path = Path(ROOT / "coin" / "out" / "_traced_dock_fingers.stl")
+    export_stl(M.dock_fingers_parts(1, spread=0)["dock"], str(path))
+    mesh = trimesh.load(path, force="mesh")
+    path.unlink()
+    return mesh
+
+
 def test_fingers_match_remmulegguh():
-    """Independent check: the fingers, in the dock frame, coincide with his holder's fingers within 2% by volume."""
+    """Independent check: the fingers built with spread 0, in the dock frame, coincide with his holder's fingers within 2% by volume."""
     src = ROOT / "thingiverse" / "printables1625982" / "holderrfid_short.stl"
     if not src.exists():
         pytest.skip("remmulegguh's holderrfid_short.stl is not present (it is not redistributed)")
@@ -130,7 +142,7 @@ def test_fingers_match_remmulegguh():
     his.vertices = his.vertices @ R.T + [0, 0, Z_BACK + plate_back]
     probe = trimesh.creation.box(extents=[40, 20, 29])
     probe.apply_translation([0, 0, Z_BACK - 15.5])
-    ours = trimesh.boolean.intersection([_part(), probe], engine="manifold")
+    ours = trimesh.boolean.intersection([_traced_part(), probe], engine="manifold")
     theirs = trimesh.boolean.intersection([his, probe], engine="manifold")
     shared = trimesh.boolean.intersection([ours, theirs], engine="manifold")
     assert theirs.volume > 100

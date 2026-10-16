@@ -30,6 +30,10 @@ Overhang is the area of faces facing down more than 45 degrees and not on the be
 
 Recommended: standing on the bottom stop with the fingers sticking back, as the plain dock stands. The dock itself adds only 18 mm2 of overhang (the plain dock's own 22 mm2 less the grooves), and the only part that needs support is the fingers' underside, 154 mm2 of build-plate-only support under a flat face about 15 mm up. Prints in that orientation keep the fingers' outline in the layer plane, which is their strong direction for flexing in the socket; the 3MF turns on build-plate-only support for the part. PETG on a cantilever of this size is likely to want a brim: the footprint is 336 mm2 and the fingers hang 30 mm behind it. The support will leave a rougher face on the fingers' flat underside, so clean it before first fitting.
 
+## Spread and release bevel
+
+The fingers on this dock are not the bare trace: they carry `FINGER_SPREAD` (+2.0 mm per side, Charles's choice from the printed sweep, 2026-10-15; see `docs/FINGER_SPREAD.md`) and the small release bevel on the two hook corners that lead when the dock is turned counter-clockwise seen from the front. Both are built into `dock_fingers_parts`, which takes a `spread` argument (0 gives the traced fingers). Neither changes the dock itself or the section at the fingers' mid-height beyond the spread, and the overhang the bevel adds is zero (it takes about 1.3 mm2 away), so the support estimate below stands. The bore the spread is judged against is still the assumed 26.9 mm, not a measurement.
+
 ## One-plate project
 
 `python tools/make_3mf.py --fingers` writes `coin/out/u1_dock_fingers.3mf`: slot 1, as laid out for printing, body on filament 1, digit and hint on filament 2, titled PETG, no printer, process or filament presets (pick the U1 0.4 mm PETG presets in Snapmaker Orca after opening). Without the flag the script writes the existing test print exactly as before. Run the build (`python coin/u1_chip_clip.py`) first.

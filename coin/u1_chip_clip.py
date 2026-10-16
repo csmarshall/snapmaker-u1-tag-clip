@@ -18,7 +18,7 @@ Printing: the chip prints back-down, with the sticker recess open on the bed sid
 import math
 from typing import Any
 
-from socket_fingers import FINGER_HEIGHT, spread_outline
+from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE, FINGER_SPREAD, bevel_leg, hook_half_width, hook_step, spread_outline  # noqa: F401  (FINGER_OUTLINE: the tests read it from here)
 from build123d import (
     Align,
     Box,
@@ -467,16 +467,43 @@ def _dock_extents() -> dict[str, Any]:
     }
 
 
-def _socket_fingers(axis_y: float, z_back: float, spread: float = 0.0):
+def _socket_fingers(axis_y: float, z_back: float, spread: float = FINGER_SPREAD):
     """remmulegguh's snap fingers, going into the socket from the panel at z_back, centred on a socket axis at axis_y.
 
     Fingers come from coin/socket_fingers.py, mapped from his frame (socket axis along x, +z down) into this one: sideways stays sideways, depth goes to -Z,
     down goes to -Y. That mapping is a proper rotation (determinant +1), so nothing is mirrored.
-    `spread` (mm per side, default 0 = the traced outline exactly) moves the arms and hooks outward with the root fixed; see socket_fingers.spread_outline.
+    `spread` (mm per side, default FINGER_SPREAD, Charles's sweep choice; 0 = the traced outline exactly) moves the arms and hooks outward with the root fixed; see socket_fingers.spread_outline.
     """
     # The outline is (depth into the socket, sideways); on a plane whose local x is this X and local y is -Z, a point is (sideways, depth - z_back).
     finger_plane = Plane(origin=(0, axis_y - FINGER_HEIGHT / 2, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
-    return extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in spread_outline(spread)]), align=None), amount=FINGER_HEIGHT)
+    fingers = extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in spread_outline(spread)]), align=None), amount=FINGER_HEIGHT)
+    return fingers - _hook_bevel_cutters(axis_y, z_back, spread)
+
+
+def _hook_bevel_cutters(axis_y: float, z_back: float, spread: float):
+    """The two wedges that bevel the hooks' leading corners: where the retaining step meets the end face that leads when the part is turned counter-clockwise seen from the front.
+
+    Seen from the front (+Z toward the viewer, X right, Y up, so counter-clockwise is positive rotation about +Z) the +X hook moves toward +Y and the -X hook toward -Y,
+    so the leading corners are the +X hook's top (+Y) one and the -X hook's bottom (-Y) one: the two that a 180 degree turn about the socket axis exchanges. Each wedge is a right triangle
+    of leg bevel_leg() in the (Y, depth) plane, with its right angle at the corner, running from the step's inner side out past the hook's widest point; the cut leaves the 45 degree face the turned hook rides inward on.
+    The wedge starts at the step's inner side, so the arm and the hook's inner half are not touched, and it never reaches the fingers' mid-height section.
+    """
+    leg = bevel_leg(spread)
+    if leg == 0:
+        return None
+    depth, inner, _ = hook_step(spread)
+    outer = hook_half_width(spread)  # the wedge runs out past the hook's widest point, so the flank beyond the step is bevelled too
+    e = 0.2  # overshoot past the faces being cut, so the wedge leaves no sliver
+    wedges = None
+    for sign in (1, -1):
+        y_end = axis_y + sign * FINGER_HEIGHT / 2
+        # (Y, depth) corners of the wedge: the right angle at the step's end corner, one leg along the end face, the other along the step; mapped to (Y, Z) with Z = z_back - depth.
+        tri = [(y_end + sign * e, z_back - depth), (y_end - sign * leg, z_back - depth), (y_end + sign * e, z_back - depth - leg - e)]
+        x_start = inner if sign > 0 else -outer - e  # the wedge spans the inner side of the step to e beyond the hook's widest point (on the -X hook mirrored)
+        plane = Plane(origin=(x_start, 0, 0), x_dir=(0, 1, 0), z_dir=(1, 0, 0))  # local x = Y, local y = z_dir x x_dir = Z; extrudes toward +X
+        wedge = extrude(plane * Polygon(*_ccw(tri), align=None), amount=outer - inner + e)
+        wedges = wedge if wedges is None else wedges + wedge
+    return wedges
 
 
 def _band_clamp(sign: int, y_lo: float, y_hi: float):
@@ -582,15 +609,15 @@ def dock_integrated_parts(slot: int | None) -> dict[str, object]:
 STICKER_CENTRE_Y = 0.0  # the chip frame's origin is the sticker's centre (the recess is centred on it), so this is also the dock's socket axis in dock_fingers_parts
 
 
-def dock_fingers_parts(slot: int | None) -> dict[str, object]:
+def dock_fingers_parts(slot: int | None, spread: float = FINGER_SPREAD) -> dict[str, object]:
     """The dock with remmulegguh's snap fingers on its back, no adapter, slot, dovetail or mount (issue #8): it plugs into the spool-holder socket where a spool would sit.
 
     The dock is dock_parts(slot, mount_grooves=False) with its back face on the panel plane (z = _dock_extents()["z_back"]) and the fingers' axis through the sticker's
     centre, so the sticker sits on the socket axis. The fingers' 0.3 mm tab, in front of the panel face, is buried in the back plate. Returns dock (body and fingers),
-    accent (as in dock_parts) and fingers (the added geometry alone).
+    accent (as in dock_parts) and fingers (the added geometry alone). `spread` is as in _socket_fingers (default FINGER_SPREAD).
     """
     parts = dock_parts(slot, mount_grooves=False)
-    fingers = _socket_fingers(STICKER_CENTRE_Y, _dock_extents()["z_back"])
+    fingers = _socket_fingers(STICKER_CENTRE_Y, _dock_extents()["z_back"], spread)
     return {"dock": parts["dock"] + fingers, "accent": parts["accent"], "fingers": fingers}
 
 
@@ -615,11 +642,11 @@ def sticker_above_axis(adapter: str) -> float:
     return -_adapter_frame(adapter)["axis_y"]
 
 
-def cover_parts(slot: int | None, spread: float = 0.0, label: str | None = None) -> dict[str, object]:
+def cover_parts(slot: int | None, spread: float = FINGER_SPREAD, label: str | None = None) -> dict[str, object]:
     """The blank cover for an unused socket: the snap fingers and a round plate covering the whole bore (flat across its top, to stand on when printed), with the slot digit inlaid in the accent colour (none when slot is None).
 
     It sits on the same socket axis as the socket adapter, so the two can be compared in place.
-    `spread` (mm per side, default 0 = exactly the traced fingers) widens the fingers outward for the grip sweep (docs/FINGER_SPREAD.md). `label` engraves that text in place of the slot digit, scaled down if it would run wider than the plate allows.
+    `spread` (mm per side, default FINGER_SPREAD; 0 = exactly the traced fingers) widens the fingers outward for the grip sweep (docs/FINGER_SPREAD.md). `label` engraves that text in place of the slot digit, scaled down if it would run wider than the plate allows.
     """
     assert SOCKET_COVER_FLAT < SOCKET_PLATE_RADIUS, "the cover's flat top would cut the plate off above its round edge"
     f = _adapter_frame("socket")

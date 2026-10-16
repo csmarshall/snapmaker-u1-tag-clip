@@ -75,9 +75,11 @@ def test_cover_at_spread_zero_reproduces_the_traced_fingers():
     assert shared != pytest.approx(ours, rel=0.02)  # the check can see the offset
 
 
-def test_default_cover_is_the_spread_zero_cover():
-    plain = M.cover_parts(2)["cover"].volume
-    assert M.cover_parts(2, spread=0.0)["cover"].volume == plain
+def test_default_cover_is_the_chosen_spread_cover():
+    """Charles chose 2.0 mm per side from the printed sweep (2026-10-15): the default of every variant that carries the fingers."""
+    assert F.FINGER_SPREAD == 2.0
+    assert M.cover_parts(2)["cover"].volume == pytest.approx(M.cover_parts(2, spread=F.FINGER_SPREAD)["cover"].volume, rel=1e-12)
+    assert M.cover_parts(2)["cover"].volume != pytest.approx(M.cover_parts(2, spread=0.0)["cover"].volume, rel=1e-6)
 
 
 def test_covers_are_valid_solids_with_the_hooks_where_the_spread_puts_them(covers):

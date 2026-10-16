@@ -66,6 +66,8 @@ FINGER_OUTLINE = (
     (0.006, -14.991), (-0.3, -14.991), (-0.3, 15.009),
 )
 
+FINGER_SPREAD = 2.0  # mm per side, the default spread of every variant that carries the fingers: Charles's choice from the printed sweep (docs/FINGER_SPREAD.md), 2026-10-15. The real bore is unmeasured (assumed 26.9 mm), so revisit it once measured. 0 gives the traced outline exactly
+
 ROOT_DEPTH = 0.006  # the outline's points at or in front of this depth are the root (the tab and the fuse with the plate); a spread never moves them
 SPREAD_RAMP = 10.0  # mm of depth over which a spread builds up from nothing at the root to its full value; past it the arms and hooks sit rigidly shifted
 
@@ -93,3 +95,20 @@ HOOK_FROM_DEPTH = 26.0  # the hooks are the outline's points this deep or deeper
 def hook_half_width(spread: float = 0.0) -> float:
     """Half-width of the hooks, the widest part of the fingers inside the socket (11.009 mm traced), at this spread."""
     return max(abs(side) for depth, side in spread_outline(spread) if depth >= HOOK_FROM_DEPTH)
+
+
+FINGER_BEVEL = 1.5  # mm, leg of the 45 degree release bevel on the two hook corners that lead when the fingers are turned counter-clockwise (seen from the dock's front), so a left turn cams the hooks inward and out of the socket. A tuned feel value, not derivable: change it here (0 = no bevel). It is clipped to the hook's retaining step (1.087 mm) and to FINGER_HEIGHT, see bevel_leg
+HOOK_REAR_DEPTH = 27.006  # depth of the hooks' retaining (panel-facing) step: the outline's face from the arm's outer side out to the hook's widest point
+
+
+def hook_step(spread: float = FINGER_SPREAD) -> tuple[float, float, float]:
+    """Return (depth, inner side, outer side) of the +side hook's retaining step at this spread: the face the bevel's rear leg lies in."""
+    sides = sorted(side for depth, side in spread_outline(spread) if depth == HOOK_REAR_DEPTH and side > 0)
+    assert len(sides) == 2, "the outline no longer has a two-point retaining step at HOOK_REAR_DEPTH"
+    return HOOK_REAR_DEPTH, sides[0], sides[1]
+
+
+def bevel_leg(spread: float = FINGER_SPREAD) -> float:
+    """The bevel's leg along the finger height and along the depth: FINGER_BEVEL, but never more than the retaining step's height or FINGER_HEIGHT."""
+    _, inner, outer = hook_step(spread)
+    return max(0.0, min(FINGER_BEVEL, outer - inner, FINGER_HEIGHT))
