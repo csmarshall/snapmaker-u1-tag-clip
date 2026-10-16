@@ -14,15 +14,17 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
-from print_plates import BED, FINGERS_PARTS, FINGERS_PLATES, INTEGRATED_PARTS, INTEGRATED_PLATES, PARTS, PLATES, lay_out  # noqa: E402
+from print_plates import BED, CHIP_SHEET_PARTS, CHIP_SHEET_PLATES, DOCKS_SET_PARTS, DOCKS_SET_PLATES, FINGERS_PARTS, FINGERS_PLATES, INTEGRATED_PARTS, INTEGRATED_PLATES, PARTS, PLATES, lay_out  # noqa: E402
 
 INLAY_ROLES = {"label"}
-SUPPORTED = {"Blank cover, slot 2", "Dock with fingers, slot 1"}  # parts whose fingers need slicer support (see README, Printing)
+SUPPORTED = {"Blank cover, slot 2", "Dock with fingers, slot 1", "Dock with fingers, slot 2", "Dock with fingers, slot 3", "Dock with fingers, slot 4"}  # parts whose fingers need slicer support (see README, Printing)
 ORCA_VERSION = "01.10.01.50"  # claimed in the file; Orca refuses a 3MF from a newer version than itself
 PLATE_GAP = 0.2  # Orca's LOGICAL_PART_PLATE_GAP: plates sit one bed width plus this fraction apart
 OUT_3MF = ROOT / "coin" / "out" / "u1_test_print.3mf"
 OUT_INTEGRATED_3MF = ROOT / "coin" / "out" / "u1_dock_integrated.3mf"
 OUT_FINGERS_3MF = ROOT / "coin" / "out" / "u1_dock_fingers.3mf"
+OUT_DOCKS_SET_3MF = ROOT / "coin" / "out" / "u1_docks_fingers_set.3mf"
+OUT_CHIP_SHEET_3MF = ROOT / "coin" / "out" / "u1_chip_sheet.3mf"
 
 
 
@@ -91,6 +93,14 @@ def write_skeleton(path: Path, parts_table: tuple = PARTS, plates: dict = PLATES
 
 def main() -> int:
     """Write the project 3MF (geometry, parts, plates, filament per part, cover supports), or with --integrated the one-plate integrated-dock project; return a shell exit code."""
+    if "--docks-set" in sys.argv[1:]:
+        names = write_skeleton(OUT_DOCKS_SET_3MF, DOCKS_SET_PARTS, DOCKS_SET_PLATES, "U1 docks with socket fingers, slots 1 to 4 (PETG)")
+        print(f"wrote {OUT_DOCKS_SET_3MF}: {len(names)} objects: {', '.join(names)}")
+        return 0
+    if "--chip-sheet" in sys.argv[1:]:
+        names = write_skeleton(OUT_CHIP_SHEET_3MF, CHIP_SHEET_PARTS, CHIP_SHEET_PLATES, "U1 chip sheet, 25 chips (PETG)")
+        print(f"wrote {OUT_CHIP_SHEET_3MF}: {len(names)} objects: " + ", ".join(f"{n} x {names.count(n)}" for n in dict.fromkeys(names)))
+        return 0
     if "--fingers" in sys.argv[1:]:
         names = write_skeleton(OUT_FINGERS_3MF, FINGERS_PARTS, FINGERS_PLATES, "U1 dock with socket fingers, slot 1 (PETG)")
         print(f"wrote {OUT_FINGERS_3MF}: {len(names)} objects: {', '.join(names)}")

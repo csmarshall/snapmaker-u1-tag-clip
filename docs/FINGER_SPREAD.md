@@ -33,7 +33,9 @@ If none of the six is right, the answer is outside the range: the loosest that s
 
 Charles printed the sweep in PETG and chose +2.0 mm per side (2026-10-15). It is now `FINGER_SPREAD` in `coin/socket_fingers.py` and the default for every variant that carries the fingers: the socket adapter, the blank cover, the dock with fingers and the fallback finger piece (the integrated dock has no fingers). On paper +2.0 puts the hooks' corners 0.52 mm past the chord of an assumed 26.9 mm bore at the finger edges, so the wall squeezes the arms inward by roughly that much; the bore has still not been measured, so if it is, this is the number to revisit. Setting `FINGER_SPREAD = 0` brings back the traced fingers.
 
-## The release bevel
+## The release bevel (dropped)
+
+Charles tried the idea and dropped it on 2026-10-15: `FINGER_BEVEL` is 0, so nothing is cut, and the code and its tests stay so it can be set back to a value (1.5 was tried). What follows describes the machinery as built.
 
 Charles also wanted the fingers to pop out of the socket when the part is turned left. Seen from the dock's front, looking into the printer, counter-clockwise is the positive rotation about the socket axis in the model's frame. That frame has X to the right, Y up and Z toward the viewer (X cross Y is +Z), the fingers reach back along -Z, so a viewer on +Z is the one at the front. A point at (x, y) turning counter-clockwise moves along (-y, x): the +X hook goes toward +Y and the -X hook toward -Y. So the corners that lead are the +X hook's top end (+Y) and the -X hook's bottom end (-Y), the pair a half turn about the axis exchanges. The test computes this from the mesh's own bevel faces (it checks the motion has a positive component along each face's outward normal, and a negative one on the mirror corners) rather than from a picture.
 

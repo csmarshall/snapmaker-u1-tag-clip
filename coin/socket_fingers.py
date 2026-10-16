@@ -97,7 +97,7 @@ def hook_half_width(spread: float = 0.0) -> float:
     return max(abs(side) for depth, side in spread_outline(spread) if depth >= HOOK_FROM_DEPTH)
 
 
-FINGER_BEVEL = 1.5  # mm, leg of the 45 degree release bevel on the two hook corners that lead when the fingers are turned counter-clockwise (seen from the dock's front), so a left turn cams the hooks inward and out of the socket. A tuned feel value, not derivable: change it here (0 = no bevel). It is clipped to the hook's retaining step (1.087 mm) and to FINGER_HEIGHT, see bevel_leg
+FINGER_BEVEL = 0.0  # mm, leg of the 45 degree release bevel on the two hook corners that lead when the fingers are turned counter-clockwise (seen from the dock's front). Dropped by Charles 2026-10-15, so 0 = no bevel is cut anywhere; set it back to a value (1.5 was tried) to restore it. A tuned feel value, not derivable. It is clipped to the hook's retaining step (1.087 mm) and to FINGER_HEIGHT, see bevel_leg
 HOOK_REAR_DEPTH = 27.006  # depth of the hooks' retaining (panel-facing) step: the outline's face from the arm's outer side out to the hook's widest point
 
 

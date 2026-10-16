@@ -1,4 +1,4 @@
-"""Checks for the release bevel on the snap fingers' hooks (docs/FINGER_SPREAD.md, issue 9).
+"""Checks for the release bevel on the snap fingers' hooks (docs/FINGER_SPREAD.md, issue 9). The bevel is dropped by default (FINGER_BEVEL = 0); these keep the machinery covered by passing a bevel explicitly.
 
 What these prove: where the bevel is, which corners it is on, that it leads when the part turns counter-clockwise (computed from the mesh's own coordinates), that it is symmetric under a half turn
 about the socket axis, that the mid-height section is untouched, and how much material it removes. They cannot prove that it helps a real hook pop out of a real socket, or what PETG does there.
@@ -20,7 +20,7 @@ import socket_fingers as F  # noqa: E402
 from print_orientation import OVERHANG_LIMIT, UPSIDE_DOWN  # noqa: E402
 from print_plates import BED_CONTACT, ON_BOTTOM_STOP  # noqa: E402
 
-BEVEL = F.FINGER_BEVEL  # as shipped; the tests that switch it off restore it afterwards
+BEVEL = 1.5  # the value that was tried (Charles dropped the bevel, FINGER_BEVEL = 0); the tests pass it explicitly so the machinery stays covered
 AXIS_Y, Z_BACK = 0.0, 0.0  # a bare finger piece on a socket axis through the origin, panel face at z=0
 
 
@@ -42,11 +42,19 @@ def _bevel_faces(m: trimesh.Trimesh) -> np.ndarray:
     return np.flatnonzero((np.abs(n[:, 0]) < 1e-6) & (np.abs(np.abs(n[:, 1]) - np.sqrt(0.5)) < 1e-6) & (n[:, 2] > 0.7))
 
 
-def test_the_constants_are_what_the_docs_say():
-    assert F.FINGER_BEVEL == 1.5 and F.FINGER_SPREAD == 2.0
+def test_the_constants_are_what_the_docs_say(monkeypatch):
+    assert F.FINGER_BEVEL == 0.0 and F.FINGER_SPREAD == 2.0  # the bevel is dropped by default
     _, inner, outer = F.hook_step(0.0)
     assert (inner, outer) == (9.709, 10.796) and F.hook_step()[1:] == pytest.approx((9.709 + 2.0, 10.796 + 2.0))
-    assert F.bevel_leg() == pytest.approx(1.087)  # clipped to the retaining step, which is lower than FINGER_BEVEL
+    assert F.bevel_leg() == 0
+    monkeypatch.setattr(F, "FINGER_BEVEL", BEVEL)
+    assert F.bevel_leg() == pytest.approx(1.087)  # clipped to the retaining step, which is lower than the tried 1.5
+
+
+def test_default_fingers_carry_no_bevel_anywhere():
+    assert M._hook_bevel_cutters(AXIS_Y, Z_BACK, F.FINGER_SPREAD) is None
+    assert len(_bevel_faces(_mesh(M._socket_fingers(AXIS_Y, Z_BACK)))) == 0
+    assert len(_bevel_faces(_mesh(M.cover_parts(2)["cover"]))) == 0
 
 
 def test_leg_is_clipped_to_the_step_and_the_finger_height(monkeypatch):
@@ -163,10 +171,10 @@ def _overhang_area(mesh: trimesh.Trimesh, rotation: np.ndarray) -> float:
     ("blank cover", lambda: M.cover_parts(2)["cover"], UPSIDE_DOWN),
     ("dock with fingers", lambda: M.dock_fingers_parts(1)["dock"], ON_BOTTOM_STOP),
 ])
-def test_bevel_adds_no_overhang_in_the_print_orientations(monkeypatch, name, build, rotation):
-    """The bevel faces are at exactly 45 degrees, which the rule does not count (it counts steeper); the area needing support must not grow."""
+def test_bevel_if_restored_adds_no_overhang_in_the_print_orientations(monkeypatch, name, build, rotation):
+    """If the bevel is restored, its faces are at exactly 45 degrees, which the rule does not count (it counts steeper); the area needing support must not grow."""
     monkeypatch.setattr(F, "FINGER_BEVEL", 0.0)
     before = _overhang_area(_mesh(build()), rotation)
-    monkeypatch.setattr(F, "FINGER_BEVEL", 1.5)
+    monkeypatch.setattr(F, "FINGER_BEVEL", BEVEL)
     after = _overhang_area(_mesh(build()), rotation)
     assert after <= before + 1e-6

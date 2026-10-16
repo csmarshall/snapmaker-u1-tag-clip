@@ -54,6 +54,23 @@ FINGERS_PARTS = (
 )
 FINGERS_PLATES = {1: ("Dock with fingers", "PETG")}
 
+# Production set: the four docks with fingers, slots 1 to 4, on one plate, each standing on its bottom stop with its digit and hint on the second filament (docs/DOCK_FINGERS.md).
+DOCKS_SET_PARTS = tuple(
+    (1, f"Dock with fingers, slot {slot}", "Standing on its bottom stop; the fingers print in-layer and need support under them (build plate only).", ON_BOTTOM_STOP,
+     [(OUT / f"dock_fingers_slot{slot}.stl", "dock"), (OUT / f"dock_fingers_slot{slot}_accent.stl", "label")])
+    for slot in (1, 2, 3, 4)
+)
+DOCKS_SET_PLATES = {1: ("Docks with fingers, slots 1 to 4", "PETG")}
+
+# Chip sheet: how many chips of each material, in this order; each is back face down with its label on the second filament, as on the test plate.
+CHIP_SHEET_COUNTS = (("PETG", 16), ("PLA", 7), ("PVA", 1), ("PCTG", 1))
+CHIP_SHEET_PARTS = tuple(
+    (1, f"Chip, {material} label", "Back face down, no pause. Press the sticker into the recess afterwards.", FLAT, [(OUT / f"chip_{material}.stl", "chip"), (OUT / f"chip_{material}_label.stl", "label")])
+    for material, count in CHIP_SHEET_COUNTS
+    for _ in range(count)
+)
+CHIP_SHEET_PLATES = {1: ("Chip sheet", "PETG")}
+
 
 def split_overhang(mesh: trimesh.Trimesh, sealed_pocket_centre: np.ndarray | None = None) -> tuple[trimesh.Trimesh, trimesh.Trimesh | None]:
     """Return (faces that print unsupported, faces facing down more steeply than 45 degrees above the bed).
