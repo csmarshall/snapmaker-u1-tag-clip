@@ -63,13 +63,13 @@ def test_dock_parts_are_watertight_and_disjoint(slot):
 
 @pytest.mark.parametrize("material", MATERIALS)
 def test_chip_seats_without_touching(material):
-    chip, dock = _mesh(f"chip_{material}.stl"), _mesh("dock_slot3.stl")
+    chip, dock = _mesh(f"{M.CHIP_FILE_PREFIX}{material}.stl"), _mesh("dock_slot3.stl")
     assert chip.is_watertight
     assert _overlap(chip, dock) == pytest.approx(0, abs=1e-3)
 
 
 def test_chip_slides_in_from_above():
-    chip, dock = _mesh("chip_PETG.stl"), _mesh("dock_slot3.stl")
+    chip, dock = _mesh(f"{M.CHIP_FILE_PREFIX}PETG.stl"), _mesh("dock_slot3.stl")
     worst = 0.0
     for dy in np.arange(45.0, -0.01, -0.5):
         moved = chip.copy()
@@ -80,7 +80,7 @@ def test_chip_slides_in_from_above():
 
 def test_upside_down_chip_cannot_seat():
     """Round end first, the chip must stop on the key post, its lowest point at least most of the post's height above where a correct chip's flat end seats."""
-    chip, dock = _turned(_mesh("chip_PETG.stl")), _mesh("dock_slot3.stl")
+    chip, dock = _turned(_mesh(f"{M.CHIP_FILE_PREFIX}PETG.stl")), _mesh("dock_slot3.stl")
     lowest = None
     for dy in np.arange(30.0, -15.01, -0.25):
         moved = chip.copy()
@@ -137,7 +137,7 @@ def test_back_plate_covers_the_whole_sticker():
 
 def test_sticker_pocket_opens_on_the_back():
     """The pocket is a recess in the back face, so the sticker goes in after printing and can be swapped: open at the back face, solid above its ceiling."""
-    chip = _mesh("chip_PETG.stl")
+    chip = _mesh(f"{M.CHIP_FILE_PREFIX}PETG.stl")
     assert not chip.contains([[0, 0, 0.05]])[0]
     assert not chip.contains([[0, 0, M.POCKET_DEPTH - 0.05]])[0]
     assert chip.contains([[0, 0, M.POCKET_DEPTH + 0.1]])[0]
@@ -152,13 +152,13 @@ def test_sticker_sits_below_the_back_face():
 
 @pytest.mark.parametrize("material", MATERIALS)
 def test_label_stays_inside_the_chip(material):
-    label = _mesh(f"chip_{material}_label.stl")
+    label = _mesh(f"{M.CHIP_FILE_PREFIX}{material}_label.stl")
     assert np.hypot(label.vertices[:, 0], label.vertices[:, 1]).max() <= M.COIN_RADIUS - M.LABEL_EDGE_MARGIN + 0.05
 
 
 @pytest.mark.parametrize("material", MATERIALS)
 def test_label_is_centred_and_clear_of_the_lips(material):
-    label = _mesh(f"chip_{material}_label.stl")
+    label = _mesh(f"{M.CHIP_FILE_PREFIX}{material}_label.stl")
     (x0, y0, _), (x1, y1, _) = label.bounds
     assert (x0 + x1) / 2 == pytest.approx(0, abs=0.05)
     assert max(abs(x0), abs(x1)) <= M.COIN_RADIUS - M.DOCK_LIP_OVERLAP - M.LABEL_EDGE_MARGIN + 0.05
@@ -166,7 +166,7 @@ def test_label_is_centred_and_clear_of_the_lips(material):
 
 def test_labels_share_one_line_above_the_hook():
     """All-capital names (no descenders) have their letters centred at the same height; no name's ink comes closer than LABEL_HOOK_GAP to the hook, and the lowest one sits right at it."""
-    bounds = {m: _mesh(f"chip_{m}_label.stl").bounds for m in MATERIALS}
+    bounds = {m: _mesh(f"{M.CHIP_FILE_PREFIX}{m}_label.stl").bounds for m in MATERIALS}
     caps_only = [M.file_stem(n) for n in M.FILAMENTS if n.upper() == n]
     centres = [(bounds[m][0][1] + bounds[m][1][1]) / 2 for m in caps_only]
     assert max(centres) - min(centres) <= 0.15  # round letters (S, G, U) overshoot the baseline by about 0.1mm, as fonts do
@@ -181,7 +181,7 @@ def test_label_floor_clears_the_sticker_pocket():
 
 
 def test_hook_finger_stands_proud_of_the_lower_pocket():
-    chip, pocket = _mesh("chip_PETG.stl"), _mesh("dock_slot3_lower_pocket.stl")
+    chip, pocket = _mesh(f"{M.CHIP_FILE_PREFIX}PETG.stl"), _mesh("dock_slot3_lower_pocket.stl")
     assert chip.bounds[1][2] - pocket.bounds[1][2] >= 2.0
 
 
@@ -192,7 +192,7 @@ def test_clip_matches_extrutim():
     assert hashlib.sha256(CLIP_CLASSIC.read_bytes()).hexdigest().startswith(CLIP_CLASSIC_SHA256_PREFIX)
     shapely = pytest.importorskip("shapely.geometry")
     orig = trimesh.load(CLIP_CLASSIC, force="mesh")
-    chip = _turned(_mesh("chip_PETG.stl"))
+    chip = _turned(_mesh(f"{M.CHIP_FILE_PREFIX}PETG.stl"))
     base_shift = M.COIN_THICKNESS - 0.9  # chip plate top minus the original's base top
     to_yz = np.array([[0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0], [0, 0, 0, 1]], float)
 
@@ -210,3 +210,21 @@ def test_clip_matches_extrutim():
             assert len(o) == len(c), f"wall count differs at x={x} z={z}"
             worst = max(worst, float(np.abs(o - c).max()))
     assert worst <= 0.1
+
+
+def test_chip_3mf_is_one_object_with_body_on_filament_1_and_label_on_filament_2():
+    """Reads the built .3mf back: one object, two parts named after the chip's files, extruders 1 and 2 (nothing here checks that a slicer accepts the file)."""
+    import zipfile
+    from xml.etree import ElementTree
+
+    path = OUT / f"{M.CHIP_FILE_PREFIX}PETG.3mf"
+    if not path.exists():
+        pytest.skip(f"{path} missing: run the build first")
+    with zipfile.ZipFile(path) as z:
+        config = ElementTree.fromstring(z.read("Metadata/model_settings.config"))
+        model = ElementTree.fromstring(z.read("3D/3dmodel.model"))
+    objects = config.findall("object")
+    assert len(objects) == 1
+    parts = {p.find("metadata[@key='name']").get("value"): p.find("metadata[@key='extruder']").get("value") for p in objects[0].findall("part")}
+    assert parts == {f"{M.CHIP_FILE_PREFIX}PETG": "1", f"{M.CHIP_FILE_PREFIX}PETG_label": "2"}
+    assert len(model.findall(".//{*}build/{*}item")) == 1

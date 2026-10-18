@@ -91,7 +91,7 @@ def test_sticker_centre_is_on_the_socket_axis():
     assert (body.bounds[0][0] + body.bounds[1][0]) / 2 == pytest.approx(0, abs=0.05)
     pocket = M.POCKET_DIAMETER / 2  # the chip's recess is centred on the chip frame's origin
     assert pocket > 0
-    chip = _mesh("chip_PETG.stl")
+    chip = _mesh(f"{M.CHIP_FILE_PREFIX}PETG.stl")
     section = chip.section(plane_origin=[0, 0, M.POCKET_DEPTH / 2], plane_normal=[0, 0, 1])
     circle = min(section.discrete, key=lambda p: abs(np.ptp(p[:, 0]) - M.POCKET_DIAMETER))  # the recess's outline, not the chip's
     assert np.ptp(circle[:, 0]) == pytest.approx(M.POCKET_DIAMETER, abs=0.05)

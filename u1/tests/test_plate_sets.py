@@ -72,7 +72,7 @@ def test_each_chip_carries_its_own_label():
     for p in _placed(P.CHIP_SHEET_PARTS):
         material = p["name"].split(", ")[1].split(" ")[0]
         (body_file, _, body), (label_file, _, label) = p["files"]
-        assert body_file.stem == f"chip_{material}" and label_file.stem == f"chip_{material}_label"
+        assert body_file.stem == f"{M.CHIP_FILE_PREFIX}{material}" and label_file.stem == f"{M.CHIP_FILE_PREFIX}{material}_label"
         assert label.bounds[0][:2] == pytest.approx(label.bounds[0][:2])
         assert (label.bounds[0][:2] >= body.bounds[0][:2] - 1e-6).all() and (label.bounds[1][:2] <= body.bounds[1][:2] + 1e-6).all()  # the label sits inside its chip
 

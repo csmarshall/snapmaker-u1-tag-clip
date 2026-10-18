@@ -15,10 +15,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]  # the repository root
 sys.path.insert(0, str(ROOT / "u1" / "tools"))
 from print_plates import BED, CHIP_SHEET_PARTS, CHIP_SHEET_PLATES, DOCKS_SET_PARTS, DOCKS_SET_PLATES, FINGERS_PARTS, FINGERS_PLATES, INTEGRATED_PARTS, INTEGRATED_PLATES, PARTS, PLATES, lay_out  # noqa: E402
+from chip_3mf import ORCA_VERSION, mesh_xml  # noqa: E402,F401  (also imported from here by the other sheet tools)
 
 INLAY_ROLES = {"label"}
 SUPPORTED = {"Blank cover, slot 2", "Dock with fingers, slot 1", "Dock with fingers, slot 2", "Dock with fingers, slot 3", "Dock with fingers, slot 4"}  # parts whose fingers need slicer support (see README, Printing)
-ORCA_VERSION = "01.10.01.50"  # claimed in the file; Orca refuses a 3MF from a newer version than itself
 PLATE_GAP = 0.2  # Orca's LOGICAL_PART_PLATE_GAP: plates sit one bed width plus this fraction apart
 OUT_3MF = ROOT / "u1" / "out" / "u1_test_print.3mf"
 OUT_INTEGRATED_3MF = ROOT / "u1" / "out" / "u1_dock_integrated.3mf"
@@ -26,13 +26,6 @@ OUT_FINGERS_3MF = ROOT / "u1" / "out" / "u1_dock_fingers.3mf"
 OUT_DOCKS_SET_3MF = ROOT / "u1" / "out" / "u1_docks_fingers_set.3mf"
 OUT_CHIP_SHEET_3MF = ROOT / "u1" / "out" / "u1_chip_sheet.3mf"
 
-
-
-def mesh_xml(object_id: int, mesh) -> str:
-    """Return one 3MF <object> holding the mesh."""
-    verts = "".join(f'<vertex x="{x:.5f}" y="{y:.5f}" z="{z:.5f}"/>' for x, y, z in mesh.vertices)
-    tris = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in mesh.faces)
-    return f'<object id="{object_id}" type="model"><mesh><vertices>{verts}</vertices><triangles>{tris}</triangles></mesh></object>'
 
 
 def write_skeleton(path: Path, parts_table: tuple = PARTS, plates: dict = PLATES, title: str = "U1 chip clip test print") -> list[str]:

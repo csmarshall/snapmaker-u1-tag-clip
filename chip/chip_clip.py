@@ -15,7 +15,7 @@ Chip frame: X = width, Y = up (the chip slides down -Y into the dock, flat end f
 Printing: the chip prints back-down, with the sticker recess open on the bed side (the sticker goes in afterwards); the dock prints standing on its bottom stop
 (flat end down), so nothing on it bridges or overhangs more than 45 degrees.
 
-Run: python chip/chip_clip.py ["Name" ...]  builds every chip (or just the named ones) and the four numbered docks into chip/out.
+Run: python chip/chip_clip.py ["Name" ...] [--label-stl]  builds every chip (or just the named ones) as <prefix><name>.3mf/.stl/.step, and with no names the four numbered docks too, into chip/out.
 """
 import math
 import sys
@@ -251,9 +251,17 @@ def _label_line() -> float:
 LABEL_LINE_Y = _label_line()
 
 
+CHIP_FILE_PREFIX = "tag-clip_"  # every chip output file is named <prefix><stem>.<ext>; the one place this name is written, because the project name is not settled
+
+
 def file_stem(label: str) -> str:
     """File-name-safe form of a filament name: "PLA+" -> "PLAplus", "Nylon CF" -> "Nylon_CF"."""
     return label.replace("+", "plus").replace(" ", "_")
+
+
+def chip_file_stem(label: str) -> str:
+    """The name, without extension, of every output file for one chip: "PLA+" -> "tag-clip_PLAplus"."""
+    return CHIP_FILE_PREFIX + file_stem(label)
 
 
 def _chip_outline():
@@ -432,20 +440,27 @@ def _dock_extents() -> dict[str, Any]:
     }
 
 
-def build_chips_and_docks(names: list[str]) -> None:
-    """Write the chips (all FILAMENTS, or just `names`) as STL and STEP with their label inlays; with no names also the numbered docks, whole and as named parts."""
+def build_chips_and_docks(names: list[str], label_stl: bool = False) -> None:
+    """Write the chips (all FILAMENTS, or just `names`), each as one 3MF (body on filament 1, name inlay on filament 2) plus the body as STL and STEP; with no names also the numbered docks, whole and as named parts.
+
+    label_stl=True also writes the inlay alone as <stem>_label.stl, which the tests and the sheet and preview tools in u1/ read.
+    """
     from OCP.BRepTools import BRepTools
+
+    from chip_3mf import write_chip_3mf
 
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
     for material in names or FILAMENTS:
         body, engraving = chip_parts(material)
-        stem = f"chip_{file_stem(material)}"
+        stem = chip_file_stem(material)
         export_stl(body, str(out / f"{stem}.stl"))
         export_step(body, str(out / f"{stem}.step"))
-        export_stl(engraving, str(out / f"{stem}_label.stl"))
+        write_chip_3mf(out / f"{stem}.3mf", stem, f"Chip, {material}", body, engraving)
+        if label_stl:
+            export_stl(engraving, str(out / f"{stem}_label.stl"))
     if names:
-        print(f"built {len(names)} chip(s) in {out}: " + ", ".join(f"chip_{file_stem(m)}.stl + _label.stl" for m in names))
+        print(f"built {len(names)} chip(s) in {out}: " + ", ".join(f"{chip_file_stem(m)}.3mf/.stl/.step" for m in names))
         return
     for slot in U1_SLOTS:
         parts = dock_parts(slot)
@@ -459,4 +474,5 @@ def build_chips_and_docks(names: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    build_chips_and_docks(sys.argv[1:])  # any names given build just those chips, e.g. python chip_clip.py "PETG-GF" "TPU 85A"
+    args = sys.argv[1:]
+    build_chips_and_docks([a for a in args if a != "--label-stl"], label_stl="--label-stl" in args)  # any names given build just those chips, e.g. python chip_clip.py "PETG-GF" "TPU 85A"

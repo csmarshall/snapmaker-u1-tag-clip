@@ -10,6 +10,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]  # the repository root
+sys.path.insert(0, str(ROOT / "chip"))
+from chip_clip import CHIP_FILE_PREFIX  # noqa: E402
+
 OUT = ROOT / "u1" / "out"
 CHIP_OUT = ROOT / "chip" / "out"  # the chips and generic docks
 STAGE = OUT / "preview"
@@ -18,7 +21,9 @@ DOCK_PARTS = ("back_plate", "channels", "lower_pocket", "accent")
 
 def source(name: str) -> Path:
     """The built STL for a mesh name: chips and the generic docks come from chip/out, everything else from u1/out."""
-    return (CHIP_OUT if name.startswith(("chip_", "dock_slot")) else OUT) / f"{name}.stl"
+    if name.startswith("chip_"):  # the page's name for a chip mesh; the file on disk carries the prefix
+        return CHIP_OUT / f"{CHIP_FILE_PREFIX}{name[len('chip_'):]}.stl"
+    return (CHIP_OUT if name.startswith("dock_slot") else OUT) / f"{name}.stl"
 
 
 def main() -> int:
@@ -26,16 +31,16 @@ def main() -> int:
     mesh_dir = STAGE / "mesh"
     mesh_dir.mkdir(parents=True, exist_ok=True)
     # Every chip the build made, found by its label file, so this never needs its own copy of the filament list.
-    stems = sorted(p.name[len("chip_"):-len("_label.stl")] for p in CHIP_OUT.glob("chip_*_label.stl"))
+    stems = sorted(p.name[len(CHIP_FILE_PREFIX):-len("_label.stl")] for p in CHIP_OUT.glob(f"{CHIP_FILE_PREFIX}*_label.stl"))
     if not stems:
-        print("no chips in chip/out: run chip/chip_clip.py first", file=sys.stderr)
+        print("no chips in chip/out: run chip/chip_clip.py --label-stl first", file=sys.stderr)
         return 1
     names = [f"chip_{m}" for m in stems] + [f"chip_{m}_label" for m in stems]
     names += [f"dock_slot{s}_{p}" for s in (1, 2, 3, 4) for p in DOCK_PARTS]
     names += ["dock_mount", "socket_adapter", "hub_adapter_standin"] + [f"cover_slot{s}{p}" for s in (1, 2, 3, 4) for p in ("", "_accent")]
     missing = [n for n in names if not source(n).exists()]
     if missing:
-        print(f"missing build outputs (run chip/chip_clip.py and u1/u1_build.py first): {', '.join(missing)}", file=sys.stderr)
+        print(f"missing build outputs (run chip/chip_clip.py --label-stl and u1/u1_build.py first): {', '.join(missing)}", file=sys.stderr)
         return 1
     # Meshes from parts that no longer exist would otherwise linger and be published with the page.
     for stale in mesh_dir.glob("*.txt"):

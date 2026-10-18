@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "u1" / "tools"))
 sys.path.insert(0, str(ROOT / "u1"))
 sys.path.insert(0, str(ROOT / "chip"))
 from print_orientation import OVERHANG_LIMIT, UPSIDE_DOWN  # noqa: E402
-from chip_clip import POCKET_DEPTH, POCKET_DIAMETER  # noqa: E402
+from chip_clip import CHIP_FILE_PREFIX, POCKET_DEPTH, POCKET_DIAMETER  # noqa: E402
 
 OUT = ROOT / "u1" / "out"
 CHIP_OUT = ROOT / "chip" / "out"  # the chips and generic docks
@@ -37,7 +37,7 @@ PARTS = (
     (1, "Dock mount", "Upside down on its arm ends. The crossbar bridges about 39mm.", UPSIDE_DOWN, [(OUT / "dock_mount.stl", "mount")]),
     (1, "Socket adapter", "Standing on its flat top.", UPSIDE_DOWN, [(OUT / "socket_adapter.stl", "adapter")]),
     (1, "Blank cover, slot 2", "Standing on its flat top, with slicer supports under the fingers.", UPSIDE_DOWN, [(OUT / "cover_slot2.stl", "mount"), (OUT / "cover_slot2_accent.stl", "label")]),
-    (1, "Chip, PETG label", "Back face down, no pause. The recess ceiling bridges about 26mm. Press the sticker into the recess afterwards.", FLAT, [(CHIP_OUT / "chip_PETG.stl", "chip"), (CHIP_OUT / "chip_PETG_label.stl", "label")]),
+    (1, "Chip, PETG label", "Back face down, no pause. The recess ceiling bridges about 26mm. Press the sticker into the recess afterwards.", FLAT, [(CHIP_OUT / f"{CHIP_FILE_PREFIX}PETG.stl", "chip"), (CHIP_OUT / f"{CHIP_FILE_PREFIX}PETG_label.stl", "label")]),
 )
 # Plate number -> (title, filament).
 PLATES = {1: ("Fit set", "PETG")}
@@ -67,7 +67,7 @@ DOCKS_SET_PLATES = {1: ("Docks with fingers, slots 1 to 4", "PETG")}
 # Chip sheet: how many chips of each material, in this order; each is back face down with its label on the second filament, as on the test plate.
 CHIP_SHEET_COUNTS = (("PETG", 16), ("PLA", 7), ("PVA", 1), ("PCTG", 1))
 CHIP_SHEET_PARTS = tuple(
-    (1, f"Chip, {material} label", "Back face down, no pause. Press the sticker into the recess afterwards.", FLAT, [(CHIP_OUT / f"chip_{material}.stl", "chip"), (CHIP_OUT / f"chip_{material}_label.stl", "label")])
+    (1, f"Chip, {material} label", "Back face down, no pause. Press the sticker into the recess afterwards.", FLAT, [(CHIP_OUT / f"{CHIP_FILE_PREFIX}{material}.stl", "chip"), (CHIP_OUT / f"{CHIP_FILE_PREFIX}{material}_label.stl", "label")])
     for material, count in CHIP_SHEET_COUNTS
     for _ in range(count)
 )

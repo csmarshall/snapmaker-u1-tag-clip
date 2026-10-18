@@ -19,7 +19,7 @@ ADAPTER_MESHES = {"socket": "socket_adapter.stl", "hub": "hub_adapter_standin.st
 
 @pytest.mark.parametrize("adapter", M.ADAPTERS)
 def test_chip_slides_in_from_above_past_the_mount(adapter):
-    chip = _mesh("chip_PETG.stl")
+    chip = _mesh(f"{M.CHIP_FILE_PREFIX}PETG.stl")
     rest = trimesh.util.concatenate([_mesh("dock_slot3.stl"), _mesh("dock_mount.stl"), _mesh(ADAPTER_MESHES[adapter])])
     worst = 0.0
     for dy in np.arange(45.0, -0.01, -0.5):
