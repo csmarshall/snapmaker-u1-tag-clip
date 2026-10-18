@@ -1,4 +1,4 @@
-# u1-rfid-chip-clip
+# tag-clip
 
 A filament-clip "coin" that carries an NTAG215 sticker, plus a holder that snaps into the Snapmaker U1's side-panel spool-holder socket so the printer can read the tag without a spool holder attached. Made for feeding the U1 from an external dryer (a Creality SpacePi X4 here) with the paxx12 extended firmware and OpenRFID.
 
