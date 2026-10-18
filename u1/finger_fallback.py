@@ -1,9 +1,9 @@
 """Fallback socket adapter in two printed pieces: a harness plate and a separate snap-finger piece that slides into it on a dovetail.
 
-Use it if the integral socket adapter's fingers (u1_chip_clip.socket_adapter_parts) prove too stiff, too weak or print badly in PETG. It is an independent set of
-parts: nothing in u1_chip_clip.py changes, and the integral adapter, dock mount, cover and chip are built exactly as before.
+Use it if the integral socket adapter's fingers (u1_parts.socket_adapter_parts) prove too stiff, too weak or print badly in PETG. It is an independent set of
+parts: nothing in chip/chip_clip.py or u1/u1_parts.py changes, and the integral adapter, dock mount, cover and chip are built exactly as before.
 
-Frame: the chip frame of u1_chip_clip.py (X width, Y up, Z out from the panel; the plate's back face on the panel at z_back, the fingers going to -Z through the socket).
+Frame: the chip frame of chip/chip_clip.py (X width, Y up, Z out from the panel; the plate's back face on the panel at z_back, the fingers going to -Z through the socket).
 
 Finger piece: remmulegguh's traced fingers (the very same _socket_fingers call as the integral adapter, so FINGER_OUTLINE and FINGER_HEIGHT are used unchanged, including
 the thin tab that the outline starts behind the panel face) plus two dovetail tongues that stand out of the tab's front face into the plate, each with a detent ridge.
@@ -11,23 +11,23 @@ Harness plate: the integral adapter's plate (its outer envelope, dock-mount slot
 cut into its back face. The grooves open at the plate's top edge, so the finger piece slides down from above until its bottom face meets the grooves' stop; its top face then sits
 flush with the plate's top edge, as in the integral adapter, and each ridge drops into a dimple in its groove's floor to hold it there.
 
-Printing: both pieces print standing on the plate's top edge, as the integral adapter does (tools/finger_fallback_plate.py checks every face-down orientation and reports the
+Printing: both pieces print standing on the plate's top edge, as the integral adapter does (u1/tools/finger_fallback_plate.py checks every face-down orientation and reports the
 overhang area); the dovetails run along Y, so they are straight vertical extrusions in that orientation.
 """
 import math
+import sys
+from pathlib import Path
 
-from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE
-from build123d import Plane, Polygon, extrude
-from u1_chip_clip import (
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "chip"))  # the generic chip and dock live beside this folder
+from build123d import Plane, Polygon, extrude  # noqa: E402
+from chip_clip import ARM_WALL_THICKNESS, FIT_CLEARANCE, _box, _ccw  # noqa: E402
+from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE  # noqa: E402
+from u1_parts import (  # noqa: E402
     ADAPTER_SLOT_PROFILE,
     ADAPTER_THICKNESS,
     ADAPTER_WIDTH,
-    ARM_WALL_THICKNESS,
-    FIT_CLEARANCE,
     _adapter_frame,
     _adapter_plate,
-    _box,
-    _ccw,
     _socket_fingers,
 )
 
@@ -133,8 +133,6 @@ def harness_plate():
 
 
 if __name__ == "__main__":
-    from pathlib import Path
-
     from build123d import export_step, export_stl
 
     out = Path(__file__).parent / "out"

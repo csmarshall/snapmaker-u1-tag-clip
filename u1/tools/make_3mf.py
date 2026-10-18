@@ -1,9 +1,9 @@
-"""Build the test-print project (docs/TEST_PRINT.md) as one Snapmaker Orca 3MF, one plate per entry in print_plates.PLATES.
+"""Build the test-print project (u1/docs/TEST_PRINT.md) as one Snapmaker Orca 3MF, one plate per entry in print_plates.PLATES.
 
 Uses the layout from print_plates.py. Bodies print with filament 1 and inlays (labels, digits, hint) with filament 2. The blank cover gets supports on the plate.
 There are no printer, process or filament settings in it: pick the U1 0.4mm presets in Snapmaker Orca after opening. (Snapmaker Orca 1.10.1's CLI segfaults on loading any process preset, so it cannot fill them in or slice-check the file.)
 
-Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib python tools/make_3mf.py
+Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib python u1/tools/make_3mf.py
 """
 import sys
 import zipfile
@@ -12,19 +12,19 @@ from xml.sax.saxutils import quoteattr
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "tools"))
+ROOT = Path(__file__).resolve().parents[2]  # the repository root
+sys.path.insert(0, str(ROOT / "u1" / "tools"))
 from print_plates import BED, CHIP_SHEET_PARTS, CHIP_SHEET_PLATES, DOCKS_SET_PARTS, DOCKS_SET_PLATES, FINGERS_PARTS, FINGERS_PLATES, INTEGRATED_PARTS, INTEGRATED_PLATES, PARTS, PLATES, lay_out  # noqa: E402
 
 INLAY_ROLES = {"label"}
 SUPPORTED = {"Blank cover, slot 2", "Dock with fingers, slot 1", "Dock with fingers, slot 2", "Dock with fingers, slot 3", "Dock with fingers, slot 4"}  # parts whose fingers need slicer support (see README, Printing)
 ORCA_VERSION = "01.10.01.50"  # claimed in the file; Orca refuses a 3MF from a newer version than itself
 PLATE_GAP = 0.2  # Orca's LOGICAL_PART_PLATE_GAP: plates sit one bed width plus this fraction apart
-OUT_3MF = ROOT / "coin" / "out" / "u1_test_print.3mf"
-OUT_INTEGRATED_3MF = ROOT / "coin" / "out" / "u1_dock_integrated.3mf"
-OUT_FINGERS_3MF = ROOT / "coin" / "out" / "u1_dock_fingers.3mf"
-OUT_DOCKS_SET_3MF = ROOT / "coin" / "out" / "u1_docks_fingers_set.3mf"
-OUT_CHIP_SHEET_3MF = ROOT / "coin" / "out" / "u1_chip_sheet.3mf"
+OUT_3MF = ROOT / "u1" / "out" / "u1_test_print.3mf"
+OUT_INTEGRATED_3MF = ROOT / "u1" / "out" / "u1_dock_integrated.3mf"
+OUT_FINGERS_3MF = ROOT / "u1" / "out" / "u1_dock_fingers.3mf"
+OUT_DOCKS_SET_3MF = ROOT / "u1" / "out" / "u1_docks_fingers_set.3mf"
+OUT_CHIP_SHEET_3MF = ROOT / "u1" / "out" / "u1_chip_sheet.3mf"
 
 
 

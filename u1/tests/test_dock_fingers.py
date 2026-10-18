@@ -1,10 +1,9 @@
-"""Checks for the dock with remmulegguh's snap fingers on its back (docs/DOCK_FINGERS.md, issue #8).
+"""Checks for the dock with remmulegguh's snap fingers on its back (u1/docs/DOCK_FINGERS.md, issue #8).
 
 Run the build first. Most checks compare the part with numbers from the same script, so they show consistency with its own parameters, not that anything fits a socket
 or that a sticker reads at the loop centre. The check against his holder's real fingers is independent when his file is present locally.
 """
 import functools
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -13,13 +12,10 @@ import shapely
 import trimesh
 from build123d import export_stl
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from test_fit import M, ROOT, _mesh, _overlap  # noqa: E402
+from u1_model import M, ROOT, _mesh, _overlap  # noqa: E402
 
-sys.path.insert(0, str(ROOT / "coin"))
 from socket_fingers import FINGER_SPREAD, spread_outline  # noqa: E402
 
-sys.path.insert(0, str(ROOT / "tools"))
 from print_orientation import OVERHANG_LIMIT  # noqa: E402
 from print_plates import BED_CONTACT, FINGERS_PARTS, ON_BOTTOM_STOP  # noqa: E402
 
@@ -35,7 +31,7 @@ def _part(slot: int = 1) -> trimesh.Trimesh:
 @functools.lru_cache(maxsize=None)
 def _flat_dock(slot: int) -> trimesh.Trimesh:
     """dock_parts(slot, mount_grooves=False), built here: the dock the finger variant must contain."""
-    path = Path(ROOT / "coin" / "out" / f"_flat_dock_slot{slot}.stl")
+    path = Path(ROOT / "u1" / "out" / f"_flat_dock_slot{slot}.stl")
     export_stl(M.dock_parts(slot, mount_grooves=False)["dock"], str(path))
     mesh = trimesh.load(path, force="mesh")
     path.unlink()
@@ -122,7 +118,7 @@ def test_finger_section_matches_the_traced_outline():
 
 def _traced_part() -> trimesh.Trimesh:
     """The finger dock built with spread 0, so the traced fingers themselves can be compared with his."""
-    path = Path(ROOT / "coin" / "out" / "_traced_dock_fingers.stl")
+    path = Path(ROOT / "u1" / "out" / "_traced_dock_fingers.stl")
     export_stl(M.dock_fingers_parts(1, spread=0)["dock"], str(path))
     mesh = trimesh.load(path, force="mesh")
     path.unlink()

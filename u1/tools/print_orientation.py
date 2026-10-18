@@ -1,6 +1,6 @@
 """Draw the socket adapter, the dock mount and the blank cover on a print bed, each standing on its top end as printed, and mark the faces that would need support (facing down more steeply than 45 degrees, not on the bed).
 
-Writes a PNG for the review page. Run after the build: uv run --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/print_orientation.py <out.png>
+Writes a PNG for the review page. Run after the build: uv run --with trimesh --with numpy --with matplotlib --with scipy --with networkx  python u1/tools/print_orientation.py <out.png>
 """
 import sys
 from pathlib import Path
@@ -13,7 +13,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.collections import PolyCollection  # noqa: E402
 
-OUT = Path(__file__).resolve().parents[1] / "coin" / "out"
+OUT = Path(__file__).resolve().parents[1] / "out"
 OVERHANG_LIMIT = np.cos(np.radians(45))  # a face needs support when it faces down more steeply than this
 LIGHT = np.array([-0.3, 0.6, 0.75]) / np.linalg.norm([-0.3, 0.6, 0.75])
 

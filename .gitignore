@@ -5,6 +5,7 @@ thingiverse/
 session-state.md
 CLAUDE.local.md
 *.log
-coin/out/
+chip/out/
+u1/out/
 __pycache__/
 .DS_Store

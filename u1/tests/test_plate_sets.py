@@ -4,16 +4,14 @@ Run the build first. What these prove: the right parts in the right counts, each
 will arrange supports, brims or colour changes as hoped (the file carries no settings), or that any of it prints well in PETG.
 """
 import re
-import sys
 import zipfile
 from collections import Counter
 
 import numpy as np
 import pytest
 
-from test_fit import ROOT, M
+from u1_model import M, ROOT  # noqa: F401
 
-sys.path.insert(0, str(ROOT / "tools"))
 import make_3mf  # noqa: E402
 import print_plates as P  # noqa: E402
 

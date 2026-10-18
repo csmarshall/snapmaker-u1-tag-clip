@@ -1,10 +1,10 @@
-"""The fallback test plate (docs/FINGER_FALLBACK.md): the harness plate and the separate snap-finger piece, each turned to the face-down orientation with the least overhang, on one PETG plate.
+"""The fallback test plate (u1/docs/FINGER_FALLBACK.md): the harness plate and the separate snap-finger piece, each turned to the face-down orientation with the least overhang, on one PETG plate.
 
-For each piece every face-down orientation (one per face of its bounding box) is scored with the same overhang rule as tools/print_plates.py (faces turned down more steeply
+For each piece every face-down orientation (one per face of its bounding box) is scored with the same overhang rule as u1/tools/print_plates.py (faces turned down more steeply
 than 45 degrees and not on the bed), and the least is picked; the table is printed. Only these six are tried, not tilted ones.
-Writes coin/out/u1_finger_fallback.3mf (no printer, process or filament settings: pick the U1 0.4mm and PETG presets in Snapmaker Orca after opening, as for u1_test_print.3mf).
+Writes u1/out/u1_finger_fallback.3mf (no printer, process or filament settings: pick the U1 0.4mm and PETG presets in Snapmaker Orca after opening, as for u1_test_print.3mf).
 
-Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/finger_fallback_plate.py
+Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/finger_fallback_plate.py
 """
 import sys
 import zipfile
@@ -14,14 +14,15 @@ from xml.sax.saxutils import quoteattr
 import numpy as np
 import trimesh
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "tools"))
-sys.path.insert(0, str(ROOT / "coin"))
+ROOT = Path(__file__).resolve().parents[2]  # the repository root
+sys.path.insert(0, str(ROOT / "u1" / "tools"))
+sys.path.insert(0, str(ROOT / "u1"))
+sys.path.insert(0, str(ROOT / "chip"))
 from make_3mf import ORCA_VERSION, mesh_xml  # noqa: E402
 from print_orientation import orient  # noqa: E402
 from print_plates import BED, GAP, split_overhang  # noqa: E402
 
-OUT = ROOT / "coin" / "out"
+OUT = ROOT / "u1" / "out"
 OUT_3MF = OUT / "u1_finger_fallback.3mf"
 PIECES = (("Harness plate", OUT / "u1_finger_fallback_plate.stl"), ("Finger piece", OUT / "u1_finger_fallback_fingers.stl"))
 # Which face of the piece is on the bed -> the direction (chip frame: X width, Y up the dock, Z out from the panel) that must point down.
@@ -59,7 +60,7 @@ def lay_out() -> list[dict]:
 
 
 def write_3mf(path: Path, placed: list[dict]) -> None:
-    """Write one plate holding both pieces, filament 1, centred on the bed (the same file structure as tools/make_3mf.py)."""
+    """Write one plate holding both pieces, filament 1, centred on the bed (the same file structure as u1/tools/make_3mf.py)."""
     head = '<?xml version="1.0" encoding="UTF-8"?>\n'
     ns = 'xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" requiredextensions="p"'
     lo = np.min([p["mesh"].bounds[0] for p in placed], axis=0)
@@ -99,7 +100,7 @@ def main() -> int:
     """Print the orientation table, write the 3MF; return a shell exit code."""
     missing = [str(p) for _, p in PIECES if not p.exists()]
     if missing:
-        print(f"missing build outputs (run python coin/finger_fallback.py first): {', '.join(missing)}", file=sys.stderr)
+        print(f"missing build outputs (run python u1/finger_fallback.py first): {', '.join(missing)}", file=sys.stderr)
         return 1
     placed = lay_out()
     for piece in placed:

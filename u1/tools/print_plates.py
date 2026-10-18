@@ -1,7 +1,7 @@
-"""Lay out the test-print set (docs/TEST_PRINT.md) on U1 build plates, each part turned as printed, and stage it for the test-print page.
+"""Lay out the test-print set (u1/docs/TEST_PRINT.md) on U1 build plates, each part turned as printed, and stage it for the test-print page.
 
 Each part is written as base64 STL text (artifacts do not serve .stl), split into the faces that need support and the rest, plus a layout.json the page reads.
-Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib python tools/print_plates.py
+Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib python u1/tools/print_plates.py
 """
 import base64
 import json
@@ -12,14 +12,16 @@ from pathlib import Path
 import numpy as np
 import trimesh
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "tools"))
-sys.path.insert(0, str(ROOT / "coin"))
+ROOT = Path(__file__).resolve().parents[2]  # the repository root
+sys.path.insert(0, str(ROOT / "u1" / "tools"))
+sys.path.insert(0, str(ROOT / "u1"))
+sys.path.insert(0, str(ROOT / "chip"))
 from print_orientation import OVERHANG_LIMIT, UPSIDE_DOWN  # noqa: E402
-from u1_chip_clip import POCKET_DEPTH, POCKET_DIAMETER  # noqa: E402
+from chip_clip import POCKET_DEPTH, POCKET_DIAMETER  # noqa: E402
 
-OUT = ROOT / "coin" / "out"
-FIXTURES = ROOT / "fixtures"
+OUT = ROOT / "u1" / "out"
+CHIP_OUT = ROOT / "chip" / "out"  # the chips and generic docks
+FIXTURES = ROOT / "u1" / "fixtures"
 STAGE = OUT / "test_print"
 BED = 270.0  # Snapmaker U1 bed, mm square
 GAP = 12.0  # between parts on the plate
@@ -31,16 +33,16 @@ ON_BOTTOM_STOP = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)  # dock: it
 
 # (plate, name, how it prints, rotation, [(file, colour role)]); the first file is the body, the rest are inlays in the same frame.
 PARTS = (
-    (1, "Dock, slot 1", "Standing on its bottom stop.", ON_BOTTOM_STOP, [(OUT / "dock_slot1.stl", "dock"), (OUT / "dock_slot1_accent.stl", "label")]),
+    (1, "Dock, slot 1", "Standing on its bottom stop.", ON_BOTTOM_STOP, [(CHIP_OUT / "dock_slot1.stl", "dock"), (CHIP_OUT / "dock_slot1_accent.stl", "label")]),
     (1, "Dock mount", "Upside down on its arm ends. The crossbar bridges about 39mm.", UPSIDE_DOWN, [(OUT / "dock_mount.stl", "mount")]),
     (1, "Socket adapter", "Standing on its flat top.", UPSIDE_DOWN, [(OUT / "socket_adapter.stl", "adapter")]),
     (1, "Blank cover, slot 2", "Standing on its flat top, with slicer supports under the fingers.", UPSIDE_DOWN, [(OUT / "cover_slot2.stl", "mount"), (OUT / "cover_slot2_accent.stl", "label")]),
-    (1, "Chip, PETG label", "Back face down, no pause. The recess ceiling bridges about 26mm. Press the sticker into the recess afterwards.", FLAT, [(OUT / "chip_PETG.stl", "chip"), (OUT / "chip_PETG_label.stl", "label")]),
+    (1, "Chip, PETG label", "Back face down, no pause. The recess ceiling bridges about 26mm. Press the sticker into the recess afterwards.", FLAT, [(CHIP_OUT / "chip_PETG.stl", "chip"), (CHIP_OUT / "chip_PETG_label.stl", "label")]),
 )
 # Plate number -> (title, filament).
 PLATES = {1: ("Fit set", "PETG")}
 
-# The integrated dock (docs/INTEGRATED_DOCK.md) is its own one-plate project, so the test print above stays as it was.
+# The integrated dock (u1/docs/INTEGRATED_DOCK.md) is its own one-plate project, so the test print above stays as it was.
 # Chip X to printer -Z (its +X side face on the bed), chip Y along the bed, chip Z to printer X: a proper rotation (determinant +1). The tongue then lies flat along the bed.
 ON_SIDE = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], float)
 INTEGRATED_PARTS = (
@@ -48,13 +50,13 @@ INTEGRATED_PARTS = (
 )
 INTEGRATED_PLATES = {1: ("Integrated dock", "PETG")}
 
-# The dock with the socket fingers on its back (docs/DOCK_FINGERS.md): standing on its bottom stop like the plain dock, the fingers stick out sideways in the layer plane.
+# The dock with the socket fingers on its back (u1/docs/DOCK_FINGERS.md): standing on its bottom stop like the plain dock, the fingers stick out sideways in the layer plane.
 FINGERS_PARTS = (
     (1, "Dock with fingers, slot 1", "Standing on its bottom stop; the fingers print in-layer and need support under them (build plate only).", ON_BOTTOM_STOP, [(OUT / "dock_fingers_slot1.stl", "dock"), (OUT / "dock_fingers_slot1_accent.stl", "label")]),
 )
 FINGERS_PLATES = {1: ("Dock with fingers", "PETG")}
 
-# Production set: the four docks with fingers, slots 1 to 4, on one plate, each standing on its bottom stop with its digit and hint on the second filament (docs/DOCK_FINGERS.md).
+# Production set: the four docks with fingers, slots 1 to 4, on one plate, each standing on its bottom stop with its digit and hint on the second filament (u1/docs/DOCK_FINGERS.md).
 DOCKS_SET_PARTS = tuple(
     (1, f"Dock with fingers, slot {slot}", "Standing on its bottom stop; the fingers print in-layer and need support under them (build plate only).", ON_BOTTOM_STOP,
      [(OUT / f"dock_fingers_slot{slot}.stl", "dock"), (OUT / f"dock_fingers_slot{slot}_accent.stl", "label")])
@@ -65,7 +67,7 @@ DOCKS_SET_PLATES = {1: ("Docks with fingers, slots 1 to 4", "PETG")}
 # Chip sheet: how many chips of each material, in this order; each is back face down with its label on the second filament, as on the test plate.
 CHIP_SHEET_COUNTS = (("PETG", 16), ("PLA", 7), ("PVA", 1), ("PCTG", 1))
 CHIP_SHEET_PARTS = tuple(
-    (1, f"Chip, {material} label", "Back face down, no pause. Press the sticker into the recess afterwards.", FLAT, [(OUT / f"chip_{material}.stl", "chip"), (OUT / f"chip_{material}_label.stl", "label")])
+    (1, f"Chip, {material} label", "Back face down, no pause. Press the sticker into the recess afterwards.", FLAT, [(CHIP_OUT / f"chip_{material}.stl", "chip"), (CHIP_OUT / f"chip_{material}_label.stl", "label")])
     for material, count in CHIP_SHEET_COUNTS
     for _ in range(count)
 )
@@ -147,7 +149,7 @@ def main() -> int:
         plates[str(rnd)] = {"title": PLATES[rnd][0], "filament": PLATES[rnd][1], "parts": items}
     layout = {"bed": BED, "plates": plates}
     (STAGE / "layout.json").write_text(json.dumps(layout, indent=1))
-    shutil.copy(ROOT / "tools" / "preview" / "u1-test-print.html", STAGE / "u1-test-print.html")
+    shutil.copy(ROOT / "u1" / "tools" / "preview" / "u1-test-print.html", STAGE / "u1-test-print.html")
     print(f"staged {len(list(mesh_dir.glob('*.txt')))} meshes and the page in {STAGE}")
     return 0
 

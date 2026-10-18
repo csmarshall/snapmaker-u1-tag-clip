@@ -1,13 +1,11 @@
-"""Checks for the fallback socket adapter (coin/finger_fallback.py): a harness plate and a separate snap-finger piece joined by a dovetail with detent ridges.
+"""Checks for the fallback socket adapter (u1/finger_fallback.py): a harness plate and a separate snap-finger piece joined by a dovetail with detent ridges.
 
-The parts are built here from the model, not read from coin/out. Every number the checks compare against comes from the same constants the parts were built from
+The parts are built here from the model, not read from u1/out. Every number the checks compare against comes from the same constants the parts were built from
 (FIT_CLEARANCE, FINGER_OUTLINE, the adapter's dimensions), so passing means the pieces agree with their own parameters and with the traced outline; it does not mean
 they fit a real printer, that PETG prints these dimensions, or that the detent has a usable push-in force. Those need the printed test.
 """
-import sys
 import zipfile
 from functools import reduce
-from pathlib import Path
 from xml.etree import ElementTree
 
 import numpy as np
@@ -17,14 +15,11 @@ import trimesh
 from build123d import export_stl
 from shapely.geometry import Polygon
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "coin"))
-sys.path.insert(0, str(ROOT / "tools"))
+from u1_model import M, ROOT  # noqa: E402,F401
 import finger_fallback as FF  # noqa: E402
 import finger_fallback_plate as FP  # noqa: E402
 from print_orientation import orient  # noqa: E402
-import u1_chip_clip as M  # noqa: E402
-from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE, FINGER_SPREAD, spread_outline  # noqa: E402
+from socket_fingers import FINGER_HEIGHT, FINGER_SPREAD, spread_outline  # noqa: E402
 
 FRAME = M._adapter_frame("socket")
 Z0, AXIS_Y, Y_TOP = FRAME["z_back"], FRAME["axis_y"], FRAME["y_top"]
@@ -120,7 +115,7 @@ def test_grooves_keep_their_wall_from_the_slot(meshes):
     assert side_wall >= M.ARM_WALL_THICKNESS - 1e-3
     rear_wall = removed.distance(slot)  # the rebate's ceiling to the slot's rear wall
     assert rear_wall == pytest.approx(M.ADAPTER_THICKNESS - M.ADAPTER_SLOT_PROFILE[-1][1] - FF.TAB_THICKNESS - C, abs=1e-3)
-    assert rear_wall > 0.5  # recorded in docs/FINGER_FALLBACK.md: about 0.63 mm, thinner than the integral adapter's 1.23
+    assert rear_wall > 0.5  # recorded in u1/docs/FINGER_FALLBACK.md: about 0.63 mm, thinner than the integral adapter's 1.23
 
 
 def test_pieces_assemble_without_interference_and_with_the_derived_clearance(meshes):

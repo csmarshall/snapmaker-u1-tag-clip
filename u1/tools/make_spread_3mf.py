@@ -1,10 +1,10 @@
-"""Build the finger-spread sweep plate (docs/FINGER_SPREAD.md): six blank covers whose snap fingers are spread 0 to 2.5 mm per side, one Snapmaker Orca 3MF.
+"""Build the finger-spread sweep plate (u1/docs/FINGER_SPREAD.md): six blank covers whose snap fingers are spread 0 to 2.5 mm per side, one Snapmaker Orca 3MF.
 
 Each cover is the blank cover with the spread value engraved as its label (control +0.0 first), turned as printed (flat top on the bed, fingers on slicer supports) and laid out on the 270mm bed.
 It is one filament (PETG) and carries no printer, process or filament settings: pick the U1 0.4mm presets after opening. Nothing the other builds write is touched.
 Also prints, for each spread, the hooks' half-width against the assumed bore (the bore is 1waynger1's plug width, not measured on the printer).
 
-Run: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/make_spread_3mf.py
+Run: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/make_spread_3mf.py
 """
 import math
 import sys
@@ -16,19 +16,20 @@ from xml.sax.saxutils import quoteattr
 import numpy as np
 import trimesh
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "tools"))
-sys.path.insert(0, str(ROOT / "coin"))
+ROOT = Path(__file__).resolve().parents[2]  # the repository root
+sys.path.insert(0, str(ROOT / "u1" / "tools"))
+sys.path.insert(0, str(ROOT / "u1"))
+sys.path.insert(0, str(ROOT / "chip"))
 from make_3mf import ORCA_VERSION, mesh_xml  # noqa: E402
 from print_orientation import UPSIDE_DOWN  # noqa: E402
 from print_plates import BED, GAP  # noqa: E402
 from socket_fingers import FINGER_HEIGHT, hook_half_width  # noqa: E402
-from u1_chip_clip import SOCKET_BORE_DIAMETER, cover_parts  # noqa: E402
+from u1_parts import SOCKET_BORE_DIAMETER, cover_parts  # noqa: E402
 from build123d import export_stl  # noqa: E402
 
 SPREADS = (0.0, 0.5, 1.0, 1.5, 2.0, 2.5)  # mm per side; the control first
 COLUMNS = 3  # covers per row on the bed
-OUT_3MF = ROOT / "coin" / "out" / "u1_finger_spread.3mf"
+OUT_3MF = ROOT / "u1" / "out" / "u1_finger_spread.3mf"
 
 
 def label_for(spread: float) -> str:

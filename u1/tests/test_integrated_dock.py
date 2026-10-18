@@ -1,21 +1,18 @@
-"""Checks for the integrated dock (the dock with the adapter's dovetail built in; docs/INTEGRATED_DOCK.md).
+"""Checks for the integrated dock (the dock with the adapter's dovetail built in; u1/docs/INTEGRATED_DOCK.md).
 
 Run the build first. These compare the part with numbers from the same script (and, where his base is present, with 1waynger1's real slot), so passing means the file agrees
 with its own parameters and the slot as measured, not that it fits a printed adapter.
 """
-import sys
-from pathlib import Path
 
 import numpy as np
 import pytest
 import shapely
 import trimesh
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build123d import export_stl  # noqa: E402
-from test_fit import ADAPTER_MESHES, M, _his_hub_base, _mesh, _overlap  # noqa: E402
+from test_u1_fit import ADAPTER_MESHES, _his_hub_base  # noqa: E402
+from u1_model import M, _mesh, _overlap  # noqa: E402
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from print_orientation import OVERHANG_LIMIT  # noqa: E402
 from print_plates import BED_CONTACT, INTEGRATED_PARTS, ON_SIDE  # noqa: E402
 

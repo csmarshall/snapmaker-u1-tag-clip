@@ -1,9 +1,8 @@
-"""Checks for the release bevel on the snap fingers' hooks (docs/FINGER_SPREAD.md, issue 9). The bevel is dropped by default (FINGER_BEVEL = 0); these keep the machinery covered by passing a bevel explicitly.
+"""Checks for the release bevel on the snap fingers' hooks (u1/docs/FINGER_SPREAD.md, issue 9). The bevel is dropped by default (FINGER_BEVEL = 0); these keep the machinery covered by passing a bevel explicitly.
 
 What these prove: where the bevel is, which corners it is on, that it leads when the part turns counter-clockwise (computed from the mesh's own coordinates), that it is symmetric under a half turn
 about the socket axis, that the mid-height section is untouched, and how much material it removes. They cannot prove that it helps a real hook pop out of a real socket, or what PETG does there.
 """
-import sys
 import tempfile
 from pathlib import Path
 
@@ -13,9 +12,8 @@ import shapely
 import trimesh
 from build123d import export_stl
 
-from test_fit import M, ROOT
+from u1_model import M, ROOT  # noqa: F401
 
-sys.path.insert(0, str(ROOT / "tools"))
 import socket_fingers as F  # noqa: E402
 from print_orientation import OVERHANG_LIMIT, UPSIDE_DOWN  # noqa: E402
 from print_plates import BED_CONTACT, ON_BOTTOM_STOP  # noqa: E402

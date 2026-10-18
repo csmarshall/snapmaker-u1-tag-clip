@@ -1,17 +1,16 @@
-"""Checks for the finger-spread sweep (docs/FINGER_SPREAD.md, issue 9).
+"""Checks for the finger-spread sweep (u1/docs/FINGER_SPREAD.md, issue 9).
 
 What these prove: the spread is an explicit, bounded offset from the traced outline, the root does not move, and the six covers are valid, separate solids on the bed.
 What they cannot prove: that any spread grips the real socket. That depends on the real bore (assumed 26.9 mm) and on PETG shrinkage, and only a print answers it.
 """
-import sys
 import zipfile
 import numpy as np
 import pytest
 import trimesh
 
-from test_fit import M, ROOT, _finger_volumes, _overlap
+from test_u1_fit import _finger_volumes
+from u1_model import M, ROOT, _overlap  # noqa: F401
 
-sys.path.insert(0, str(ROOT / "tools"))
 import make_spread_3mf as S  # noqa: E402
 import socket_fingers as F  # noqa: E402
 
