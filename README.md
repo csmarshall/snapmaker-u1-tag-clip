@@ -33,6 +33,16 @@ uv run --with build123d --with trimesh --with numpy --with matplotlib --with sci
 uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/make_spread_3mf.py  # coin/out/u1_finger_spread.3mf: six blank covers, fingers spread 0 to 2.5 mm per side, see docs/FINGER_SPREAD.md
 ```
 
+### Adding a new chip type
+
+The built-in list is `FILAMENTS` in `coin/u1_chip_clip.py` (20 names). To make a chip for a name that is not in it, pass the name on the command line and only those chips are built:
+
+```sh
+uv run --with build123d --with numpy --with scipy --with trimesh python coin/u1_chip_clip.py "TPU 85A" "PETG-GF"
+```
+
+Each name writes `chip_<name>.stl` (the body), `chip_<name>_label.stl` (the label inlay, printed as a second colour) and `chip_<name>.step` to `coin/out/`; spaces become `_` and `+` becomes `plus` in the file name. The label shrinks to fit long names. A name that is not in `FILAMENTS` is laid out on the same label line as the built-in names, so one with long descenders may sit closer to the hook finger than they do; check the preview. To make a name permanent, add it to `FILAMENTS` so a full build includes it.
+
 ## Printing
 
 - **Chip:** back face down, no pause. The sticker presses into the open recess in the back afterwards (`POCKET_DEPTH` 0.6mm, so it sits below the face), and a bad one is swapped without reprinting. For two colours, load `chip_<material>.stl` and `chip_<material>_label.stl` together as one object.
