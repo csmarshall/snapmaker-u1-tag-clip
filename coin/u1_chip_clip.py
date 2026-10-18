@@ -18,7 +18,7 @@ Printing: the chip prints back-down, with the sticker recess open on the bed sid
 import math
 from typing import Any
 
-from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE
+from socket_fingers import FINGER_HEIGHT, FINGER_OUTLINE, FINGER_SPREAD, bevel_leg, hook_half_width, hook_step, spread_outline  # noqa: F401  (FINGER_OUTLINE: the tests read it from here)
 from build123d import (
     Align,
     Box,
@@ -145,10 +145,15 @@ SOCKET_COVER_THICKNESS = 3.0  # the blank cover's plate, as thick as remmulegguh
 # Measured, not derivable: the width of 1waynger1's plug where it meets the panel (26.87mm), the best figure we have for the socket bore until one is measured on the printer.
 SOCKET_BORE_DIAMETER = 26.9
 SOCKET_COVER_OVERLAP = 1.5  # how far the blank cover's plate reaches past the bore's top edge
+COVER_LABEL_MAX_WIDTH = 0.7 * 2 * SOCKET_PLATE_RADIUS  # a free-text label on the cover (the spread sweep's +1.0) shrinks to fit this width
 SOCKET_COVER_FLAT = SOCKET_BORE_DIAMETER / 2 + SOCKET_COVER_OVERLAP  # the cover's flat top above the axis: it stands on this when printed, the fingers on supports
 MOUNT_TONGUE_LENGTH = 30.0  # how far the dock mount's tongue reaches down into the slot
 MOUNT_RISER = 3.0  # the crossbar resting on the adapter's top edge, under the dock
 MOUNT_ARM_WIDTH = 3.0  # each side arm, beside the dock
+# The integrated dock (dock_integrated_parts) has no mount: its own stem carries the dovetail. The stem is the slot's section grown by this much, so it is wider than the slot
+# and its underside rests on the adapter's top edge in the same place the mount's crossbar does. Not derivable from a fit: it only has to leave a bearing ring on the plate's top
+# edge. 3 mm is the dock's own rail width, kept narrow so the ring is a short bridge when the dock prints on its tongue end.
+INTEGRATED_SHOULDER = 3.0
 # The mount grips the dock only in its middle band: the stretch of side face left once the lower pocket's height is taken off both ends, centred on the dock.
 # Each arm ends in an L clamp over the whole band: its side wall beside the dock and a front jaw over the rail's front edge, with the panel closing the C,
 # plus a tongue in a groove in the dock's side face, which stops the dock sliding up or down.
@@ -348,8 +353,10 @@ def _orientation_hint(y_base: float, y_bevel: float):
     return Pos(0, 0, z_face - HINT_DEPTH) * (extrude(chip, amount=HINT_DEPTH + 0.01) + extrude(arrow, amount=HINT_DEPTH + 0.01))
 
 
-def dock_parts(slot: int | None) -> dict[str, object]:
+def dock_parts(slot: int | None, mount_grooves: bool = True) -> dict[str, object]:
     """Return the named parts of the dock for one U1 slot: back_plate, channels, lower_pocket, accent (the slot digit and the hint, inlaid flush), and dock, the body's union.
+
+    mount_grooves=False leaves the side faces flat (full rails), for the integrated dock, which has no mount to grip them.
 
     For two colours, print dock (body colour) together with accent (number colour); they share one origin.
 
@@ -405,13 +412,14 @@ def dock_parts(slot: int | None) -> dict[str, object]:
     back_plate -= hint_cut
     channels -= funnel
     # The dock mount's grooves, one in each side face in the middle band; harmless on the taped dock.
-    ext = _dock_extents()
-    (gy0, gy1), (gz0, gz1) = ext["groove_y"], ext["groove_z"]
-    for sign in (-1, 1):
-        x0, x1 = sorted((sign * (outer_half - MOUNT_GROOVE_DEPTH), sign * (outer_half + 1)))
-        groove = _box(x0, x1, gy0, gy1, gz0, gz1)
-        back_plate -= groove
-        channels -= groove
+    if mount_grooves:
+        ext = _dock_extents()
+        (gy0, gy1), (gz0, gz1) = ext["groove_y"], ext["groove_z"]
+        for sign in (-1, 1):
+            x0, x1 = sorted((sign * (outer_half - MOUNT_GROOVE_DEPTH), sign * (outer_half + 1)))
+            groove = _box(x0, x1, gy0, gy1, gz0, gz1)
+            back_plate -= groove
+            channels -= groove
 
     lower_pocket = _box(-inner_half, inner_half, y_bottom, cover_top, z_cover_in, z_cover_out)  # cover plate
     for sign in (-1, 1):
@@ -459,15 +467,43 @@ def _dock_extents() -> dict[str, Any]:
     }
 
 
-def _socket_fingers(axis_y: float, z_back: float):
+def _socket_fingers(axis_y: float, z_back: float, spread: float = FINGER_SPREAD):
     """remmulegguh's snap fingers, going into the socket from the panel at z_back, centred on a socket axis at axis_y.
 
     Fingers come from coin/socket_fingers.py, mapped from his frame (socket axis along x, +z down) into this one: sideways stays sideways, depth goes to -Z,
     down goes to -Y. That mapping is a proper rotation (determinant +1), so nothing is mirrored.
+    `spread` (mm per side, default FINGER_SPREAD, Charles's sweep choice; 0 = the traced outline exactly) moves the arms and hooks outward with the root fixed; see socket_fingers.spread_outline.
     """
     # The outline is (depth into the socket, sideways); on a plane whose local x is this X and local y is -Z, a point is (sideways, depth - z_back).
     finger_plane = Plane(origin=(0, axis_y - FINGER_HEIGHT / 2, 0), x_dir=(1, 0, 0), z_dir=(0, 1, 0))
-    return extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in FINGER_OUTLINE]), align=None), amount=FINGER_HEIGHT)
+    fingers = extrude(finger_plane * Polygon(*_ccw([(side, depth - z_back) for depth, side in spread_outline(spread)]), align=None), amount=FINGER_HEIGHT)
+    return fingers - _hook_bevel_cutters(axis_y, z_back, spread)
+
+
+def _hook_bevel_cutters(axis_y: float, z_back: float, spread: float):
+    """The two wedges that bevel the hooks' leading corners: where the retaining step meets the end face that leads when the part is turned counter-clockwise seen from the front.
+
+    Seen from the front (+Z toward the viewer, X right, Y up, so counter-clockwise is positive rotation about +Z) the +X hook moves toward +Y and the -X hook toward -Y,
+    so the leading corners are the +X hook's top (+Y) one and the -X hook's bottom (-Y) one: the two that a 180 degree turn about the socket axis exchanges. Each wedge is a right triangle
+    of leg bevel_leg() in the (Y, depth) plane, with its right angle at the corner, running from the step's inner side out past the hook's widest point; the cut leaves the 45 degree face the turned hook rides inward on.
+    The wedge starts at the step's inner side, so the arm and the hook's inner half are not touched, and it never reaches the fingers' mid-height section.
+    """
+    leg = bevel_leg(spread)
+    if leg == 0:
+        return None
+    depth, inner, _ = hook_step(spread)
+    outer = hook_half_width(spread)  # the wedge runs out past the hook's widest point, so the flank beyond the step is bevelled too
+    e = 0.2  # overshoot past the faces being cut, so the wedge leaves no sliver
+    wedges = None
+    for sign in (1, -1):
+        y_end = axis_y + sign * FINGER_HEIGHT / 2
+        # (Y, depth) corners of the wedge: the right angle at the step's end corner, one leg along the end face, the other along the step; mapped to (Y, Z) with Z = z_back - depth.
+        tri = [(y_end + sign * e, z_back - depth), (y_end - sign * leg, z_back - depth), (y_end + sign * e, z_back - depth - leg - e)]
+        x_start = inner if sign > 0 else -outer - e  # the wedge spans the inner side of the step to e beyond the hook's widest point (on the -X hook mirrored)
+        plane = Plane(origin=(x_start, 0, 0), x_dir=(0, 1, 0), z_dir=(1, 0, 0))  # local x = Y, local y = z_dir x x_dir = Z; extrudes toward +X
+        wedge = extrude(plane * Polygon(*_ccw(tri), align=None), amount=outer - inner + e)
+        wedges = wedge if wedges is None else wedges + wedge
+    return wedges
 
 
 def _band_clamp(sign: int, y_lo: float, y_hi: float):
@@ -550,6 +586,41 @@ def dock_mount_parts() -> dict[str, object]:
     return {"dock_mount": mount}
 
 
+def dock_integrated_parts(slot: int | None) -> dict[str, object]:
+    """The dock with the adapter's dovetail built in, for either adapter (the slot is shared), so it slides straight into the slot with no dock mount.
+
+    The dock is dock_parts(slot) without the mount's side grooves (there is no mount to grip them, so the rails stay full width). Below its bottom end a stem spans the FIT_CLEARANCE + MOUNT_RISER gap the mount's crossbar fills: the slot's section grown by
+    INTEGRATED_SHOULDER (and kept inside the adapter plate's outline), so its underside rests on the adapter's top edge with the dock exactly where it sits on the mount.
+    Under that, the tongue is the slot's section less FIT_CLEARANCE all round for MOUNT_TONGUE_LENGTH, as in dock_mount_parts. Returns dock (body, stem and tongue), accent (as in
+    dock_parts) and stem (the added geometry alone).
+    """
+    parts = dock_parts(slot, mount_grooves=False)
+    d, f = _dock_extents(), _adapter_frame("socket")
+    plane = Plane(origin=(0, f["y_top"], 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))  # local x = X, local y = Z, extruded toward -Y
+    tongue = extrude(plane * _slot_section(FIT_CLEARANCE), amount=MOUNT_TONGUE_LENGTH)
+    shoulder_plane = Plane(origin=(0, d["y_bottom"], 0), x_dir=(1, 0, 0), z_dir=(0, -1, 0))
+    grown = offset(_slot_section(0), amount=INTEGRATED_SHOULDER, kind=Kind.INTERSECTION).faces()[0]
+    plate = _box(-ADAPTER_WIDTH / 2, ADAPTER_WIDTH / 2, f["y_top"], d["y_bottom"], f["z_back"], f["z_front"])
+    shoulder = extrude(shoulder_plane * grown, amount=d["y_bottom"] - f["y_top"]) & plate
+    stem = shoulder + tongue
+    return {"dock": parts["dock"] + stem, "accent": parts["accent"], "stem": stem}
+
+
+STICKER_CENTRE_Y = 0.0  # the chip frame's origin is the sticker's centre (the recess is centred on it), so this is also the dock's socket axis in dock_fingers_parts
+
+
+def dock_fingers_parts(slot: int | None, spread: float = FINGER_SPREAD) -> dict[str, object]:
+    """The dock with remmulegguh's snap fingers on its back, no adapter, slot, dovetail or mount (issue #8): it plugs into the spool-holder socket where a spool would sit.
+
+    The dock is dock_parts(slot, mount_grooves=False) with its back face on the panel plane (z = _dock_extents()["z_back"]) and the fingers' axis through the sticker's
+    centre, so the sticker sits on the socket axis. The fingers' 0.3 mm tab, in front of the panel face, is buried in the back plate. Returns dock (body and fingers),
+    accent (as in dock_parts) and fingers (the added geometry alone). `spread` is as in _socket_fingers (default FINGER_SPREAD).
+    """
+    parts = dock_parts(slot, mount_grooves=False)
+    fingers = _socket_fingers(STICKER_CENTRE_Y, _dock_extents()["z_back"], spread)
+    return {"dock": parts["dock"] + fingers, "accent": parts["accent"], "fingers": fingers}
+
+
 def socket_adapter_parts() -> dict[str, object]:
     """Our socket adapter: remmulegguh's snap fingers behind a plate with 1waynger1's slot, so the dock mount fits it as it fits his hub adapter.
 
@@ -571,21 +642,26 @@ def sticker_above_axis(adapter: str) -> float:
     return -_adapter_frame(adapter)["axis_y"]
 
 
-def cover_parts(slot: int | None) -> dict[str, object]:
+def cover_parts(slot: int | None, spread: float = FINGER_SPREAD, label: str | None = None) -> dict[str, object]:
     """The blank cover for an unused socket: the snap fingers and a round plate covering the whole bore (flat across its top, to stand on when printed), with the slot digit inlaid in the accent colour (none when slot is None).
 
     It sits on the same socket axis as the socket adapter, so the two can be compared in place.
+    `spread` (mm per side, default FINGER_SPREAD; 0 = exactly the traced fingers) widens the fingers outward for the grip sweep (docs/FINGER_SPREAD.md). `label` engraves that text in place of the slot digit, scaled down if it would run wider than the plate allows.
     """
     assert SOCKET_COVER_FLAT < SOCKET_PLATE_RADIUS, "the cover's flat top would cut the plate off above its round edge"
     f = _adapter_frame("socket")
     axis_y, z_back, r = f["axis_y"], f["z_back"], SOCKET_PLATE_RADIUS
     below_flat = Pos(0, axis_y + SOCKET_COVER_FLAT - 2 * r) * Rectangle(4 * r, 4 * r)
     plate = Pos(0, 0, z_back) * extrude(((Pos(0, axis_y) * Circle(r)) & below_flat).faces()[0], amount=SOCKET_COVER_THICKNESS)
-    cover = plate + _socket_fingers(axis_y, z_back)
+    cover = plate + _socket_fingers(axis_y, z_back, spread)
     accent = None
-    if slot is not None:
-        size = 2 * r * 0.55 / Text(str(slot), font_size=1.0).bounding_box().size.Y
-        accent = Pos(0, axis_y - 2, z_back + SOCKET_COVER_THICKNESS) * extrude(Text(str(slot), font_size=size), amount=-ENGRAVE_DEPTH)
+    if slot is not None or label is not None:
+        text = str(slot) if label is None else label
+        unit = Text(text, font_size=1.0).bounding_box().size
+        size = 2 * r * 0.55 / unit.Y
+        if label is not None:
+            size = min(size, COVER_LABEL_MAX_WIDTH / unit.X)
+        accent = Pos(0, axis_y - 2, z_back + SOCKET_COVER_THICKNESS) * extrude(Text(text, font_size=size), amount=-ENGRAVE_DEPTH)
         cover -= accent
     return {"cover": cover, "accent": accent}
 
@@ -595,14 +671,20 @@ if __name__ == "__main__":
 
     from OCP.BRepTools import BRepTools
 
+    import sys
+
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
-    for material in FILAMENTS:
+    custom = sys.argv[1:]  # any names given build just those chips, e.g. python u1_chip_clip.py "PETG-GF" "TPU 85A"
+    for material in custom or FILAMENTS:
         body, engraving = chip_parts(material)
         stem = f"chip_{file_stem(material)}"
         export_stl(body, str(out / f"{stem}.stl"))
         export_step(body, str(out / f"{stem}.step"))
         export_stl(engraving, str(out / f"{stem}_label.stl"))
+    if custom:
+        print(f"built {len(custom)} chip(s) in {out}: " + ", ".join(f"chip_{file_stem(m)}.stl + _label.stl" for m in custom))
+        sys.exit(0)
     for slot in U1_SLOTS:
         parts = dock_parts(slot)
         for name, shape in parts.items():
@@ -614,11 +696,25 @@ if __name__ == "__main__":
         for name, shape in cover.items():
             BRepTools.Clean_s(shape.wrapped)
             export_stl(shape, str(out / (f"cover_slot{slot}.stl" if name == "cover" else f"cover_slot{slot}_{name}.stl")))
+    for slot in U1_SLOTS:
+        integrated = dock_integrated_parts(slot)
+        for name in ("dock", "accent"):
+            BRepTools.Clean_s(integrated[name].wrapped)
+            export_stl(integrated[name], str(out / (f"dock_integrated_slot{slot}.stl" if name == "dock" else f"dock_integrated_slot{slot}_{name}.stl")))
+        export_step(integrated["dock"], str(out / f"dock_integrated_slot{slot}.step"))
+    for slot in U1_SLOTS:
+        with_fingers = dock_fingers_parts(slot)
+        for name in ("dock", "accent"):
+            BRepTools.Clean_s(with_fingers[name].wrapped)
+            export_stl(with_fingers[name], str(out / (f"dock_fingers_slot{slot}.stl" if name == "dock" else f"dock_fingers_slot{slot}_{name}.stl")))
+        export_step(with_fingers["dock"], str(out / f"dock_fingers_slot{slot}.step"))
     for name, shape in (("dock_mount", dock_mount_parts()["dock_mount"]), ("socket_adapter", socket_adapter_parts()["socket_adapter"])):
         export_stl(shape, str(out / f"{name}.stl"))
         export_step(shape, str(out / f"{name}.step"))
     export_stl(hub_adapter_standin()["hub_adapter"], str(out / "hub_adapter_standin.stl"))  # viewer and checks only
     print("chip: print back-down, no pause; press the sticker into the recess in its back afterwards")
     print("dock: print standing on its bottom stop (flat end down); tape it to the panel, or push it into the dock mount")
+    print("integrated dock (dovetail built in, no mount): print lying on its side face, see docs/INTEGRATED_DOCK.md")
+    print("dock with socket fingers (no adapter): print standing on its bottom stop with supports under the fingers, see docs/DOCK_FINGERS.md")
     print("dock mount: print upside down, standing on the ends of its arms; socket adapter: print standing on the plate's flat top and the fingers' top face; cover: print standing on the plate's flat top, with supports under the fingers")
     print(f"dock mount: the sticker sits {sticker_above_axis('socket'):.1f} mm above the socket axis on our socket adapter, {sticker_above_axis('hub'):.1f} mm on 1waynger1's hub adapter ({'near' if HUB_NEAR_END_UP else 'far'} end up)")

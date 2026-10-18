@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 import shapely
 import trimesh
+from build123d import export_stl
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "coin" / "out"
@@ -342,9 +343,20 @@ def test_cover_parts_are_watertight_and_disjoint():
     assert _overlap(cover, accent) == pytest.approx(0, abs=0.01)
 
 
-@pytest.mark.parametrize("piece", ["socket_adapter.stl", "cover_slot3.stl"])
-def test_socket_fingers_match_remmulegguh(piece):
-    """Independent check: the traced fingers, mapped into the dock frame, coincide with his holder's fingers within 2% by volume."""
+def _traced_piece(piece: str) -> trimesh.Trimesh:
+    """A socket piece built with spread 0, so its fingers are the traced ones (the built files carry FINGER_SPREAD)."""
+    axis_y, z_back = M._adapter_frame("socket")["axis_y"], M._adapter_frame("socket")["z_back"]
+    shape = M.cover_parts(3, spread=0)["cover"] if piece.startswith("cover") else M._adapter_plate("socket") + M._socket_fingers(axis_y, z_back, 0)
+    path = OUT / f"_traced_{piece}"
+    OUT.mkdir(exist_ok=True)
+    export_stl(shape, str(path))
+    mesh = trimesh.load(path, force="mesh")
+    path.unlink()
+    return mesh
+
+
+def _finger_volumes(mesh: trimesh.Trimesh) -> tuple[float, float, float]:
+    """Independent check helper: the fingers of `mesh` against remmulegguh's, both in the dock frame, in the fingers' region (1-30mm deep, clear of the plates). Returns (his volume, our volume, shared volume)."""
     src = ROOT / "thingiverse" / "printables1625982" / "holderrfid_short.stl"
     if not src.exists():
         pytest.skip("remmulegguh's holderrfid_short.stl is not present (it is not redistributed)")
@@ -358,12 +370,19 @@ def test_socket_fingers_match_remmulegguh(piece):
     his.vertices = his.vertices @ R.T + [0, axis_y, z_back + plate_back]
     probe = trimesh.creation.box(extents=[40, 20, 29])
     probe.apply_translation([0, axis_y, z_back - 15.5])  # the fingers' region, 1-30mm deep, clear of the plates
-    ours = trimesh.boolean.intersection([_mesh(piece), probe], engine="manifold")
+    ours = trimesh.boolean.intersection([mesh, probe], engine="manifold")
     theirs = trimesh.boolean.intersection([his, probe], engine="manifold")
     shared = trimesh.boolean.intersection([ours, theirs], engine="manifold")
-    assert theirs.volume > 100
-    assert shared.volume == pytest.approx(theirs.volume, rel=0.02)
-    assert shared.volume == pytest.approx(ours.volume, rel=0.02)
+    return theirs.volume, ours.volume, shared.volume
+
+
+@pytest.mark.parametrize("piece", ["socket_adapter.stl", "cover_slot3.stl"])
+def test_socket_fingers_match_remmulegguh(piece):
+    """Independent check: the fingers built with spread 0 (the traced ones), mapped into the dock frame, coincide with his holder's fingers within 2% by volume."""
+    theirs, ours, shared = _finger_volumes(_traced_piece(piece))
+    assert theirs > 100
+    assert shared == pytest.approx(theirs, rel=0.02)
+    assert shared == pytest.approx(ours, rel=0.02)
 
 
 def _his_hub_base() -> trimesh.Trimesh:

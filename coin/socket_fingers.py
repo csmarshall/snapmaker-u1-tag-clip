@@ -65,3 +65,50 @@ FINGER_OUTLINE = (
     (1.85, -9.339), (1.628, -9.421), (1.175, -9.553), (0.712, -9.641), (0.478, -9.669), (0.006, -9.691),
     (0.006, -14.991), (-0.3, -14.991), (-0.3, 15.009),
 )
+
+FINGER_SPREAD = 2.0  # mm per side, the default spread of every variant that carries the fingers: Charles's choice from the printed sweep (docs/FINGER_SPREAD.md), 2026-10-15. The real bore is unmeasured (assumed 26.9 mm), so revisit it once measured. 0 gives the traced outline exactly
+
+ROOT_DEPTH = 0.006  # the outline's points at or in front of this depth are the root (the tab and the fuse with the plate); a spread never moves them
+SPREAD_RAMP = 10.0  # mm of depth over which a spread builds up from nothing at the root to its full value; past it the arms and hooks sit rigidly shifted
+
+
+def spread_outline(spread: float = 0.0) -> tuple[tuple[float, float], ...]:
+    """FINGER_OUTLINE with the arms and hooks moved outward by `spread` mm per side, the root fixed.
+
+    Every point behind the root moves sideways away from the axis by spread * s(t), where t = (depth - ROOT_DEPTH) / SPREAD_RAMP clamped to 0..1 and s is the smoothstep 3t^2 - 2t^3.
+    Moving the inner and outer faces together keeps the arms' thickness and the hooks' shape, and the ramp (zero slope at the root, at most about 1.5 * spread / SPREAD_RAMP afterwards)
+    bends the arms out from the root instead of shearing them off it, so the corner where an arm leaves the tab is not made sharper. A spread of 0 returns the traced outline itself.
+    """
+    if spread == 0:
+        return FINGER_OUTLINE
+    moved = []
+    for depth, side in FINGER_OUTLINE:
+        t = min(max((depth - ROOT_DEPTH) / SPREAD_RAMP, 0.0), 1.0)
+        shift = spread * t * t * (3 - 2 * t)
+        moved.append((depth, side + shift if side > 0 else side - shift if side < 0 else side))
+    return tuple(moved)
+
+
+HOOK_FROM_DEPTH = 26.0  # the hooks are the outline's points this deep or deeper (the straight arms end at 25.006 and the hook's step starts at 27.006)
+
+
+def hook_half_width(spread: float = 0.0) -> float:
+    """Half-width of the hooks, the widest part of the fingers inside the socket (11.009 mm traced), at this spread."""
+    return max(abs(side) for depth, side in spread_outline(spread) if depth >= HOOK_FROM_DEPTH)
+
+
+FINGER_BEVEL = 0.0  # mm, leg of the 45 degree release bevel on the two hook corners that lead when the fingers are turned counter-clockwise (seen from the dock's front). Dropped by Charles 2026-10-15, so 0 = no bevel is cut anywhere; set it back to a value (1.5 was tried) to restore it. A tuned feel value, not derivable. It is clipped to the hook's retaining step (1.087 mm) and to FINGER_HEIGHT, see bevel_leg
+HOOK_REAR_DEPTH = 27.006  # depth of the hooks' retaining (panel-facing) step: the outline's face from the arm's outer side out to the hook's widest point
+
+
+def hook_step(spread: float = FINGER_SPREAD) -> tuple[float, float, float]:
+    """Return (depth, inner side, outer side) of the +side hook's retaining step at this spread: the face the bevel's rear leg lies in."""
+    sides = sorted(side for depth, side in spread_outline(spread) if depth == HOOK_REAR_DEPTH and side > 0)
+    assert len(sides) == 2, "the outline no longer has a two-point retaining step at HOOK_REAR_DEPTH"
+    return HOOK_REAR_DEPTH, sides[0], sides[1]
+
+
+def bevel_leg(spread: float = FINGER_SPREAD) -> float:
+    """The bevel's leg along the finger height and along the depth: FINGER_BEVEL, but never more than the retaining step's height or FINGER_HEIGHT."""
+    _, inner, outer = hook_step(spread)
+    return max(0.0, min(FINGER_BEVEL, outer - inner, FINGER_HEIGHT))
