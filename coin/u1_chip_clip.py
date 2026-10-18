@@ -671,14 +671,20 @@ if __name__ == "__main__":
 
     from OCP.BRepTools import BRepTools
 
+    import sys
+
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
-    for material in FILAMENTS:
+    custom = sys.argv[1:]  # any names given build just those chips, e.g. python u1_chip_clip.py "PETG-GF" "TPU 85A"
+    for material in custom or FILAMENTS:
         body, engraving = chip_parts(material)
         stem = f"chip_{file_stem(material)}"
         export_stl(body, str(out / f"{stem}.stl"))
         export_step(body, str(out / f"{stem}.step"))
         export_stl(engraving, str(out / f"{stem}_label.stl"))
+    if custom:
+        print(f"built {len(custom)} chip(s) in {out}: " + ", ".join(f"chip_{file_stem(m)}.stl + _label.stl" for m in custom))
+        sys.exit(0)
     for slot in U1_SLOTS:
         parts = dock_parts(slot)
         for name, shape in parts.items():
