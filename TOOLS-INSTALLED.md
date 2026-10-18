@@ -17,4 +17,4 @@
 ## Ephemeral uv environments (nothing persistent installed)
 
 - `uv run --with matplotlib --with numpy --with numpy-stl` was used to render STL previews (scratchpad render script). Cached by uv only; remove with `uv cache prune` if desired.
-- The fixtures were built through the 3dp-mcp-server plugin's `create_model` (build123d). `fixtures/u1_fixtures.py` reproduces them standalone with `uv run --with build123d python fixtures/u1_fixtures.py` (not yet run; the plugin output was verified instead).
+- The fixtures were built through the 3dp-mcp-server plugin's `create_model` (build123d). `u1/fixtures/u1_fixtures.py` reproduces them standalone with `uv run --with build123d python u1/fixtures/u1_fixtures.py` (not yet run; the plugin output was verified instead).

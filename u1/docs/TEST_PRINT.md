@@ -1,20 +1,20 @@
 # Test print plan
 
-One plate, in PETG: `coin/out/u1_test_print.3mf` (built by `tools/make_3mf.py`). Bodies use filament 1 and inlays (label, digit, hint) filament 2. The blank cover has supports turned on, and nothing needs a pause. The file carries no printer settings: pick the Snapmaker U1 (0.4 nozzle) presets after opening.
+One plate, in PETG: `u1/out/u1_test_print.3mf` (built by `u1/tools/make_3mf.py`). Bodies use filament 1 and inlays (label, digit, hint) filament 2. The blank cover has supports turned on, and nothing needs a pause. The file carries no printer settings: pick the Snapmaker U1 (0.4 nozzle) presets after opening.
 
-There is no separate reader-range round. The coil is a loop about 126mm across around each socket (estimated from Snapmaker's photos, see `docs/ANTENNA.md`), and the sticker sits 28.6mm above the socket axis on the socket adapter, well inside it. The sticker is only the dock's 1.2mm back plate away from the panel, and the advice online is to keep the tag within 1 to 3cm. So the first read of a docked chip is the test. If it fails, the coil-finder puck and standoff strip in `fixtures/` are there to find out why.
+There is no separate reader-range round. The coil is a loop about 126mm across around each socket (estimated from Snapmaker's photos, see `u1/docs/ANTENNA.md`), and the sticker sits 28.6mm above the socket axis on the socket adapter, well inside it. The sticker is only the dock's 1.2mm back plate away from the panel, and the advice online is to keep the tag within 1 to 3cm. So the first read of a docked chip is the test. If it fails, the coil-finder puck and standoff strip in `u1/fixtures/` are there to find out why.
 
 | Print | File | Orientation and notes |
 |---|---|---|
-| Chip | `coin/out/chip_PETG.stl` (+ `_label`) | Back face down, no pause. Press the sticker into the recess in its back afterwards. |
-| Dock | `coin/out/dock_slot1.stl` (+ `_accent`) | Standing on its bottom stop. |
-| Dock mount | `coin/out/dock_mount.stl` | Upside down, on its arm ends. The crossbar bridges about 39mm. |
-| Socket adapter | `coin/out/socket_adapter.stl` | Standing on its flat top. |
-| Blank cover | `coin/out/cover_slot2.stl` (+ `_accent`) | Standing on its flat top, with slicer supports under the fingers. |
+| Chip | `chip/out/tag-clip_PETG.stl` (+ `_label`) | Back face down, no pause. Press the sticker into the recess in its back afterwards. |
+| Dock | `chip/out/dock_slot1.stl` (+ `_accent`) | Standing on its bottom stop. |
+| Dock mount | `u1/out/dock_mount.stl` | Upside down, on its arm ends. The crossbar bridges about 39mm. |
+| Socket adapter | `u1/out/socket_adapter.stl` | Standing on its flat top. |
+| Blank cover | `u1/out/cover_slot2.stl` (+ `_accent`) | Standing on its flat top, with slicer supports under the fingers. |
 
 | Check | Pass | If not |
 |---|---|---|
-| **Read test:** chip docked on the socket adapter, `FILAMENT_DT_UPDATE CHANNEL=<0-3>` | Reads every time, 5 of 5 | map the coil with `fixtures/u1_coil_finder_puck.stl`; check plastic thickness with `fixtures/u1_standoff_strip.stl` (`DOCK_FLOOR`) |
+| **Read test:** chip docked on the socket adapter, `FILAMENT_DT_UPDATE CHANNEL=<0-3>` | Reads every time, 5 of 5 | map the coil with `u1/fixtures/u1_coil_finder_puck.stl`; check plastic thickness with `u1/fixtures/u1_standoff_strip.stl` (`DOCK_FLOOR`) |
 | Sticker presses into the recess and stays below the back face | Flush or below, chip slides into the dock without catching | `POCKET_DEPTH`, `STICKER_CLEARANCE` |
 | Chip slides into the dock from the top and seats on the key post; upside down it sits about 3mm high | Slides freely, no rattle | `FIT_CLEARANCE` |
 | Hook finger catches a thumb and lifts the chip out | Comes out one-handed | `WALL_A_EXTRA_HEIGHT` |

@@ -14,38 +14,43 @@ The U1 only reads a tag when the auto feeder first engages, so put the coin in t
 
 | Path | What |
 |---|---|
-| `coin/u1_chip_clip.py` | Parametric build123d model of the chip (open sticker recess in the back, clip arms and engraved label) and four numbered docks (U1 slots 1 to 4), each exported whole and as named parts. All dimensions are named constants at the top. Output goes to `coin/out/` (not committed). |
-| `tests/test_fit.py` | Fit and consistency checks on the built files, plus a comparison of the clip with Extrutim's original (skipped when that file is absent). |
-| `tools/build_preview.py`, `tools/preview/` | Stages the rotatable 3D review page and its meshes in `coin/out/preview/` for publishing as an artifact. |
-| `docs/ANTENNA.md` | Where the U1's reader probably sees a sticker, worked out from earlier tag holders (an estimate until measured). |
-| `fixtures/` | Test prints for finding where and through how much plastic the U1's reader still sees a sticker: a standoff strip (0.4 to 2.0mm floors) and a handled coil-finder puck. `fixtures/u1_fixtures.py` regenerates them. |
+| `chip/chip_clip.py` | The generic part. Parametric build123d model of the chip (open sticker recess in the back, clip arms and engraved label) and four numbered docks (slots 1 to 4), each exported whole and as named parts. All dimensions, and every constant the chip and dock share, are named constants at the top. Runs standalone; output goes to `chip/out/` (not committed). |
+| `chip/chip_3mf.py` | Writes one chip as a single 3MF (body on filament 1, name inlay on filament 2); the chip build calls it. |
+| `tests/test_fit.py` | Fit and consistency checks on the built chips and generic dock, plus a comparison of the clip with Extrutim's original (skipped when that file is absent). |
+| `u1/` | Everything specific to the Snapmaker U1, importing from `chip/`: `u1_parts.py` (socket adapter, dock mount, blank cover, the docks with snap fingers and the integrated dovetail dock, a hub-adapter stand-in), `socket_fingers.py` (remmulegguh's traced fingers), `finger_fallback.py`, and `u1_build.py`, which writes them to `u1/out/` (not committed). |
+| `u1/tests/` | The U1 checks: mount, adapters and covers (`test_u1_fit.py`), finger docks, spread, bevel, fallback, integrated dock and plate sets. |
+| `u1/tools/`, `u1/tools/preview/` | Print-plate layouts and 3MF writers (`print_plates.py`, `make_3mf.py`, `make_spread_3mf.py`, `finger_fallback_plate.py`, `print_orientation.py`), and `build_preview.py`, which stages the rotatable 3D review page and its meshes in `u1/out/preview/` for publishing as an artifact. |
+| `u1/docs/` | `TEST_PRINT.md`, `DOCK_FINGERS.md`, `FINGER_SPREAD.md`, `INTEGRATED_DOCK.md` and `FINGER_FALLBACK.md`. |
+| `docs/ANTENNA.md`, `docs/WORKFLOW.md` | Where the U1's reader probably sees a sticker, worked out from earlier tag holders (an estimate until measured); and the coin-per-spool workflow. |
+| `u1/fixtures/` | Test prints for finding where and through how much plastic the U1's reader still sees a sticker: a standoff strip (0.4 to 2.0mm floors) and a handled coil-finder puck. `u1/fixtures/u1_fixtures.py` regenerates them. |
 | `install_onshape_mcp.sh` | Optional helper that registers an Onshape MCP server for Claude Code (dry run by default). |
 | `TOOLS-INSTALLED.md` | What was installed while working on this and how to remove it. |
 
 ## Build, check, preview
 
 ```sh
-uv run --with build123d python coin/u1_chip_clip.py
-uv run --with build123d --with trimesh --with manifold3d --with pytest --with rtree --with shapely --with networkx --with scipy python -m pytest -q tests
-uv run python tools/build_preview.py
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/print_plates.py  # test-print plates, see docs/TEST_PRINT.md
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/make_3mf.py  # coin/out/u1_test_print.3mf: the test-print plate, inlays on filament 2
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/make_spread_3mf.py  # coin/out/u1_finger_spread.3mf: six blank covers, fingers spread 0 to 2.5 mm per side, see docs/FINGER_SPREAD.md
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python chip/chip_clip.py --label-stl  # chips (tag-clip_<name>.3mf/.stl/.step, plus the label STLs the checks and sheets read) and the four docks, into chip/out/
+uv run --with build123d python u1/u1_build.py  # the U1 parts into u1/out/
+uv run --with build123d --with trimesh --with manifold3d --with pytest --with rtree --with shapely --with networkx --with scipy --with matplotlib python -m pytest -q tests u1/tests
+uv run python u1/tools/build_preview.py
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/print_plates.py  # test-print plates, see u1/docs/TEST_PRINT.md
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/make_3mf.py  # u1/out/u1_test_print.3mf: the test-print plate, inlays on filament 2
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/make_spread_3mf.py  # u1/out/u1_finger_spread.3mf: six blank covers, fingers spread 0 to 2.5 mm per side, see u1/docs/FINGER_SPREAD.md
 ```
 
 ### Adding a new chip type
 
-The built-in list is `FILAMENTS` in `coin/u1_chip_clip.py` (20 names). To make a chip for a name that is not in it, pass the name on the command line and only those chips are built:
+The built-in list is `FILAMENTS` in `chip/chip_clip.py` (20 names). To make a chip for a name that is not in it, pass the name on the command line and only those chips are built:
 
 ```sh
-uv run --with build123d --with numpy --with scipy --with trimesh python coin/u1_chip_clip.py "TPU 85A" "PETG-GF"
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python chip/chip_clip.py "TPU 85A" "PETG-GF"
 ```
 
-Each name writes `chip_<name>.stl` (the body), `chip_<name>_label.stl` (the label inlay, printed as a second colour) and `chip_<name>.step` to `coin/out/`; spaces become `_` and `+` becomes `plus` in the file name. The label shrinks to fit long names. A name that is not in `FILAMENTS` is laid out on the same label line as the built-in names, so one with long descenders may sit closer to the hook finger than they do; check the preview. To make a name permanent, add it to `FILAMENTS` so a full build includes it.
+Each name writes `tag-clip_<name>.3mf` (one object: the body on filament 1 and the name inlay on filament 2), `tag-clip_<name>.stl` (the body) and `tag-clip_<name>.step` to `chip/out/`; add `--label-stl` to also get the inlay alone as `tag-clip_<name>_label.stl`, which the checks and the U1 sheet tools read. The file prefix is `CHIP_FILE_PREFIX` in `chip/chip_clip.py`; spaces become `_` and `+` becomes `plus` in the file name. The label shrinks to fit long names. A name that is not in `FILAMENTS` is laid out on the same label line as the built-in names, so one with long descenders may sit closer to the hook finger than they do; check the preview. To make a name permanent, add it to `FILAMENTS` so a full build includes it.
 
 ## Printing
 
-- **Chip:** back face down, no pause. The sticker presses into the open recess in the back afterwards (`POCKET_DEPTH` 0.6mm, so it sits below the face), and a bad one is swapped without reprinting. For two colours, load `chip_<material>.stl` and `chip_<material>_label.stl` together as one object.
+- **Chip:** back face down, no pause. The sticker presses into the open recess in the back afterwards (`POCKET_DEPTH` 0.6mm, so it sits below the face), and a bad one is swapped without reprinting. For two colours, open `tag-clip_<material>.3mf` (body and label are already one object, with the label on filament 2).
 - **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. The same `dock_slot<n>` either tapes to the panel over the antenna with VHB, or pushes into the dock mount. For two colours, load `dock_slot<n>.stl` (body) with `dock_slot<n>_accent.stl` (the slot digit and the orientation hint, inlaid flush).
 - **Dock mount** (`dock_mount.stl`): print upside down, standing on the ends of its arms; the crossbar bridges about 39mm between them.
 - **Socket adapter** (`socket_adapter.stl`): print standing on the plate's flat top and the fingers' top face. **Blank cover** (`cover_slot<n>.stl` plus `_accent` for the digit): print standing on the plate's flat top, with supports under the fingers; its plate is round almost to the top so it hides the whole socket bore. Both snap into a spool-holder socket with remmulegguh's fingers. `hub_adapter_standin.stl` only stands in for 1waynger1's base in the viewer and checks; it is not a print.

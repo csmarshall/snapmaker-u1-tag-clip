@@ -5,11 +5,11 @@ An independent test plate, not a replacement for the integral socket adapter. Us
 Build and check:
 
 ```
-PYTHONPATH=coin uv run --with build123d python coin/finger_fallback.py
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx --with manifold3d --with rtree python tools/finger_fallback_plate.py
+uv run --with build123d python u1/finger_fallback.py
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx --with manifold3d --with rtree python u1/tools/finger_fallback_plate.py
 ```
 
-The first writes `coin/out/u1_finger_fallback_plate.stl` and `u1_finger_fallback_fingers.stl` (and STEP). The second picks each piece's print orientation, prints the overhang table, and writes `coin/out/u1_finger_fallback.3mf` (one plate, both pieces, filament 1; it carries no printer, process or filament settings, so choose the U1 0.4mm and PETG presets in Snapmaker Orca after opening). Nothing existing is touched: `coin/out/u1_test_print.3mf`, the PARTS and PLATES in `tools/print_plates.py` and the dock, adapter, cover and chip meshes build exactly as before.
+The first writes `u1/out/u1_finger_fallback_plate.stl` and `u1_finger_fallback_fingers.stl` (and STEP). The second picks each piece's print orientation, prints the overhang table, and writes `u1/out/u1_finger_fallback.3mf` (one plate, both pieces, filament 1; it carries no printer, process or filament settings, so choose the U1 0.4mm and PETG presets in Snapmaker Orca after opening). Nothing existing is touched: `u1/out/u1_test_print.3mf`, the PARTS and PLATES in `u1/tools/print_plates.py` and the dock, adapter, cover and chip meshes build exactly as before.
 
 ## What the pieces are
 
@@ -19,7 +19,7 @@ The harness plate is the integral adapter's plate with its outer envelope, corne
 
 ## Joint dimensions, and where they come from
 
-Every dimension is derived; the constants that cannot be derived are named in `coin/finger_fallback.py` with a comment saying why.
+Every dimension is derived; the constants that cannot be derived are named in `u1/finger_fallback.py` with a comment saying why.
 
 | Dimension | Value | Derivation |
 |---|---|---|
@@ -38,7 +38,7 @@ The dimple is the ridge's shape grown by the clearance in length and width and c
 
 ## Print orientation
 
-Chosen by the overhang check in `tools/print_orientation.py` and `tools/print_plates.py` (faces turned down more steeply than 45 degrees and not on the bed), tried for each of the six faces of the piece's bounding box. Both pieces are PETG. Area over the limit, mm2:
+Chosen by the overhang check in `u1/tools/print_orientation.py` and `u1/tools/print_plates.py` (faces turned down more steeply than 45 degrees and not on the bed), tried for each of the six faces of the piece's bounding box. Both pieces are PETG. Area over the limit, mm2:
 
 | Face down | Harness plate | Finger piece |
 |---|---|---|
@@ -61,7 +61,7 @@ The joint adds stack-up: the finger piece can float up to the clearance in each 
 
 ## What the tests do and do not prove
 
-`tests/test_finger_fallback.py` builds the pieces from the model and checks that: the finger piece's section through the fingers' mid-height equals `FINGER_OUTLINE` and matches the integral adapter's fingers, with height and centring per `FINGER_HEIGHT`; the plate keeps the integral plate's envelope and slot; the grooves keep their walls from the slot and plate edge; seated, the pieces share no volume, the top faces are flush, and the gap in cross-sections through the joint is `FIT_CLEARANCE` everywhere, ridge tip included; the finger piece seats on the stop, cannot be pulled out or moved sideways without hitting the flanks; the ridge is proud of the groove floor by the interference, is clear in its dimple, and must be pushed over when the piece slides up; and the chosen orientations have the least overhang.
+`u1/tests/test_finger_fallback.py` builds the pieces from the model and checks that: the finger piece's section through the fingers' mid-height equals `FINGER_OUTLINE` and matches the integral adapter's fingers, with height and centring per `FINGER_HEIGHT`; the plate keeps the integral plate's envelope and slot; the grooves keep their walls from the slot and plate edge; seated, the pieces share no volume, the top faces are flush, and the gap in cross-sections through the joint is `FIT_CLEARANCE` everywhere, ridge tip included; the finger piece seats on the stop, cannot be pulled out or moved sideways without hitting the flanks; the ridge is proud of the groove floor by the interference, is clear in its dimple, and must be pushed over when the piece slides up; and the chosen orientations have the least overhang.
 
 These checks derive both sides of every comparison from the same constants (`FIT_CLEARANCE`, the traced outline, the adapter's dimensions), so they prove consistency, not fit. They cannot catch: PETG shrinkage or elephant's foot changing the real clearance, whether 0.3mm is a sliding fit or too loose on this printer, whether the detent's 0.15mm interference gives a usable click or is too stiff or too slack, whether the 2.19mm neck survives use, or whether the traced fingers themselves are right in the real socket (the trace is the independent evidence for that, and this split keeps it as is). The one independent check is the trace comparison: the outline comes from remmulegguh's file, not from this code.
 

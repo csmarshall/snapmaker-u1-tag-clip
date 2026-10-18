@@ -66,7 +66,7 @@ FINGER_OUTLINE = (
     (0.006, -14.991), (-0.3, -14.991), (-0.3, 15.009),
 )
 
-FINGER_SPREAD = 2.0  # mm per side, the default spread of every variant that carries the fingers: Charles's choice from the printed sweep (docs/FINGER_SPREAD.md), 2026-10-15. The real bore is unmeasured (assumed 26.9 mm), so revisit it once measured. 0 gives the traced outline exactly
+FINGER_SPREAD = 2.0  # mm per side, the default spread of every variant that carries the fingers: Charles's choice from the printed sweep (u1/docs/FINGER_SPREAD.md), 2026-10-15. The real bore is unmeasured (assumed 26.9 mm), so revisit it once measured. 0 gives the traced outline exactly
 
 ROOT_DEPTH = 0.006  # the outline's points at or in front of this depth are the root (the tab and the fuse with the plate); a spread never moves them
 SPREAD_RAMP = 10.0  # mm of depth over which a spread builds up from nothing at the root to its full value; past it the arms and hooks sit rigidly shifted

@@ -45,7 +45,7 @@ What this does not tell us:
 - **First read test:** check the sticker reads on both adapters before printing a set.
 - **Testing a read:** `FILAMENT_DT_UPDATE CHANNEL=<0-3>` in the Fluidd console re-reads a channel (channel 1 is 0), per Snapmaker's RFID troubleshooting page.
 - **VHB mount (issue #5):** the same spot. Below the socket, the sticker centre is about 35 to 40mm from the socket's centre.
-- **Check before trusting it:** the first read of a docked chip on the socket adapter is the test (docs/TEST_PRINT.md). The coil-finder puck and standoff strip in `fixtures/` remain for diagnosing a failed read.
+- **Check before trusting it:** the first read of a docked chip on the socket adapter is the test (u1/docs/TEST_PRINT.md). The coil-finder puck and standoff strip in `u1/fixtures/` remain for diagnosing a failed read.
 
 All of this is human-directed and AI-assisted. The measurements come from the community files listed in `SOURCES.md`, and nothing here has been tested on a printer.
 
