@@ -106,7 +106,9 @@ ENGRAVE_DEPTH = 0.6  # deep enough to paint or fill, or to print in a second col
 
 # ---- dock (in the chip frame) ------------------------------------------------------------------
 DOCK_BACK_GAP = FIT_CLEARANCE  # air between the chip's back face and the back plate
-DOCK_SLOT_CLEARANCE = FIT_CLEARANCE  # per side, chip edge to channel wall, and chip front to lip
+DOCK_SLOT_CLEARANCE = FIT_CLEARANCE  # chip's flat end to the bottom stop
+DOCK_SIDE_CLEARANCE = 0.5  # per side, chip edge to channel wall; wider than FIT_CLEARANCE because a chip's first layer squashes out and PETG hair adds to it (prints of 2026-10-17 stuck at 0.3)
+DOCK_FRONT_CLEARANCE = 0.8  # chip front to lip underside, front-to-back; the back gap stays DOCK_BACK_GAP so the sticker's read distance does not grow with it
 DOCK_FLOOR = 1.2  # back plate thickness: plastic between the chip and the printer panel, to be tuned from the standoff-strip test
 DOCK_RAIL_WIDTH = 3.0
 DOCK_LIP_OVERLAP = 2.0  # how far the lips reach over the chip's edge
@@ -338,11 +340,11 @@ def dock_parts(slot: int | None, mount_grooves: bool = True) -> dict[str, object
     flat top rim. The lower pocket (side walls, cover plate, full-depth bottom stop and key post) carries the slot digit; its top edge stops just past the hook
     finger, which stands proud of it so a thumb run up the cover catches it and lifts the chip out.
     """
-    inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
+    inner_half = COIN_RADIUS + DOCK_SIDE_CLEARANCE
     outer_half = inner_half + DOCK_RAIL_WIDTH
     lip_in = COIN_RADIUS - DOCK_LIP_OVERLAP
     z_back = -DOCK_BACK_GAP - DOCK_FLOOR
-    z_slot_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE
+    z_slot_front = COIN_THICKNESS + DOCK_FRONT_CLEARANCE
     z_front = z_slot_front + DOCK_LIP_THICKNESS
     z_cover_in = ARM_WALL_TOP_Z + COVER_ARM_CLEARANCE
     z_cover_out = z_cover_in + COVER_PLATE_THICKNESS
@@ -416,8 +418,8 @@ def _dock_extents() -> dict[str, Any]:
 
     The band runs from the lower pocket's top edge up by the dock's length less twice the pocket's height, so it is centred on y_mid, the dock's mid-height.
     """
-    inner_half = COIN_RADIUS + DOCK_SLOT_CLEARANCE
-    z_slot_front = COIN_THICKNESS + DOCK_SLOT_CLEARANCE
+    inner_half = COIN_RADIUS + DOCK_SIDE_CLEARANCE
+    z_slot_front = COIN_THICKNESS + DOCK_FRONT_CLEARANCE
     cover_top = ARM_Y_HOOK_TIP - COVER_HOOK_CLEARANCE
     y_top = COIN_RADIUS - DOCK_COIN_PROTRUSION
     y_bottom = -COIN_FLAT_END_Y - DOCK_SLOT_CLEARANCE - DOCK_BOTTOM_THICKNESS
