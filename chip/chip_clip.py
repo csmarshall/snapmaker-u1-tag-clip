@@ -90,7 +90,7 @@ C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 # The known names; their letters all share one line on the chip. Beyond the original set, these come from a 2026 survey of common filaments a U1 can print
 # (Snapmaker, Bambu Lab, Polymaker, eSun listings); high-temperature lines (PAHT-CF, PPS-CF) are left out, and nylon keeps the "Nylon" spelling.
 FILAMENTS = (
-    "PLA", "PLA+", "PLA Silk", "PLA Matte", "PLA-CF",
+    "PLA", "PLA+", "PLA+ HS", "PLA Silk", "PLA Matte", "PLA-CF",
     "PETG", "PETG+", "PETG HF", "PETG-CF", "PCTG",
     "ASA", "ABS", "PC",
     "TPU", "TPU 95A", "TPU 90A",
