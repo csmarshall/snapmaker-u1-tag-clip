@@ -972,7 +972,6 @@ dependencies = [
     { name = "matplotlib" },
     { name = "networkx" },
     { name = "numpy" },
-    { name = "scipy" },
     { name = "trimesh" },
 ]
 
@@ -993,7 +992,6 @@ requires-dist = [
     { name = "matplotlib" },
     { name = "networkx" },
     { name = "numpy" },
-    { name = "scipy" },
     { name = "trimesh" },
 ]
 

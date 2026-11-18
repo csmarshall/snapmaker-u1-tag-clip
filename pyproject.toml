@@ -10,7 +10,6 @@ dependencies = [
     "trimesh",
     "numpy",
     "matplotlib",
-    "scipy",
     "networkx",
 ]
 

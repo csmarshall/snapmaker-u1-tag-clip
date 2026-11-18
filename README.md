@@ -59,6 +59,16 @@ It works on my printer, and I'm still tuning it.
 
 Issues and photos of your prints are welcome.
 
+## The drawing
+
+The finger dock as an old-school blueprint. A workflow redraws it from the model whenever the model changes, so it always matches what prints.
+
+<!-- blueprint:blueprint_dock -->
+[![U1 TAG CLIP · FINGER DOCK](docs/images/blueprint_dock.svg)](docs/images/blueprint_dock.svg)
+
+<sub>Drawing generated from `build/dock.step` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model.</sub>
+<!-- /blueprint -->
+
 ## The repo
 
 | Path | What |
@@ -68,7 +78,7 @@ Issues and photos of your prints are welcome.
 | [`prints/`](prints/) | Generated 3MFs. `tools/build_prints.py` writes them, so don't hand-edit. |
 | [`tools/build_prints.py`](tools/build_prints.py) | Builds everything and rewrites `prints/`. With the locked toolchain (`uv.lock`) the same model rebuilds to the same bytes on the same OS. Linux and macOS cut curves into slightly different triangles (I measured it: same bounds, volume within 0.0003 mm³), so their bytes differ. Only the GitHub Actions job writes `prints/`. Build locally to preview, and leave the `prints/` changes out of your commit. |
 | [`tests/`](tests/), [`u1/tests/`](u1/tests/) | Fit and consistency checks on the built meshes: clearances, the clip against the original's geometry, finger positions, plate layouts, reproducible 3MFs. CI runs them on every push. |
-| [`docs/`](docs/) | The day-to-day loop (`WORKFLOW.md`) and my best guess at where the U1's reader coil is (`ANTENNA.md`). |
+| [`docs/`](docs/) | The day-to-day loop (`WORKFLOW.md`) and my best guess at where the U1's reader coil is (`ANTENNA.md`). `images/blueprint_dock.svg` is the drawing above: `tools/export_step.py` exports the dock and the Blueprint workflow renders it with [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator). |
 
 ### Build and test locally
 
@@ -106,7 +116,6 @@ CC BY-NC-SA 4.0 ([LICENSE](LICENSE)), because I built on CC BY-NC-SA work. Non-c
 - The dock mount and socket adapter use the measured slot section of 1waynger1's [Snapmaker U1 Filament Hub Replacement](https://makerworld.com/en/models/2152529-snapmaker-u1-filament-hub-replacement) (MakerWorld 2152529), so they fit his base. I used those dimensions and nothing else; none of his files are here.
 - Firmware and tag support: [paxx12's SnapmakerU1-Extended-Firmware](https://github.com/paxx12/SnapmakerU1-Extended-Firmware) and [OpenRFID](https://github.com/suchmememanyskill/OpenRFID).
 - Label font: [Arimo](https://github.com/googlefonts/Arimo), SIL Open Font License 1.1 (`chip/fonts/OFL.txt`).
-- Blueprint lettering: [Architects Daughter](https://fonts.google.com/specimen/Architects+Daughter) by Kimberly Geswein, SIL Open Font License 1.1 (`tools/fonts/OFL-ArchitectsDaughter.txt`).
 
 None of the original authors' files are redistributed here.
 

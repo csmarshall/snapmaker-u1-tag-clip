@@ -9,3 +9,6 @@ chip/out/
 u1/out/
 __pycache__/
 .DS_Store
+
+# blueprint inputs written by tools/export_step.py
+build/
