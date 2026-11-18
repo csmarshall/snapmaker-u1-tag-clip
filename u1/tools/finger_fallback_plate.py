@@ -4,7 +4,7 @@ For each piece every face-down orientation (one per face of its bounding box) is
 than 45 degrees and not on the bed), and the least is picked; the table is printed. Only these six are tried, not tilted ones.
 Writes u1/out/u1_finger_fallback.3mf (no printer, process or filament settings: pick the U1 0.4mm and PETG presets in Snapmaker Orca after opening, as for u1_test_print.3mf).
 
-Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/finger_fallback_plate.py
+Run after the builds: uv run python u1/tools/finger_fallback_plate.py
 """
 import sys
 import zipfile

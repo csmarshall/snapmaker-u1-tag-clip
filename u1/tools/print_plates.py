@@ -1,7 +1,7 @@
 """Lay out the test-print set (u1/docs/TEST_PRINT.md) on U1 build plates, each part turned as printed, and stage it for the test-print page.
 
 Each part is written as base64 STL text (artifacts do not serve .stl), split into the faces that need support and the rest, plus a layout.json the page reads.
-Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib python u1/tools/print_plates.py
+Run after the builds: uv run python u1/tools/print_plates.py
 """
 import base64
 import json
@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "u1" / "tools"))
 sys.path.insert(0, str(ROOT / "u1"))
 sys.path.insert(0, str(ROOT / "chip"))
 from print_orientation import OVERHANG_LIMIT, UPSIDE_DOWN  # noqa: E402
-from chip_clip import CHIP_FILE_PREFIX, POCKET_DEPTH, POCKET_DIAMETER  # noqa: E402
+from chip_clip import CHIP_FILE_PREFIX, FILAMENTS, file_stem, POCKET_DEPTH, POCKET_DIAMETER  # noqa: E402
 
 OUT = ROOT / "u1" / "out"
 CHIP_OUT = ROOT / "chip" / "out"  # the chips and generic docks
@@ -72,6 +72,13 @@ CHIP_SHEET_PARTS = tuple(
     for _ in range(count)
 )
 CHIP_SHEET_PLATES = {1: ("Chip sheet", "PETG")}
+
+# All chips: one of every filament in chip_clip.FILAMENTS on one plate, each back face down with its name on the second filament. build_prints.py checks that they fit on a single bed.
+ALL_CHIPS_PARTS = tuple(
+    (1, f"Chip, {material}", "Back face down, no pause. Press the sticker into the recess afterwards.", FLAT, [(CHIP_OUT / f"{CHIP_FILE_PREFIX}{file_stem(material)}.stl", "chip"), (CHIP_OUT / f"{CHIP_FILE_PREFIX}{file_stem(material)}_label.stl", "label")])
+    for material in FILAMENTS
+)
+ALL_CHIPS_PLATES = {1: ("All chips", "PETG")}
 
 
 def split_overhang(mesh: trimesh.Trimesh, sealed_pocket_centre: np.ndarray | None = None) -> tuple[trimesh.Trimesh, trimesh.Trimesh | None]:

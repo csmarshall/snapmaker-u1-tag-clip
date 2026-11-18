@@ -3,10 +3,9 @@
 Uses the layout from print_plates.py. Bodies print with filament 1 and inlays (labels, digits, hint) with filament 2. The blank cover gets supports on the plate.
 There are no printer, process or filament settings in it: pick the U1 0.4mm presets in Snapmaker Orca after opening. (Snapmaker Orca 1.10.1's CLI segfaults on loading any process preset, so it cannot fill them in or slice-check the file.)
 
-Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib python u1/tools/make_3mf.py
+Run after the builds: uv run python u1/tools/make_3mf.py
 """
 import sys
-import zipfile
 from pathlib import Path
 from xml.sax.saxutils import quoteattr
 
@@ -15,7 +14,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]  # the repository root
 sys.path.insert(0, str(ROOT / "u1" / "tools"))
 from print_plates import BED, CHIP_SHEET_PARTS, CHIP_SHEET_PLATES, DOCKS_SET_PARTS, DOCKS_SET_PLATES, FINGERS_PARTS, FINGERS_PLATES, INTEGRATED_PARTS, INTEGRATED_PLATES, PARTS, PLATES, lay_out  # noqa: E402
-from chip_3mf import ORCA_VERSION, mesh_xml  # noqa: E402,F401  (also imported from here by the other sheet tools)
+from chip_3mf import ORCA_VERSION, mesh_xml, write_3mf_zip  # noqa: E402,F401  (also imported from here by the other sheet tools)
 
 INLAY_ROLES = {"label"}
 SUPPORTED = {"Blank cover, slot 2", "Dock with fingers, slot 1", "Dock with fingers, slot 2", "Dock with fingers, slot 3", "Dock with fingers, slot 4"}  # parts whose fingers need slicer support (see README, Printing)
@@ -77,9 +76,7 @@ def write_skeleton(path: Path, parts_table: tuple = PARTS, plates: dict = PLATES
         "3D/3dmodel.model": f'{head}<model unit="millimeter" xml:lang="en-US" {ns}><metadata name="Application">BambuStudio-{ORCA_VERSION}</metadata><metadata name="BambuStudio:3mfVersion">1</metadata><metadata name="Title">{title}</metadata><resources>{"".join(resources)}</resources><build>{"".join(items)}</build></model>',
         "Metadata/model_settings.config": f'{head}<config>{"".join(settings_objects)}{"".join(plates_xml)}</config>',
     })
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
-        for name, text in files.items():
-            z.writestr(name, text)
+    write_3mf_zip(path, files)
     return names
 
 
