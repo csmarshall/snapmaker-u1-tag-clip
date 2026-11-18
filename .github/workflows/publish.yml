@@ -1,0 +1,31 @@
+name: Publish
+
+# On every merge to main: redraw the dock's blueprint and its README embed (common-blueprint-generator's reusable render workflow),
+# then cut a patch release with a prints-only zip and a source zip. Run it by hand to choose a minor or major bump instead.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump for this release
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+permissions:
+  contents: write
+
+jobs:
+  blueprint:
+    uses: csmarshall/common-blueprint-generator/.github/workflows/render.yml@v1
+    with:
+      export-command: uv run --locked --no-default-groups python tools/export_step.py
+      configs: build/blueprint.yml
+      commit-paths: docs/images README.md
+  release:
+    needs: blueprint
+    uses: csmarshall/common-blueprint-generator/.github/workflows/release.yml@v1
+    with:
+      bump: ${{ inputs.bump || 'patch' }}
+      prints-paths: prints docs/images/blueprint_dock.svg SOURCES.md
