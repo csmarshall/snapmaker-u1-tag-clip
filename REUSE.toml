@@ -1,19 +1,68 @@
-# Which licence covers which file. The blueprint generator reads this to print the licence on each drawing, so it must stay accurate.
-# Designs are CC BY-NC-SA 4.0 (they remix CC BY-NC-SA works, see SOURCES.md); general-purpose tooling is MIT; the Arimo font keeps its own licence.
-# When several annotations match a file, the last one wins.
+# Machine-readable licensing for every tracked file (REUSE spec 3.3, https://reuse.software/spec-3.3/).
+#
+# The designs are CC BY-NC-SA 4.0, including the code in chip/ and u1/ that defines the parts: it carries geometry traced from CC BY-NC-SA
+# models (Extrutim's clip arms, remmulegguh's snap fingers). The general-purpose tooling in tools/ and .github/ holds no traced geometry and is
+# MIT. The vendored font keeps its own licence (OFL-1.1). LICENSE.md explains the split; SOURCES.md says what came from where.
+# The blueprint generator reads this file to print the licence on each drawing.
+#
+# Each tracked file matches exactly one table below; tools/check_reuse_coverage.py checks that, and `reuse lint` checks the rest. A new file
+# that matches no table fails CI on purpose: add it here.
+
 version = 1
 
+# Our own work: code, config, docs, images, fixtures.
 [[annotations]]
-path = "**"
+path = [
+    ".gitignore",
+    "pyproject.toml",
+    "uv.lock",
+    "install_onshape_mcp.sh",
+    "*.md",
+    "docs/**",
+    "tests/**",
+    "chip/chip_3mf.py",
+    "chip/licence_notice.py",
+    "u1/finger_fallback.py",
+    "u1/u1_build.py",
+    "u1/u1_parts.py",
+    "u1/docs/**",
+    "u1/fixtures/**",
+    "u1/tests/**",
+    "u1/tools/**",
+]
 SPDX-FileCopyrightText = "2026 Charles Marshall"
 SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
 
+# The chip model: the clip arms are a close trace of Extrutim's "Filament Clip, Grandma's Favorite" (Printables 24371, CC BY-NC-SA).
+[[annotations]]
+path = "chip/chip_clip.py"
+SPDX-FileCopyrightText = ["2026 Charles Marshall", "Extrutim <https://www.printables.com/model/24371>"]
+SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
+
+# The snap fingers: traced from remmulegguh's "Snapmaker U1 NFC / RFID Tag Holder" (Printables 1625982, CC BY-NC-SA).
+[[annotations]]
+path = "u1/socket_fingers.py"
+SPDX-FileCopyrightText = ["2026 Charles Marshall", "remmulegguh <https://www.printables.com/model/1625982>"]
+SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
+
+# Generated print files (written by CI): they carry both traced parts.
+[[annotations]]
+path = "prints/**"
+SPDX-FileCopyrightText = [
+    "2026 Charles Marshall",
+    "Extrutim <https://www.printables.com/model/24371>",
+    "remmulegguh <https://www.printables.com/model/1625982>",
+]
+SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
+
+# Vendored label font.
+[[annotations]]
+path = "chip/fonts/**"
+SPDX-FileCopyrightText = "2026 The Arimo Project Authors <https://github.com/googlefonts/Arimo>"
+SPDX-License-Identifier = "OFL-1.1"
+
+# General-purpose tooling and CI: no traced geometry.
 [[annotations]]
 path = ["tools/**", ".github/**"]
 SPDX-FileCopyrightText = "2026 Charles Marshall"
 SPDX-License-Identifier = "MIT"
-
-[[annotations]]
-path = "chip/fonts/**"
-SPDX-FileCopyrightText = "2026 The Arimo Project Authors (https://github.com/googlefonts/Arimo)"
-SPDX-License-Identifier = "OFL-1.1"

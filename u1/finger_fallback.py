@@ -133,12 +133,12 @@ def harness_plate():
 
 
 if __name__ == "__main__":
-    from build123d import export_step, export_stl
+    from licence_notice import export_step_with_notice, export_stl_with_notice
 
     out = Path(__file__).parent / "out"
     out.mkdir(exist_ok=True)
     for name, shape in (("u1_finger_fallback_plate", harness_plate()), ("u1_finger_fallback_fingers", finger_piece())):
-        export_stl(shape, str(out / f"{name}.stl"))
-        export_step(shape, str(out / f"{name}.step"))
+        export_stl_with_notice(shape, out / f"{name}.stl")
+        export_step_with_notice(shape, out / f"{name}.step")
     j = joint_geometry()
     print(f"fallback: groove floor x {j['groove_in']:.2f}..{j['groove_out']:.2f} at {j['z_floor']:.2f} mm above the back face, ridge {DETENT_HEIGHT:.2f} mm high")

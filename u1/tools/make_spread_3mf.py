@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]  # the repository root
 sys.path.insert(0, str(ROOT / "u1" / "tools"))
 sys.path.insert(0, str(ROOT / "u1"))
 sys.path.insert(0, str(ROOT / "chip"))
-from make_3mf import ORCA_VERSION, mesh_xml  # noqa: E402
+from make_3mf import ORCA_VERSION, mesh_xml, model_metadata_xml  # noqa: E402
 from print_orientation import UPSIDE_DOWN  # noqa: E402
 from print_plates import BED, GAP  # noqa: E402
 from socket_fingers import FINGER_HEIGHT, hook_half_width  # noqa: E402
@@ -101,7 +101,7 @@ def write_3mf(path: Path, meshes: list[trimesh.Trimesh], names: list[str]) -> No
         "[Content_Types].xml": f'{head}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="gcode" ContentType="text/x.gcode"/></Types>',
         "_rels/.rels": f'{head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>',
         "3D/_rels/3dmodel.model.rels": f'{head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">{"".join(rels)}</Relationships>',
-        "3D/3dmodel.model": f'{head}<model unit="millimeter" xml:lang="en-US" {ns}><metadata name="Application">BambuStudio-{ORCA_VERSION}</metadata><metadata name="BambuStudio:3mfVersion">1</metadata><metadata name="Title">U1 finger spread sweep</metadata><resources>{"".join(resources)}</resources><build>{"".join(items)}</build></model>',
+        "3D/3dmodel.model": f'{head}<model unit="millimeter" xml:lang="en-US" {ns}><metadata name="Application">BambuStudio-{ORCA_VERSION}</metadata><metadata name="BambuStudio:3mfVersion">1</metadata>{model_metadata_xml("U1 finger spread sweep")}<resources>{"".join(resources)}</resources><build>{"".join(items)}</build></model>',
         "Metadata/model_settings.config": f'{head}<config>{"".join(settings)}{plate}</config>',
     })
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:

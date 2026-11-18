@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]  # the repository root
 sys.path.insert(0, str(ROOT / "u1" / "tools"))
 from print_plates import BED, CHIP_SHEET_PARTS, CHIP_SHEET_PLATES, DOCKS_SET_PARTS, DOCKS_SET_PLATES, FINGERS_PARTS, FINGERS_PLATES, INTEGRATED_PARTS, INTEGRATED_PLATES, PARTS, PLATES, lay_out  # noqa: E402
 from chip_3mf import ORCA_VERSION, mesh_xml, write_3mf_zip  # noqa: E402,F401  (also imported from here by the other sheet tools)
+from licence_notice import model_metadata_xml  # noqa: E402,F401  (also imported from here by the other sheet tools)
 
 INLAY_ROLES = {"label"}
 SUPPORTED = {"Blank cover, slot 2", "Dock with fingers, slot 1", "Dock with fingers, slot 2", "Dock with fingers, slot 3", "Dock with fingers, slot 4"}  # parts whose fingers need slicer support (see README, Printing)
@@ -73,7 +74,7 @@ def write_skeleton(path: Path, parts_table: tuple = PARTS, plates: dict = PLATES
         "[Content_Types].xml": f'{head}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="gcode" ContentType="text/x.gcode"/></Types>',
         "_rels/.rels": f'{head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>',
         "3D/_rels/3dmodel.model.rels": f'{head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">{"".join(rels)}</Relationships>',
-        "3D/3dmodel.model": f'{head}<model unit="millimeter" xml:lang="en-US" {ns}><metadata name="Application">BambuStudio-{ORCA_VERSION}</metadata><metadata name="BambuStudio:3mfVersion">1</metadata><metadata name="Title">{title}</metadata><resources>{"".join(resources)}</resources><build>{"".join(items)}</build></model>',
+        "3D/3dmodel.model": f'{head}<model unit="millimeter" xml:lang="en-US" {ns}><metadata name="Application">BambuStudio-{ORCA_VERSION}</metadata><metadata name="BambuStudio:3mfVersion">1</metadata>{model_metadata_xml(title)}<resources>{"".join(resources)}</resources><build>{"".join(items)}</build></model>',
         "Metadata/model_settings.config": f'{head}<config>{"".join(settings_objects)}{"".join(plates_xml)}</config>',
     })
     write_3mf_zip(path, files)

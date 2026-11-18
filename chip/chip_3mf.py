@@ -11,6 +11,7 @@ from xml.sax.saxutils import quoteattr
 import numpy as np
 import trimesh
 from build123d import export_stl
+from licence_notice import model_metadata_xml
 
 ORCA_VERSION = "01.10.01.50"  # claimed in the file; Orca refuses a 3MF from a newer version than itself
 BED = 270.0  # Snapmaker U1 bed, mm square; the chip is centred on it
@@ -87,7 +88,7 @@ def write_chip_3mf(path: Path, stem: str, name: str, body, inlay) -> None:
         "3D/_rels/3dmodel.model.rels": f'{head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="{model_path}" Id="rel-{object_id}" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>',
         "3D/3dmodel.model": (
             f'{head}<model unit="millimeter" xml:lang="en-US" {ns}><metadata name="Application">BambuStudio-{ORCA_VERSION}</metadata><metadata name="BambuStudio:3mfVersion">1</metadata>'
-            f'<metadata name="Title">{stem}</metadata><resources><object id="{object_id}" type="model"><components>{"".join(components)}</components></object></resources>'
+            f'{model_metadata_xml(stem)}<resources><object id="{object_id}" type="model"><components>{"".join(components)}</components></object></resources>'
             f'<build><item objectid="{object_id}" transform="1 0 0 0 1 0 0 0 1 {BED / 2:.5f} {BED / 2:.5f} 0" printable="1"/></build></model>'
         ),
         "Metadata/model_settings.config": (
