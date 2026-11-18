@@ -8,7 +8,7 @@
 
 A filament clip that carries its spool's NFC tag, and a numbered dock that snaps into the Snapmaker U1's side-panel socket. Load a spool, drop its clip in the dock, and the U1 reads the tag.
 
-**Not for resale.** Print it for yourself and your friends as much as you like. Selling the files or the prints, on Etsy or anywhere else, needs permission first ([how to ask](#selling-it)). The designs are [CC BY-NC-SA 4.0](LICENSE.md).
+**Not for resale.** Print it for yourself and your friends as much as you like. Selling the files or the prints, on Etsy or anywhere else, needs permission first ([how to ask](#selling-it)). The designs are [CC BY-NC-SA 4.0](LICENSE.md). For now these aren't for sale from me either; [#21](https://github.com/csmarshall/snapmaker-u1-tag-clip/issues/21) tracks what would change that.
 
 ![The chip and the slot 1 dock, rendered from the model](docs/images/hero.png)
 
@@ -139,13 +139,15 @@ If you share or remix it, copy this:
 
 The licence doesn't allow selling the files or printed parts. If you'd like to anyway (a small run for a makerspace, say, or bundled with something you make), [open an issue](https://github.com/csmarshall/snapmaker-u1-tag-clip/issues/new) and tell me what you have in mind. I'll answer there. The clip arms and snap fingers are traced from Extrutim's and remmulegguh's models, so a commercial yes would need theirs too.
 
-If you spot these for sale somewhere, please open an issue with the link. The licence is what a marketplace acts on when a listing gets reported.
+Right now the answer is no for everyone, me included. The dock's snap fingers would have to be redrawn from scratch before that could change, and [#21](https://github.com/csmarshall/snapmaker-u1-tag-clip/issues/21) tracks that. I'll revisit it if someone asks.
+
+If you spot these for sale somewhere, please open an issue with the link. A clear licence is what I'd point a marketplace at when reporting a listing.
 
 ### Why these licences
 
-I started from two CC BY-NC-SA models, and ShareAlike means my remix has to carry the same licence. The code does too, because the traced shapes live in it: the clip arms and the finger outline are coordinates in `chip/chip_clip.py` and `u1/socket_fingers.py`. Anyone running the code is building those shapes. The vendored fonts keep their own licence, OFL 1.1.
+I started from two CC BY-NC-SA models, and ShareAlike means my remix carries the same licence. I've applied it to the code in `chip/` and `u1/` too, because the traced shapes live in it: the clip arms and the finger outline are coordinates in `chip/chip_clip.py` and `u1/socket_fingers.py`, so running that code builds those shapes. The general-purpose tooling in `tools/` holds none of that, so it's MIT. That's my reading, not legal advice. The vendored fonts keep their own licence, OFL 1.1.
 
-The licensing is machine-readable. [`REUSE.toml`](REUSE.toml) gives every file exactly one licence and copyright ([REUSE](https://reuse.software/) format), and [`LICENSES/`](LICENSES/) has the full texts. Every 3MF, STEP and STL the build writes carries the licence in its own metadata as well, so a file that gets passed around still says where it came from.
+The licensing is machine-readable. [`REUSE.toml`](REUSE.toml) gives every file exactly one licence and copyright ([REUSE](https://reuse.software/) format), and [`LICENSES/`](LICENSES/) has the full texts. Every 3MF, STEP and STL the build writes carries the licence in its own metadata as well, so a file that gets passed around still says where it came from. (The files in `prints/` pick it up on their next CI rebuild.)
 
 ## How it was made
 

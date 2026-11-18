@@ -30,7 +30,10 @@ def glob_to_regex(glob: str) -> re.Pattern[str]:
     out: list[str] = []
     i = 0
     while i < len(glob):
-        if glob.startswith("**", i):
+        if glob.startswith("**/", i):
+            out.append("(?:.*/)?")  # zero or more directories, so **/x.py also matches x.py at the root (as reuse does)
+            i += 3
+        elif glob.startswith("**", i):
             out.append(".*")
             i += 2
         elif glob[i] == "*":

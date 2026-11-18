@@ -3,6 +3,9 @@
 REUSE.toml is the source of truth. The notice reads the licence and the copyright lines from its `prints/**` table (the generated print files),
 so changing the licence there changes every file the next build writes. Nothing here is typed twice.
 
+Every export carries that table's copyright lines, including the credit to Extrutim and remmulegguh. For the few exports with no traced work
+(the u1/fixtures test prints) that over-credits them; the licence is the same either way, and REUSE.toml stays the precise per-file record.
+
 A notice in a file states who made it and on what terms, and survives a re-upload of the file as is. It does not stop anyone from stripping it.
 """
 
@@ -106,8 +109,9 @@ def export_stl_with_notice(shape: object, path: str | Path) -> None:
 
 
 def _step_string(text: str) -> str:
-    """A STEP string literal: apostrophes doubled, ASCII only (© becomes (c))."""
-    return "'" + text.replace("©", "(c)").encode("ascii", "replace").decode().replace("'", "''") + "'"
+    """A STEP string literal: ASCII only (© becomes (c)), backslashes and apostrophes doubled as ISO 10303-21 requires."""
+    ascii_text = text.replace("©", "(c)").encode("ascii", "replace").decode()
+    return "'" + ascii_text.replace("\\", "\\\\").replace("'", "''") + "'"
 
 
 def export_step_with_notice(shape: object, path: str | Path, name: str | None = None) -> None:
