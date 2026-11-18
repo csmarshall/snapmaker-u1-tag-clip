@@ -106,6 +106,7 @@ CC BY-NC-SA 4.0 ([LICENSE](LICENSE)), because I built on CC BY-NC-SA work. Non-c
 - The dock mount and socket adapter use the measured slot section of 1waynger1's [Snapmaker U1 Filament Hub Replacement](https://makerworld.com/en/models/2152529-snapmaker-u1-filament-hub-replacement) (MakerWorld 2152529), so they fit his base. I used those dimensions and nothing else; none of his files are here.
 - Firmware and tag support: [paxx12's SnapmakerU1-Extended-Firmware](https://github.com/paxx12/SnapmakerU1-Extended-Firmware) and [OpenRFID](https://github.com/suchmememanyskill/OpenRFID).
 - Label font: [Arimo](https://github.com/googlefonts/Arimo), SIL Open Font License 1.1 (`chip/fonts/OFL.txt`).
+- Blueprint lettering: [Architects Daughter](https://fonts.google.com/specimen/Architects+Daughter) by Kimberly Geswein, SIL Open Font License 1.1 (`tools/fonts/OFL-ArchitectsDaughter.txt`).
 
 None of the original authors' files are redistributed here.
 
