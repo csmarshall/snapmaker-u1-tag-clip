@@ -1,0 +1,7 @@
+# Keeps the SHA-pinned actions in .github/workflows current; prints.yml has contents: write, so its actions are pinned to commits, not tags.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
