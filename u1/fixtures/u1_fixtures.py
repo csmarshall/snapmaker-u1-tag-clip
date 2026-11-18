@@ -3,9 +3,13 @@
 Run with: uv run --with build123d python u1_fixtures.py
 Writes u1_standoff_strip.{stl,step} and u1_coil_finder_puck.{stl,step} beside this file.
 """
+import sys
 from pathlib import Path
 
 from build123d import Box, Cylinder, Part, Pos, Text, export_step, export_stl, extrude
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "chip"))  # the vendored label font lives with the chip
+from chip_clip import LABEL_FONT_PATH  # noqa: E402
 
 STICKER_DIAMETER = 25.0  # NTAG215 round sticker, as used by A-Jey's thing:7268905
 FIT_CLEARANCE = 0.3  # per side, so the sticker drops in and out
@@ -38,7 +42,7 @@ def standoff_strip() -> Part:
             POCKET_DIAMETER / 2, POCKET_DEPTH + POCKET_OVERSHOOT
         )
         label_y = -cell_y / 2 + (LABEL_BAND + WALL) / 2
-        label = Pos(x, label_y, height) * extrude(Text(f"{floor:.1f}", font_size=LABEL_BAND * 0.7), amount=-ENGRAVE_DEPTH)
+        label = Pos(x, label_y, height) * extrude(Text(f"{floor:.1f}", font_size=LABEL_BAND * 0.7, font_path=LABEL_FONT_PATH), amount=-ENGRAVE_DEPTH)
         cell = cell - pocket - label
         strip = cell if strip is None else strip + cell
     return strip

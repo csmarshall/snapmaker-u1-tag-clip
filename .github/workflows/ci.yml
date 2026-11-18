@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.13.9"
+          python-version: "3.12"
+          enable-cache: true
+      - name: Build chips and docks
+        working-directory: chip
+        run: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python chip_clip.py --label-stl
+      - name: Build U1 parts
+        run: uv run --with build123d python u1/u1_build.py
+      - name: Test
+        run: uv run --with build123d --with trimesh --with manifold3d --with pytest --with rtree --with shapely --with networkx --with scipy --with matplotlib python -m pytest -q tests u1/tests

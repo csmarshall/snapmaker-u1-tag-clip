@@ -14,13 +14,42 @@ from build123d import export_stl
 
 ORCA_VERSION = "01.10.01.50"  # claimed in the file; Orca refuses a 3MF from a newer version than itself
 BED = 270.0  # Snapmaker U1 bed, mm square; the chip is centred on it
+ZIP_DATE_TIME = (1980, 1, 1, 0, 0, 0)  # the earliest date a zip can hold; every 3MF entry carries it so rebuilds are byte-identical
 INLAY_EXTRUDER = 2  # the name inlay prints in the second filament; everything else in the first
 
 
+def write_3mf_zip(path: Path, files: dict[str, str]) -> None:
+    """Write the entries to `path` in insertion order with a fixed timestamp and deflate, so the same content always gives the same bytes."""
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        for entry, text in files.items():
+            info = zipfile.ZipInfo(entry, date_time=ZIP_DATE_TIME)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16  # fixed permissions, whatever the host's umask
+            z.writestr(info, text)
+
+
+VERTEX_DECIMALS = 5  # vertex coordinates are written to this many decimals, and rounded to them before sorting so the order cannot depend on float noise
+
+
+def canonical_triangles(mesh) -> tuple[np.ndarray, np.ndarray]:
+    """Return (vertices, faces) of the mesh in an order that depends only on its triangles: OCC's parallel meshing yields the same triangles in a different order from run to run, which would make the file differ.
+
+    Vertices are rounded, each triangle starts at its smallest vertex (winding kept), triangles are sorted, and the vertices are numbered in sorted order.
+    """
+    tris = np.round(np.asarray(mesh.triangles, dtype=float), VERTEX_DECIMALS) + 0.0  # + 0.0 turns -0.0 into 0.0
+    for i, t in enumerate(tris):
+        first = min(range(3), key=lambda k: tuple(t[k]))
+        tris[i] = np.roll(t, -first, axis=0)
+    order = np.lexsort(tris.reshape(-1, 9).T[::-1])
+    verts, inverse = np.unique(tris[order].reshape(-1, 3), axis=0, return_inverse=True)
+    return verts, inverse.reshape(-1, 3)
+
+
 def mesh_xml(object_id: int, mesh) -> str:
-    """Return one 3MF <object> holding the mesh."""
-    verts = "".join(f'<vertex x="{x:.5f}" y="{y:.5f}" z="{z:.5f}"/>' for x, y, z in mesh.vertices)
-    tris = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in mesh.faces)
+    """Return one 3MF <object> holding the mesh, with vertices and triangles in canonical order."""
+    verts_arr, faces_arr = canonical_triangles(mesh)
+    verts = "".join(f'<vertex x="{x:.{VERTEX_DECIMALS}f}" y="{y:.{VERTEX_DECIMALS}f}" z="{z:.{VERTEX_DECIMALS}f}"/>' for x, y, z in verts_arr)
+    tris = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in faces_arr)
     return f'<object id="{object_id}" type="model"><mesh><vertices>{verts}</vertices><triangles>{tris}</triangles></mesh></object>'
 
 
@@ -67,6 +96,4 @@ def write_chip_3mf(path: Path, stem: str, name: str, body, inlay) -> None:
             f'<model_instance><metadata key="object_id" value="{object_id}"/><metadata key="instance_id" value="0"/></model_instance></plate></config>'
         ),
     }
-    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
-        for entry, text in files.items():
-            z.writestr(entry, text)
+    write_3mf_zip(path, files)

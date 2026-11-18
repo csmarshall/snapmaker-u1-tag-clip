@@ -40,6 +40,8 @@ from build123d import (
     scale,
 )
 
+LABEL_FONT_PATH = str(Path(__file__).resolve().parent / "fonts" / "Arimo-Regular.ttf")  # vendored (OFL, metric-compatible with Arial) so labels come out the same on every machine, CI included
+
 # ---- fit -------------------------------------------------------------------------------------
 FIT_CLEARANCE = 0.3  # every sliding gap between chip and dock derives from this; tune it with a fit test
 
@@ -211,13 +213,13 @@ def _lead_in_wall(z0: float):
 
 def _cap_band(size: float) -> tuple[float, float]:
     """Baseline and cap height of the label font at this size, in the font's own frame (where Text puts them with align=None)."""
-    bb = Text("H", font_size=size, align=None).bounding_box()
+    bb = Text("H", font_size=size, font_path=LABEL_FONT_PATH, align=None).bounding_box()
     return bb.min.Y, bb.max.Y
 
 
 def _label_text(label: str, size: float, cap_centre_y: float):
     """The label centred left to right by its ink, with the middle of its capital-letter band at cap_centre_y, so descenders hang below and every name's letters share one line."""
-    text = Text(label, font_size=size, align=None)
+    text = Text(label, font_size=size, font_path=LABEL_FONT_PATH, align=None)
     bb = text.bounding_box()
     cap_lo, cap_hi = _cap_band(size)
     return Pos(-(bb.min.X + bb.max.X) / 2, cap_centre_y - (cap_lo + cap_hi) / 2) * text
@@ -405,9 +407,9 @@ def dock_parts(slot: int | None, mount_grooves: bool = True) -> dict[str, object
 
     accent = hint
     if slot is not None:
-        unit_height = Text(str(slot), font_size=1.0).bounding_box().size.Y
+        unit_height = Text(str(slot), font_size=1.0, font_path=LABEL_FONT_PATH).bounding_box().size.Y
         digit_size = (cover_top - y_bottom - 2 * COVER_DIGIT_MARGIN) / unit_height
-        digit = Pos(0, (y_bottom + cover_top) / 2, z_cover_out) * extrude(Text(str(slot), font_size=digit_size), amount=-ENGRAVE_DEPTH)
+        digit = Pos(0, (y_bottom + cover_top) / 2, z_cover_out) * extrude(Text(str(slot), font_size=digit_size, font_path=LABEL_FONT_PATH), amount=-ENGRAVE_DEPTH)
         lower_pocket -= digit
         accent = accent + digit
     return {"back_plate": back_plate, "channels": channels, "lower_pocket": lower_pocket, "accent": accent, "dock": back_plate + channels + lower_pocket}

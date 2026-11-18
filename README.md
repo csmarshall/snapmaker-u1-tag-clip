@@ -1,99 +1,106 @@
-# tag-clip
+# snapmaker-u1-tag-clip
 
-A filament-clip "coin" that carries an NTAG215 sticker, plus a holder that snaps into the Snapmaker U1's side-panel spool-holder socket so the printer can read the tag without a spool holder attached. Made for feeding the U1 from an external dryer (a Creality SpacePi X4 here) with the paxx12 extended firmware and OpenRFID.
+A filament clip that carries its spool's NFC tag, and a numbered dock that snaps into the Snapmaker U1's side-panel socket so the printer reads that tag when you load the spool.
 
-**Status: work in progress, nothing here has been printed or tested yet.** Treat every dimension as a first guess until it has been fitted on a real U1.
+![The clip chip and the dock](docs/images/hero.png)
 
-## The idea
+Each spool keeps its own **chip**: a small clip that holds the loose filament end, with an NTAG215 sticker pressed into its back and the material name printed in a second colour on the front. To load a spool, take the chip off it, drop it into the **dock** for that slot on the printer, and feed the filament. The U1 reads the tag as the feeder engages. When you unload, the chip goes back on the spool. There is no velcro, no loose card to lose, and the tag can't end up with the wrong spool.
 
-Spools keep their tag with them. The tag lives on a coin that also clips the loose filament end, so there is no velcro and no separate chip to forget: to load a spool you take the coin off the spool, drop it into the holder on the printer, and feed the filament. When the print is done the coin goes back on the spool. The material name is engraved on the coin (deep enough to paint or fill) and nothing else (chips travel with spools and can end up in any position, so no copy numbers), and each coin's tag UID is registered in Spoolman through paxx12's OpenRFID support.
+It was made for feeding the U1 from an external dryer (a Creality SpacePi X4) with [paxx12's extended firmware](https://github.com/paxx12/SnapmakerU1-Extended-Firmware), OpenRFID and Spoolman. The chip itself isn't tied to the U1, so it works as a tagged filament clip anywhere a reader can see it.
 
-The U1 only reads a tag when the auto feeder first engages, so put the coin in the holder before feeding the filament.
+## Just print it
 
-## What is in the repo
+Ready-to-print 3MFs are in [`prints/`](prints/). GitHub Actions rebuilds that folder from the generator on every change, so it always matches the code.
+
+| File | What |
+|---|---|
+| [`prints/chips/tag-clip_<type>.3mf`](prints/chips/) | One chip for each known filament type (PLA, PLA+, PLA+ HS, PETG, ABS, TPU, nylon and more; see [`prints/README.md`](prints/README.md) for the full list). |
+| [`prints/tag-clip_all-chips.3mf`](prints/tag-clip_all-chips.3mf) | One of every chip type on a single U1 plate. |
+| [`prints/u1/u1_docks_fingers_set.3mf`](prints/u1/u1_docks_fingers_set.3mf) | The four U1 docks, slots 1 to 4, on one plate. |
+
+The files open in Snapmaker Orca (or Orca Slicer / Bambu Studio). They carry geometry and filament assignments only, so pick your printer, process and filament presets after opening.
+
+- **Chip:** prints back face down with no pause. The body is filament 1 and the name is filament 2. After printing, press a 25 mm round NTAG215 sticker into the recess in the back. It sits below the face, so a dead sticker can be swapped without reprinting. To print several, use Orca's copy count on the single-chip file.
+- **Dock:** prints standing on its bottom stop. Supports under the snap fingers are already enabled in the file (build plate only). The slot digit and orientation hint are inlaid in filament 2. PETG is what's been printed so far.
+
+### Need a type that isn't there?
+
+```sh
+cd chip
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python chip_clip.py "PETG-GF" "TPU 85A"
+```
+
+Each name becomes `chip/out/tag-clip_<name>.3mf` (plus `.stl` and `.step`). In file names `+` becomes `plus` and spaces become `_`. Long names shrink to fit. To make a type permanent, so that it's built into `prints/`, add it to `FILAMENTS` in [`chip/chip_clip.py`](chip/chip_clip.py) and open a pull request.
+
+## Using it with the U1
+
+The short version (full detail in [`docs/WORKFLOW.md`](docs/WORKFLOW.md)):
+
+1. Install paxx12's extended firmware (v1.6.0 or later), turn on Advanced Mode, set Filament Detection to OpenRFID, and point the Spoolman integration at your Spoolman server.
+2. Write each chip's tag. What has worked so far is a tag holding one NDEF record of type `application/json` in the OpenSpool format, for example `{"protocol":"openspool","version":"1.0","type":"PETG","color_hex":"16171B","brand":"Snapmaker"}`. Spoolman GO wrote one that the U1 read. Spoolman itself doesn't write tags; it only pairs UIDs.
+3. Snap a dock into each spool-holder socket you feed from. The dock's fingers centre the sticker on the socket, where the U1's reader coil is.
+4. Load: chip into the dock, then feed. To re-read a lane without re-feeding, run `FILAMENT_DT_UPDATE CHANNEL=<0-3>` in the Fluidd console (lane 1 is channel 0), or press "Read spool tags" in the Filament Manager.
+
+## Status
+
+This is a working design that's still being tuned, not a finished product.
+
+- **Printed and fitted:** chips, and the finger docks in PETG. The dock channel was widened to 0.5 mm per side and 0.8 mm front to back after the first prints stuck.
+- **Still being verified:** reading a tag reliably through the dock in every slot. One early failure turned out to be a blank tag, not distance. Whether the clip arms grip 1.75 mm filament as well as Extrutim's original.
+- Every sliding fit comes from one constant, `FIT_CLEARANCE` (0.3 mm), plus the dock's `DOCK_SIDE_CLEARANCE` and `DOCK_FRONT_CLEARANCE`, all in `chip/chip_clip.py`. If your printer runs tight or loose, change those and rebuild.
+
+Issues and photos of your prints are welcome.
+
+## The repo
 
 | Path | What |
 |---|---|
-| `chip/chip_clip.py` | The generic part. Parametric build123d model of the chip (open sticker recess in the back, clip arms and engraved label) and four numbered docks (slots 1 to 4), each exported whole and as named parts. All dimensions, and every constant the chip and dock share, are named constants at the top. Runs standalone; output goes to `chip/out/` (not committed). |
-| `chip/chip_3mf.py` | Writes one chip as a single 3MF (body on filament 1, name inlay on filament 2); the chip build calls it. |
-| `tests/test_fit.py` | Fit and consistency checks on the built chips and generic dock, plus a comparison of the clip with Extrutim's original (skipped when that file is absent). |
-| `u1/` | Everything specific to the Snapmaker U1, importing from `chip/`: `u1_parts.py` (socket adapter, dock mount, blank cover, the docks with snap fingers and the integrated dovetail dock, a hub-adapter stand-in), `socket_fingers.py` (remmulegguh's traced fingers), `finger_fallback.py`, and `u1_build.py`, which writes them to `u1/out/` (not committed). |
-| `u1/tests/` | The U1 checks: mount, adapters and covers (`test_u1_fit.py`), finger docks, spread, bevel, fallback, integrated dock and plate sets. |
-| `u1/tools/`, `u1/tools/preview/` | Print-plate layouts and 3MF writers (`print_plates.py`, `make_3mf.py`, `make_spread_3mf.py`, `finger_fallback_plate.py`, `print_orientation.py`), and `build_preview.py`, which stages the rotatable 3D review page and its meshes in `u1/out/preview/` for publishing as an artifact. |
-| `u1/docs/` | `TEST_PRINT.md`, `DOCK_FINGERS.md`, `FINGER_SPREAD.md`, `INTEGRATED_DOCK.md` and `FINGER_FALLBACK.md`. |
-| `docs/ANTENNA.md`, `docs/WORKFLOW.md` | Where the U1's reader probably sees a sticker, worked out from earlier tag holders (an estimate until measured); and the coin-per-spool workflow. |
-| `u1/fixtures/` | Test prints for finding where and through how much plastic the U1's reader still sees a sticker: a standoff strip (0.4 to 2.0mm floors) and a handled coil-finder puck. `u1/fixtures/u1_fixtures.py` regenerates them. |
-| `install_onshape_mcp.sh` | Optional helper that registers an Onshape MCP server for Claude Code (dry run by default). |
-| `TOOLS-INSTALLED.md` | What was installed while working on this and how to remove it. |
+| [`chip/`](chip/) | The generator for the printer-neutral parts. `chip_clip.py` is the parametric [build123d](https://github.com/gumyr/build123d) model of the chip (sticker recess, clip arms, name) and a generic dock. Every dimension is a named constant at the top. `chip_3mf.py` writes the two-filament 3MF. `fonts/` holds the label font (Arimo, OFL), vendored so the lettering is the same on every machine. |
+| [`u1/`](u1/) | The Snapmaker U1 parts, which build on `chip/`. `u1_parts.py` holds the finger dock (the production dock), the integrated dovetail dock, the socket adapter, the dock mount and blank covers. `socket_fingers.py` holds the snap fingers. `u1_build.py` builds them, `tools/` lays out plates and writes 3MFs, and `docs/` has the design notes for each variant. `fixtures/` has test prints for finding where the reader sees a sticker. |
+| [`prints/`](prints/) | Generated 3MFs. Don't edit them by hand; `tools/build_prints.py` writes them. |
+| [`tools/build_prints.py`](tools/build_prints.py) | Builds everything and rewrites `prints/`. The output is reproducible: the same model gives the same bytes. |
+| [`tests/`](tests/), [`u1/tests/`](u1/tests/) | Fit and consistency checks on the built meshes: clearances, the clip against the original's geometry, finger positions, plate layouts and reproducible 3MFs. CI runs them on every push. |
+| [`docs/`](docs/) | The day-to-day workflow (`WORKFLOW.md`) and where the U1's reader coil is likely to be (`ANTENNA.md`). |
 
-## Build, check, preview
+### Build and test locally
+
+You need [uv](https://docs.astral.sh/uv/). Everything else is fetched per command.
 
 ```sh
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python chip/chip_clip.py --label-stl  # chips (tag-clip_<name>.3mf/.stl/.step, plus the label STLs the checks and sheets read) and the four docks, into chip/out/
-uv run --with build123d python u1/u1_build.py  # the U1 parts into u1/out/
+uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/build_prints.py   # rebuild prints/
 uv run --with build123d --with trimesh --with manifold3d --with pytest --with rtree --with shapely --with networkx --with scipy --with matplotlib python -m pytest -q tests u1/tests
-uv run python u1/tools/build_preview.py
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/print_plates.py  # test-print plates, see u1/docs/TEST_PRINT.md
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/make_3mf.py  # u1/out/u1_test_print.3mf: the test-print plate, inlays on filament 2
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/make_spread_3mf.py  # u1/out/u1_finger_spread.3mf: six blank covers, fingers spread 0 to 2.5 mm per side, see u1/docs/FINGER_SPREAD.md
 ```
 
-### Adding a new chip type
+The tests read the built meshes in `chip/out/` and `u1/out/`, so run a build first. Without one, most of them skip.
 
-The built-in list is `FILAMENTS` in `chip/chip_clip.py` (20 names). To make a chip for a name that is not in it, pass the name on the command line and only those chips are built:
-
-```sh
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python chip/chip_clip.py "TPU 85A" "PETG-GF"
-```
-
-Each name writes `tag-clip_<name>.3mf` (one object: the body on filament 1 and the name inlay on filament 2), `tag-clip_<name>.stl` (the body) and `tag-clip_<name>.step` to `chip/out/`; add `--label-stl` to also get the inlay alone as `tag-clip_<name>_label.stl`, which the checks and the U1 sheet tools read. The file prefix is `CHIP_FILE_PREFIX` in `chip/chip_clip.py`; spaces become `_` and `+` becomes `plus` in the file name. The label shrinks to fit long names. A name that is not in `FILAMENTS` is laid out on the same label line as the built-in names, so one with long descenders may sit closer to the hook finger than they do; check the preview. To make a name permanent, add it to `FILAMENTS` so a full build includes it.
-
-## Printing
-
-- **Chip:** back face down, no pause. The sticker presses into the open recess in the back afterwards (`POCKET_DEPTH` 0.6mm, so it sits below the face), and a bad one is swapped without reprinting. For two colours, open `tag-clip_<material>.3mf` (body and label are already one object, with the label on filament 2).
-- **Dock:** stand it on its bottom stop (flat end down) so nothing bridges. The same `dock_slot<n>` either tapes to the panel over the antenna with VHB, or pushes into the dock mount. For two colours, load `dock_slot<n>.stl` (body) with `dock_slot<n>_accent.stl` (the slot digit and the orientation hint, inlaid flush).
-- **Dock mount** (`dock_mount.stl`): print upside down, standing on the ends of its arms; the crossbar bridges about 39mm between them.
-- **Socket adapter** (`socket_adapter.stl`): print standing on the plate's flat top and the fingers' top face. **Blank cover** (`cover_slot<n>.stl` plus `_accent` for the digit): print standing on the plate's flat top, with supports under the fingers; its plate is round almost to the top so it hides the whole socket bore. Both snap into a spool-holder socket with remmulegguh's fingers. `hub_adapter_standin.stl` only stands in for 1waynger1's base in the viewer and checks; it is not a print.
-- Every sliding gap derives from `FIT_CLEARANCE` (0.3mm). Change that one number after a fit test.
+Slicer note: Snapmaker Orca 1.10.1's command line crashes when it loads a process preset, so nothing here slices the files automatically. Open them in the GUI.
 
 ## Parts and terms
 
 | Term | What it is |
 |---|---|
-| chip | The clip coin: round end up, flat end down with rounded corners and a centre key notch, sticker in an open recess in the back, engraved material name only on the front. |
-| clip arms | The three walls on the chip that hold the filament end, traced from Extrutim's clip and turned 180 degrees as one unit. |
-| hook finger | The tallest clip arm (wall A, curled top and a small centre nub). Deliberately 2mm taller than the original (`WALL_A_EXTRA_HEIGHT`) so it stands proud of the dock's lower pocket and a thumb run up the pocket face catches it and lifts the chip out. |
-| dock | The holder the chip drops into, one per U1 slot, numbered 1 to 4 left to right with a big engraved digit. |
-| lower pocket | The wide plate and walls over the clip arms, at the flat end of the chip. Its top edge stops just past the hook finger; its side faces are closed. |
-| channels | The straight side rails and lips (the tracks in the code) that guide the chip from the dock's open top. They run 7.5mm past the lower pocket's top edge (`TRACK_INTO_POCKET`) and stop; the bottom of the pocket has only its own walls. |
-| back plate, bottom stop | The wall behind the chip (over the sticker) and the full-depth ledge the flat end rests on, which closes the lower pocket at the bottom. |
-| dock mount | Slides down into an adapter's slot from above. A crossbar rests on the adapter's top edge and the dock stands on it, held by L clamps (side wall, front jaw, tongue in the side groove) on its middle band. Fits our socket adapter and 1waynger1's hub adapter alike. |
-| socket adapter | Ours: remmulegguh's snap fingers behind a plate carrying a copy of 1waynger1's slot, so the dock mount fits it. Sticker 28.6mm above the socket axis. |
-| hub adapter | 1waynger1's base (MakerWorld 2152529), for owners who already run it in place of his spool arm. Sticker 43.0mm above the axis (47.2mm if fitted the other way up). |
-| grip band, grooves | The middle of the dock's sides: what is left of its length once the lower pocket's height is taken off both ends (6.64mm), centred on the dock. A groove in each side there takes the hanger's tongue. |
-| blank cover | The snap fingers and a round plate with the slot number, for an unused socket. |
-| key post | A 3mm post on the bottom stop that fits the notch between the chip's 4mm feet. Put in upside down, the chip's round end lands on it and sits about 3mm high. |
-| funnel | The flared mouth on top of the channels. All walls end on one flat top rim. |
-
-The clip is empty while the chip is docked (the filament end has gone into the feeder), so the lower pocket's sides are closed.
-
-## Open questions
-
-- How remmulegguh's holder is oriented when mounted, which decides where the coin dock attaches to his snap fingers and plate.
-- The real tag position and the plastic thickness the reader tolerates (the fixtures exist to answer this).
-- Whether the clip arms grip 1.75mm filament as well as the original clip.
+| chip | The clip: round end up, flat end down with a centre key notch, sticker in an open recess in the back, material name on the front. |
+| clip arms | The three walls on the chip that grip the filament end, traced from Extrutim's clip. |
+| hook finger | The tallest clip arm. It's 2 mm taller than the original so it stands proud of the dock and a thumb run up the dock's face lifts the chip out. |
+| dock | The holder the chip drops into, one per U1 slot, numbered 1 to 4 left to right. |
+| finger dock | The production dock: the snap fingers are on its back, so it plugs straight into a spool-holder socket with the sticker on the socket's axis. |
+| channels, lower pocket | The side rails and lips that guide the chip in from the open top, and the plate over the clip arms at the bottom. |
+| key post | A post on the bottom stop that fits the chip's notch. If the chip goes in upside down, it sits visibly high. |
+| blank cover | Snap fingers and a round numbered plate for an unused socket. |
 
 ## Credits and licence
 
-This project is licensed CC BY-NC-SA 4.0 (see `LICENSE`) because it builds on CC BY-NC-SA work. Non-commercial use only, share alike, attribution required.
+Licensed [CC BY-NC-SA 4.0](LICENSE), because this builds on CC BY-NC-SA work: non-commercial use only, share alike, attribution required. [`SOURCES.md`](SOURCES.md) records exactly what was taken from each source and how.
 
-- The clip arms are a close trace of Extrutim's [Filament Clip, Grandma's Favorite](https://www.printables.com/model/24371-filament-clip-grandmas-favorite-filament-clip) (Printables 24371), with the hook finger made 2mm taller. See `SOURCES.md` for how.
-- The snap-in holder follows remmulegguh's [Snapmaker U1 NFC / RFID Tag Holder](https://www.printables.com/model/1625982-snapmaker-u1-nfc-rfid-tag-holder) (Printables 1625982).
-- The sticker-coin and per-material chip idea follows A-Jey's [Snapmaker U1 RFID Adapter & Chip System](https://www.thingiverse.com/thing:7268905) (Thingiverse 7268905), and krokus57's [remix](https://www.thingiverse.com/thing:7324691).
-- Firmware: [paxx12's SnapmakerU1-Extended-Firmware](https://github.com/paxx12/SnapmakerU1-Extended-Firmware) and [OpenRFID](https://github.com/suchmememanyskill/OpenRFID).
+- The clip arms are a close trace of Extrutim's [Filament Clip, Grandma's Favorite](https://www.printables.com/model/24371-filament-clip-grandmas-favorite-filament-clip) (Printables 24371), with the hook finger made taller.
+- The snap fingers are traced from remmulegguh's [Snapmaker U1 NFC / RFID Tag Holder](https://www.printables.com/model/1625982-snapmaker-u1-nfc-rfid-tag-holder) (Printables 1625982).
+- The idea of a sticker in a coin, one per material, comes from A-Jey's [Snapmaker U1 RFID Adapter & Chip System](https://www.thingiverse.com/thing:7268905) (Thingiverse 7268905) and krokus57's [remix](https://www.thingiverse.com/thing:7324691).
+- The dock mount and socket adapter take the measured slot section of 1waynger1's [Snapmaker U1 Filament Hub Replacement](https://makerworld.com/en/models/2152529-snapmaker-u1-filament-hub-replacement) (MakerWorld 2152529) so they fit his base. Only those dimensions are used; none of his files are included.
+- Firmware and tag support: [paxx12's SnapmakerU1-Extended-Firmware](https://github.com/paxx12/SnapmakerU1-Extended-Firmware) and [OpenRFID](https://github.com/suchmememanyskill/OpenRFID).
+- Label font: [Arimo](https://github.com/googlefonts/Arimo), SIL Open Font License 1.1 (`chip/fonts/OFL.txt`).
 
-The original authors' files are not redistributed here.
+The original authors' files aren't redistributed here.
 
 ## How it was made
 
-Human-crafted and AI-assisted, human-directed: the design decisions are Charles's, and the geometry and scripts were drafted with Claude Code and reviewed along the way.
+Human-designed and human-directed, AI-assisted. The design decisions, fit tuning and print testing are Charles Marshall's. The build123d geometry, checks and tooling were drafted with Claude Code under his direction, and he reviewed every change.

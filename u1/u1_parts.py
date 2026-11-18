@@ -22,7 +22,7 @@ from build123d import (  # noqa: E402
     extrude,
     offset,
 )
-from chip_clip import ENGRAVE_DEPTH, FIT_CLEARANCE, MOUNT_GROOVE_DEPTH, _box, _ccw, _dock_extents, dock_parts  # noqa: E402
+from chip_clip import ENGRAVE_DEPTH, LABEL_FONT_PATH, FIT_CLEARANCE, MOUNT_GROOVE_DEPTH, _box, _ccw, _dock_extents, dock_parts  # noqa: E402
 from socket_fingers import FINGER_HEIGHT, FINGER_SPREAD, bevel_leg, hook_half_width, hook_step, spread_outline  # noqa: E402
 
 # ---- mounts. The dock mount slides down into a slot and holds the dock on top of whatever carries that slot: 1waynger1's hub adapter (his "Snapmaker U1
@@ -253,10 +253,10 @@ def cover_parts(slot: int | None, spread: float = FINGER_SPREAD, label: str | No
     accent = None
     if slot is not None or label is not None:
         text = str(slot) if label is None else label
-        unit = Text(text, font_size=1.0).bounding_box().size
+        unit = Text(text, font_size=1.0, font_path=LABEL_FONT_PATH).bounding_box().size
         size = 2 * r * 0.55 / unit.Y
         if label is not None:
             size = min(size, COVER_LABEL_MAX_WIDTH / unit.X)
-        accent = Pos(0, axis_y - 2, z_back + SOCKET_COVER_THICKNESS) * extrude(Text(text, font_size=size), amount=-ENGRAVE_DEPTH)
+        accent = Pos(0, axis_y - 2, z_back + SOCKET_COVER_THICKNESS) * extrude(Text(text, font_size=size, font_path=LABEL_FONT_PATH), amount=-ENGRAVE_DEPTH)
         cover -= accent
     return {"cover": cover, "accent": accent}

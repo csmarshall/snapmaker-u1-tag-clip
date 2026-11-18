@@ -1,0 +1,42 @@
+name: Rebuild prints
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "chip/**"
+      - "u1/**"
+      - "tools/build_prints.py"
+      - ".github/workflows/prints.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prints-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prints:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.13.9"
+          python-version: "3.12"
+          enable-cache: true
+      - name: Build prints
+        run: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/build_prints.py
+      - name: Commit changed prints
+        run: |
+          git add --all prints
+          if git diff --cached --quiet -- prints; then
+            echo "prints/ unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "prints: rebuild from ${GITHUB_SHA::7}"
+          git push
