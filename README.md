@@ -1,5 +1,11 @@
 # snapmaker-u1-tag-clip
 
+<p>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/designs-CC%20BY--NC--SA%204.0-lightgrey.svg" alt="Designs: CC BY-NC-SA 4.0"></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/tooling-MIT-yellow.svg" alt="Tooling: MIT"></a>
+  <a href="https://buymeacoffee.com/cs_marshall"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
+</p>
+
 A filament clip that carries its spool's NFC tag, and a numbered dock that snaps into the Snapmaker U1's side-panel socket. Load a spool, drop its clip in the dock, and the U1 reads the tag.
 
 ![The chip and the slot 1 dock, rendered from the model](docs/images/hero.png)
@@ -66,7 +72,7 @@ The finger dock as an old-school blueprint. A workflow redraws it from the model
 <!-- blueprint:blueprint_dock -->
 [![U1 TAG CLIP · FINGER DOCK](docs/images/blueprint_dock.svg)](docs/images/blueprint_dock.svg)
 
-<sub>Drawing generated from `build/dock.step` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model.</sub>
+<sub>Drawing generated from `u1/u1_parts.py (dock_fingers_parts)` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
 <!-- /blueprint -->
 
 ## The repo
@@ -108,14 +114,14 @@ One slicer gotcha: Snapmaker Orca 1.10.1's command line crashes when it loads a 
 
 ## Credits and licence
 
-CC BY-NC-SA 4.0 ([LICENSE](LICENSE)), because I built on CC BY-NC-SA work. Non-commercial, share alike, credit the authors. [`SOURCES.md`](SOURCES.md) says exactly what came from where.
+The designs are CC BY-NC-SA 4.0, because I built on CC BY-NC-SA work: non-commercial, share alike, credit the authors. The general-purpose tooling in `tools/` is MIT. [`LICENSE.md`](LICENSE.md) explains the split, [`REUSE.toml`](REUSE.toml) maps every file, and [`SOURCES.md`](SOURCES.md) says exactly what came from where. Please don't sell prints of these; if you'd like to, open an issue and ask.
 
 - The clip arms are a close trace of Extrutim's [Filament Clip, Grandma's Favorite](https://www.printables.com/model/24371-filament-clip-grandmas-favorite-filament-clip) (Printables 24371). I made the hook finger taller.
 - The snap fingers are traced from remmulegguh's [Snapmaker U1 NFC / RFID Tag Holder](https://www.printables.com/model/1625982-snapmaker-u1-nfc-rfid-tag-holder) (Printables 1625982).
 - A sticker in a coin, one per material, is A-Jey's idea: [Snapmaker U1 RFID Adapter & Chip System](https://www.thingiverse.com/thing:7268905) (Thingiverse 7268905), plus krokus57's [remix](https://www.thingiverse.com/thing:7324691).
 - The dock mount and socket adapter use the measured slot section of 1waynger1's [Snapmaker U1 Filament Hub Replacement](https://makerworld.com/en/models/2152529-snapmaker-u1-filament-hub-replacement) (MakerWorld 2152529), so they fit his base. I used those dimensions and nothing else; none of his files are here.
 - Firmware and tag support: [paxx12's SnapmakerU1-Extended-Firmware](https://github.com/paxx12/SnapmakerU1-Extended-Firmware) and [OpenRFID](https://github.com/suchmememanyskill/OpenRFID).
-- Label font: [Arimo](https://github.com/googlefonts/Arimo), SIL Open Font License 1.1 (`chip/fonts/OFL.txt`).
+- Label font: [Arimo](https://github.com/googlefonts/Arimo), SIL Open Font License 1.1 (`chip/fonts/OFL.txt`, `LICENSES/OFL-1.1.txt`).
 
 None of the original authors' files are redistributed here.
 
