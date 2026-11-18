@@ -154,13 +154,13 @@ def test_standing_on_its_bottom_stop_only_the_fingers_underside_needs_support():
     assert np.allclose(FINGERS_PARTS[0][3], ON_BOTTOM_STOP) and np.isclose(np.linalg.det(ON_BOTTOM_STOP), 1.0)
     mesh = _part()
     behind = mesh.triangles_center[:, 2] < Z_BACK - 1e-6
-    low, high = M.licence_mark_strip()
     centres = mesh.triangles_center
-    in_mark = (centres[:, 2] > Z_BACK - 1e-6) & (centres[:, 2] < Z_BACK + M.LICENCE_MARK_DEPTH + 1e-6) & (centres[:, 1] > low) & (centres[:, 1] < high)
+    mark = M._licence_mark().bounding_box()  # the lettering's own footprint, so the mask can't hide an overhang elsewhere in the strip
+    in_mark = (centres[:, 2] > Z_BACK - 1e-6) & (centres[:, 2] < Z_BACK + M.LICENCE_MARK_DEPTH + 1e-6) & (centres[:, 1] > mark.min.Y - 1e-3) & (centres[:, 1] < mark.max.Y + 1e-3) & (centres[:, 0] > mark.min.X - 1e-3) & (centres[:, 0] < mark.max.X + 1e-3)
     mesh.vertices = mesh.vertices @ ON_BOTTOM_STOP.T
     mesh.apply_translation([0, 0, -mesh.bounds[0][2]])
     over = (mesh.face_normals[:, 2] < -OVERHANG_LIMIT) & (mesh.triangles_center[:, 2] > BED_CONTACT)
     assert mesh.area_faces[over & ~behind & ~in_mark].sum() < 25
     # The lettering's ceilings are overhangs too, but only LICENCE_MARK_DEPTH (0.25 mm) deep, so they bridge without support.
-    assert mesh.area_faces[over & in_mark].sum() < 15
+    assert mesh.area_faces[over & in_mark].sum() < 10  # 7.6 mm2 measured
     assert mesh.area_faces[over & behind].sum() > 100

@@ -52,3 +52,25 @@ def test_mark_is_cut_and_switch_turns_it_off(monkeypatch) -> None:
     plain = M.dock_fingers_parts(1)["dock"].volume
     removed = plain - marked
     assert 0.5 < removed < 20.0, removed
+
+
+def test_mark_reads_the_right_way_round_from_behind() -> None:
+    """Seen from behind (looking along +Z), the viewer's right is -X. So each line's ink, laid out in its own reading frame (x to the right), must land
+    mirrored in X on the part: its centre of mass at minus the reading-frame centre. A mirrored cutter has the same bounding box and volume but puts the
+    centre on the same side, which this catches. Each line is asymmetric enough for the centre to sit clearly off zero."""
+    from build123d import Align, Text, extrude
+
+    from chip_clip import LABEL_FONT_PATH
+
+    cutter = M._licence_mark()
+    low, high = M.licence_mark_strip()
+    mid = (low + high) / 2
+    for i, text in enumerate(M.licence_mark_lines()):
+        reading = extrude(Text(text, font_size=M.LICENCE_MARK_SIZE, font_path=LABEL_FONT_PATH, align=(Align.CENTER, Align.CENTER)), amount=1)
+        expected = -reading.center().X
+        assert abs(expected) > 0.02, (text, expected)
+        solids = [s for s in cutter.solids() if (s.center().Y > mid) == (i == 0)]
+        line = solids[0]
+        for s in solids[1:]:
+            line = line + s
+        assert abs(line.center().X - expected) < 0.02, (text, line.center().X, expected)
