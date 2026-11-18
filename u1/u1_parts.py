@@ -23,6 +23,8 @@ from build123d import (  # noqa: E402
     offset,
 )
 from chip_clip import ENGRAVE_DEPTH, LABEL_FONT_PATH, FIT_CLEARANCE, MOUNT_GROOVE_DEPTH, _box, _ccw, _dock_extents, dock_parts  # noqa: E402
+from chip_clip import DOCK_BOTTOM_THICKNESS, DOCK_FLOOR, STICKER_CLEARANCE, STICKER_DIAMETER  # noqa: E402
+from licence_notice import licence_name  # noqa: E402
 from socket_fingers import FINGER_HEIGHT, FINGER_SPREAD, bevel_leg, hook_half_width, hook_step, spread_outline  # noqa: E402
 
 # ---- mounts. The dock mount slides down into a slot and holds the dock on top of whatever carries that slot: 1waynger1's hub adapter (his "Snapmaker U1
@@ -205,16 +207,58 @@ def dock_integrated_parts(slot: int | None) -> dict[str, object]:
 STICKER_CENTRE_Y = 0.0  # the chip frame's origin is the sticker's centre (the recess is centred on it), so this is also the dock's socket axis in dock_fingers_parts
 
 
+LICENCE_MARK = True  # deboss the licence on the finger dock's back (issue #22); hidden once the dock is clipped in
+LICENCE_MARK_SIZE = 1.7  # mm, font size of each line
+LICENCE_MARK_DEPTH = 0.25  # mm into the back plate, which is DOCK_FLOOR thick there
+LICENCE_MARK_LINE_GAP = 0.7  # mm between the two lines
+LICENCE_MARK_MIN_PLATE = 0.9  # mm of back plate that must remain under the lettering
+
+
+def licence_mark_lines() -> tuple[str, str]:
+    """The two lines of the mark, top first; the licence name comes from REUSE.toml through licence_notice."""
+    return (licence_name(), "NOT FOR RESALE")
+
+
+def licence_mark_strip() -> tuple[float, float]:
+    """(low, high) y of the plain back plate the mark sits in: above the bottom stop (whose first layers are on the bed) and below the sticker."""
+    low = _dock_extents()["y_bottom"] + DOCK_BOTTOM_THICKNESS
+    high = STICKER_CENTRE_Y - (STICKER_DIAMETER / 2 + STICKER_CLEARANCE)
+    return low, high
+
+
+def _licence_mark():
+    """The mark's cutter: two centred lines debossed into the dock's back face, reading the right way round from behind."""
+    low, high = licence_mark_strip()
+    pitch = LICENCE_MARK_SIZE + LICENCE_MARK_LINE_GAP
+    if 2 * LICENCE_MARK_SIZE + LICENCE_MARK_LINE_GAP > high - low:
+        raise ValueError(f"licence mark needs {2 * LICENCE_MARK_SIZE + LICENCE_MARK_LINE_GAP:.2f} mm, strip is {high - low:.2f} mm")
+    if DOCK_FLOOR - LICENCE_MARK_DEPTH < LICENCE_MARK_MIN_PLATE:
+        raise ValueError("licence mark too deep for the back plate")
+    z_back = _dock_extents()["z_back"]
+    mid = (low + high) / 2
+    cutter = None
+    for text, y in zip(licence_mark_lines(), (mid + pitch / 2, mid - pitch / 2)):
+        plane = Plane(origin=(0, y, z_back), x_dir=(-1, 0, 0), z_dir=(0, 0, -1))  # normal out of the back, x mirrored so it reads from behind
+        sketch = Text(text, font_size=LICENCE_MARK_SIZE, font_path=LABEL_FONT_PATH, align=(Align.CENTER, Align.CENTER))
+        line = extrude(plane * sketch, amount=-LICENCE_MARK_DEPTH)
+        cutter = line if cutter is None else cutter + line
+    return cutter
+
+
 def dock_fingers_parts(slot: int | None, spread: float = FINGER_SPREAD) -> dict[str, object]:
     """The dock with remmulegguh's snap fingers on its back, no adapter, slot, dovetail or mount (issue #8): it plugs into the spool-holder socket where a spool would sit.
 
     The dock is dock_parts(slot, mount_grooves=False) with its back face on the panel plane (z = _dock_extents()["z_back"]) and the fingers' axis through the sticker's
-    centre, so the sticker sits on the socket axis. The fingers' 0.3 mm tab, in front of the panel face, is buried in the back plate. Returns dock (body and fingers),
+    centre, so the sticker sits on the socket axis. The fingers' 0.3 mm tab, in front of the panel face, is buried in the back plate. With LICENCE_MARK the licence is
+    debossed small on the back below the sticker. Returns dock (body and fingers),
     accent (as in dock_parts) and fingers (the added geometry alone). `spread` is as in _socket_fingers (default FINGER_SPREAD).
     """
     parts = dock_parts(slot, mount_grooves=False)
     fingers = _socket_fingers(STICKER_CENTRE_Y, _dock_extents()["z_back"], spread)
-    return {"dock": parts["dock"] + fingers, "accent": parts["accent"], "fingers": fingers}
+    dock = parts["dock"] + fingers
+    if LICENCE_MARK:
+        dock = dock - _licence_mark()
+    return {"dock": dock, "accent": parts["accent"], "fingers": fingers}
 
 
 def socket_adapter_parts() -> dict[str, object]:
