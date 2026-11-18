@@ -1,9 +1,7 @@
 ISO-10303-21;
 HEADER;
-FILE_DESCRIPTION(('Open CASCADE Model'),'2;1');
-FILE_NAME('Open CASCADE Shape Model','2026-10-13T16:47:51',('Author'),(
-    'Open CASCADE'),'Open CASCADE STEP processor 7.9','build123d',
-  'Unknown');
+FILE_DESCRIPTION(('u1_coil_finder_puck. CC BY-NC-SA 4.0, not for resale. https://github.com/csmarshall/snapmaker-u1-tag-clip'),'2;1');
+FILE_NAME('u1_coil_finder_puck','2026-11-18T03:20:45',('Charles Marshall'),('? 2026 Charles Marshall. Includes work by Extrutim, remmulegguh.'),'Open CASCADE STEP processor','build123d','CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/). Non-commercial: not for resale, in any form, printed or as files. To ask about selling, open an issue at https://github.com/csmarshall/snapmaker-u1-tag-clip.');
 FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));
 ENDSEC;
 DATA;

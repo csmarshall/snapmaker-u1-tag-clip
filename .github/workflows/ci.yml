@@ -18,6 +18,10 @@ jobs:
           version: "0.13.9"
           python-version: "3.12"
           enable-cache: true
+      - name: Licensing (REUSE)
+        run: |
+          uvx --from 'reuse[charset-normalizer]==6.3.0' reuse lint
+          uv run --locked python tools/check_reuse_coverage.py
       - name: Build chips and docks
         working-directory: chip
         run: uv run --locked python chip_clip.py --label-stl

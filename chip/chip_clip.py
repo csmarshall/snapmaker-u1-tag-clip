@@ -33,12 +33,13 @@ from build123d import (
     Rot,
     Rectangle,
     Text,
-    export_step,
-    export_stl,
     extrude,
     loft,
     scale,
 )
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # so licence_notice resolves however this file is loaded (the tests load it by path)
+from licence_notice import export_step_with_notice, export_stl_with_notice  # noqa: E402
 
 LABEL_FONT_PATH = str(Path(__file__).resolve().parent / "fonts" / "Arimo-Regular.ttf")  # vendored (OFL, metric-compatible with Arial) so labels come out the same on every machine, CI included
 
@@ -458,11 +459,11 @@ def build_chips_and_docks(names: list[str], label_stl: bool = False) -> None:
     for material in names or FILAMENTS:
         body, engraving = chip_parts(material)
         stem = chip_file_stem(material)
-        export_stl(body, str(out / f"{stem}.stl"))
-        export_step(body, str(out / f"{stem}.step"))
+        export_stl_with_notice(body, out / f"{stem}.stl")
+        export_step_with_notice(body, out / f"{stem}.step")
         write_chip_3mf(out / f"{stem}.3mf", stem, f"Chip, {material}", body, engraving)
         if label_stl:
-            export_stl(engraving, str(out / f"{stem}_label.stl"))
+            export_stl_with_notice(engraving, out / f"{stem}_label.stl")
     if names:
         print(f"built {len(names)} chip(s) in {out}: " + ", ".join(f"{chip_file_stem(m)}.3mf/.stl/.step" for m in names))
         return
@@ -471,8 +472,8 @@ def build_chips_and_docks(names: list[str], label_stl: bool = False) -> None:
         for name, shape in parts.items():
             # OCC keeps a triangulation on each face, and the parts share faces with the whole dock; clear it so every export meshes its own faces.
             BRepTools.Clean_s(shape.wrapped)
-            export_stl(shape, str(out / (f"dock_slot{slot}.stl" if name == "dock" else f"dock_slot{slot}_{name}.stl")))
-        export_step(parts["dock"], str(out / f"dock_slot{slot}.step"))
+            export_stl_with_notice(shape, out / (f"dock_slot{slot}.stl" if name == "dock" else f"dock_slot{slot}_{name}.stl"))
+        export_step_with_notice(parts["dock"], out / f"dock_slot{slot}.step")
     print("chip: print back-down, no pause; press the sticker into the recess in its back afterwards")
     print("dock: print standing on its bottom stop (flat end down); tape it to the panel, or push it into the dock mount")
 

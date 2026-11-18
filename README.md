@@ -8,6 +8,8 @@
 
 A filament clip that carries its spool's NFC tag, and a numbered dock that snaps into the Snapmaker U1's side-panel socket. Load a spool, drop its clip in the dock, and the U1 reads the tag.
 
+**Not for resale.** Print it for yourself and your friends as much as you like. Selling the files or the prints, on Etsy or anywhere else, needs permission first ([how to ask](#selling-it)). The designs are [CC BY-NC-SA 4.0](LICENSE.md).
+
 ![The chip and the slot 1 dock, rendered from the model](docs/images/hero.png)
 
 ![Two finger docks on the U1's side panel: slot 1 holding an ABS chip, slot 2 empty](docs/images/installed.jpg)
@@ -114,7 +116,7 @@ One slicer gotcha: Snapmaker Orca 1.10.1's command line crashes when it loads a 
 
 ## Credits and licence
 
-The designs are CC BY-NC-SA 4.0, because I built on CC BY-NC-SA work: non-commercial, share alike, credit the authors. The general-purpose tooling in `tools/` is MIT. [`LICENSE.md`](LICENSE.md) explains the split, [`REUSE.toml`](REUSE.toml) maps every file, and [`SOURCES.md`](SOURCES.md) says exactly what came from where. Please don't sell prints of these; if you'd like to, open an issue and ask.
+The designs are CC BY-NC-SA 4.0, because I built on CC BY-NC-SA work: non-commercial, share alike, credit the authors. The general-purpose tooling in `tools/` is MIT. [`LICENSE.md`](LICENSE.md) explains the split, [`REUSE.toml`](REUSE.toml) maps every file, and [`SOURCES.md`](SOURCES.md) says exactly what came from where.
 
 - The clip arms are a close trace of Extrutim's [Filament Clip, Grandma's Favorite](https://www.printables.com/model/24371-filament-clip-grandmas-favorite-filament-clip) (Printables 24371). I made the hook finger taller.
 - The snap fingers are traced from remmulegguh's [Snapmaker U1 NFC / RFID Tag Holder](https://www.printables.com/model/1625982-snapmaker-u1-nfc-rfid-tag-holder) (Printables 1625982).
@@ -124,6 +126,26 @@ The designs are CC BY-NC-SA 4.0, because I built on CC BY-NC-SA work: non-commer
 - Label font: [Arimo](https://github.com/googlefonts/Arimo), SIL Open Font License 1.1 (`chip/fonts/OFL.txt`, `LICENSES/OFL-1.1.txt`).
 
 None of the original authors' files are redistributed here.
+
+### Credit line
+
+If you share or remix it, copy this:
+
+```
+"snapmaker-u1-tag-clip" by Charles Marshall (https://github.com/csmarshall/snapmaker-u1-tag-clip), CC BY-NC-SA 4.0. Clip arms after Extrutim (Printables 24371), snap fingers after remmulegguh (Printables 1625982).
+```
+
+### Selling it
+
+The licence doesn't allow selling the files or printed parts. If you'd like to anyway (a small run for a makerspace, say, or bundled with something you make), [open an issue](https://github.com/csmarshall/snapmaker-u1-tag-clip/issues/new) and tell me what you have in mind. I'll answer there. The clip arms and snap fingers are traced from Extrutim's and remmulegguh's models, so a commercial yes would need theirs too.
+
+If you spot these for sale somewhere, please open an issue with the link. The licence is what a marketplace acts on when a listing gets reported.
+
+### Why these licences
+
+I started from two CC BY-NC-SA models, and ShareAlike means my remix has to carry the same licence. The code does too, because the traced shapes live in it: the clip arms and the finger outline are coordinates in `chip/chip_clip.py` and `u1/socket_fingers.py`. Anyone running the code is building those shapes. The vendored fonts keep their own licence, OFL 1.1.
+
+The licensing is machine-readable. [`REUSE.toml`](REUSE.toml) gives every file exactly one licence and copyright ([REUSE](https://reuse.software/) format), and [`LICENSES/`](LICENSES/) has the full texts. Every 3MF, STEP and STL the build writes carries the licence in its own metadata as well, so a file that gets passed around still says where it came from.
 
 ## How it was made
 

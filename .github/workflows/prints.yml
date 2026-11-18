@@ -7,6 +7,7 @@ on:
       - "chip/**"
       - "u1/**"
       - "tools/build_prints.py"
+      - "REUSE.toml"  # the licence notice inside every print file is read from it
       - "pyproject.toml"
       - "uv.lock"
       - ".github/workflows/prints.yml"

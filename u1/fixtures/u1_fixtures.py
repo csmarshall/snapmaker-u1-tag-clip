@@ -6,10 +6,11 @@ Writes u1_standoff_strip.{stl,step} and u1_coil_finder_puck.{stl,step} beside th
 import sys
 from pathlib import Path
 
-from build123d import Box, Cylinder, Part, Pos, Text, export_step, export_stl, extrude
+from build123d import Box, Cylinder, Part, Pos, Text, extrude
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "chip"))  # the vendored label font lives with the chip
 from chip_clip import LABEL_FONT_PATH  # noqa: E402
+from licence_notice import export_step_with_notice, export_stl_with_notice  # noqa: E402
 
 STICKER_DIAMETER = 25.0  # NTAG215 round sticker, as used by A-Jey's thing:7268905
 FIT_CLEARANCE = 0.3  # per side, so the sticker drops in and out
@@ -64,5 +65,5 @@ def coil_finder_puck() -> Part:
 if __name__ == "__main__":
     out = Path(__file__).parent
     for name, shape in (("u1_standoff_strip", standoff_strip()), ("u1_coil_finder_puck", coil_finder_puck())):
-        export_stl(shape, str(out / f"{name}.stl"))
-        export_step(shape, str(out / f"{name}.step"))
+        export_stl_with_notice(shape, out / f"{name}.stl")
+        export_step_with_notice(shape, out / f"{name}.step")
