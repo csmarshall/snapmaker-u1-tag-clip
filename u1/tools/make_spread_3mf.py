@@ -4,7 +4,7 @@ Each cover is the blank cover with the spread value engraved as its label (contr
 It is one filament (PETG) and carries no printer, process or filament settings: pick the U1 0.4mm presets after opening. Nothing the other builds write is touched.
 Also prints, for each spread, the hooks' half-width against the assumed bore (the bore is 1waynger1's plug width, not measured on the printer).
 
-Run: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python u1/tools/make_spread_3mf.py
+Run: uv run python u1/tools/make_spread_3mf.py
 """
 import math
 import sys

@@ -10,7 +10,7 @@ It was made for feeding the U1 from an external dryer (a Creality SpacePi X4) wi
 
 ## Just print it
 
-Ready-to-print 3MFs are in [`prints/`](prints/). GitHub Actions rebuilds that folder from the generator on every change, so it always matches the code.
+Ready-to-print 3MFs are in [`prints/`](prints/). GitHub Actions rebuilds that folder from the generator whenever the model changes, so it tracks the code.
 
 | File | What |
 |---|---|
@@ -27,7 +27,7 @@ The files open in Snapmaker Orca (or Orca Slicer / Bambu Studio). They carry geo
 
 ```sh
 cd chip
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python chip_clip.py "PETG-GF" "TPU 85A"
+uv run python chip_clip.py "PETG-GF" "TPU 85A"
 ```
 
 Each name becomes `chip/out/tag-clip_<name>.3mf` (plus `.stl` and `.step`). In file names `+` becomes `plus` and spaces become `_`. Long names shrink to fit. To make a type permanent, so that it's built into `prints/`, add it to `FILAMENTS` in [`chip/chip_clip.py`](chip/chip_clip.py) and open a pull request.
@@ -58,17 +58,17 @@ Issues and photos of your prints are welcome.
 | [`chip/`](chip/) | The generator for the printer-neutral parts. `chip_clip.py` is the parametric [build123d](https://github.com/gumyr/build123d) model of the chip (sticker recess, clip arms, name) and a generic dock. Every dimension is a named constant at the top. `chip_3mf.py` writes the two-filament 3MF. `fonts/` holds the label font (Arimo, OFL), vendored so the lettering is the same on every machine. |
 | [`u1/`](u1/) | The Snapmaker U1 parts, which build on `chip/`. `u1_parts.py` holds the finger dock (the production dock), the integrated dovetail dock, the socket adapter, the dock mount and blank covers. `socket_fingers.py` holds the snap fingers. `u1_build.py` builds them, `tools/` lays out plates and writes 3MFs, and `docs/` has the design notes for each variant. `fixtures/` has test prints for finding where the reader sees a sticker. |
 | [`prints/`](prints/) | Generated 3MFs. Don't edit them by hand; `tools/build_prints.py` writes them. |
-| [`tools/build_prints.py`](tools/build_prints.py) | Builds everything and rewrites `prints/`. The output is reproducible: the same model gives the same bytes. |
+| [`tools/build_prints.py`](tools/build_prints.py) | Builds everything and rewrites `prints/`. With the locked toolchain (`uv.lock`) the same model rebuilds to the same bytes on one machine; Linux and macOS builds have not been compared yet, so the first CI rebuild may refresh the files once. |
 | [`tests/`](tests/), [`u1/tests/`](u1/tests/) | Fit and consistency checks on the built meshes: clearances, the clip against the original's geometry, finger positions, plate layouts and reproducible 3MFs. CI runs them on every push. |
 | [`docs/`](docs/) | The day-to-day workflow (`WORKFLOW.md`) and where the U1's reader coil is likely to be (`ANTENNA.md`). |
 
 ### Build and test locally
 
-You need [uv](https://docs.astral.sh/uv/). Everything else is fetched per command.
+You need [uv](https://docs.astral.sh/uv/). The dependencies are pinned in `uv.lock` and installed on first run.
 
 ```sh
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/build_prints.py   # rebuild prints/
-uv run --with build123d --with trimesh --with manifold3d --with pytest --with rtree --with shapely --with networkx --with scipy --with matplotlib python -m pytest -q tests u1/tests
+uv run python tools/build_prints.py   # rebuild prints/
+uv run python -m pytest -q tests u1/tests
 ```
 
 The tests read the built meshes in `chip/out/` and `u1/out/`, so run a build first. Without one, most of them skip.

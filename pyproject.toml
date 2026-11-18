@@ -1,0 +1,23 @@
+[project]
+name = "snapmaker-u1-tag-clip"
+version = "0.1.0"
+description = "Filament clip chip carrying an NFC tag, and Snapmaker U1 docks that read it"
+license = "CC-BY-NC-SA-4.0"
+requires-python = ">=3.12,<3.13"
+# Build dependencies for the generators and tools/build_prints.py. Versions are locked in uv.lock so prints/ rebuilds from a fixed toolchain.
+dependencies = [
+    "build123d",
+    "trimesh",
+    "numpy",
+    "matplotlib",
+    "scipy",
+    "networkx",
+]
+
+[dependency-groups]
+test = ["pytest", "manifold3d", "rtree", "shapely"]
+render = ["pyvista"]
+
+[tool.uv]
+package = false
+default-groups = ["test"]

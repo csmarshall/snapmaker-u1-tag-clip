@@ -1,6 +1,6 @@
 """Test fixtures for finding where and how thickly a tag reads on the Snapmaker U1 side panel.
 
-Run with: uv run --with build123d python u1_fixtures.py
+Run with: uv run python u1_fixtures.py
 Writes u1_standoff_strip.{stl,step} and u1_coil_finder_puck.{stl,step} beside this file.
 """
 import sys

@@ -1,7 +1,7 @@
 """Lay out the test-print set (u1/docs/TEST_PRINT.md) on U1 build plates, each part turned as printed, and stage it for the test-print page.
 
 Each part is written as base64 STL text (artifacts do not serve .stl), split into the faces that need support and the rest, plus a layout.json the page reads.
-Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib python u1/tools/print_plates.py
+Run after the builds: uv run python u1/tools/print_plates.py
 """
 import base64
 import json

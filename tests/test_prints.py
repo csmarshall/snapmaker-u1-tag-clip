@@ -59,6 +59,29 @@ def test_label_uses_the_vendored_font():
     assert (used.X, used.Y) == pytest.approx((explicit.X, explicit.Y))
 
 
+def test_vendored_font_actually_loads(tmp_path):
+    """build123d silently falls back to a system font when font_path cannot be loaded, so compare against that fallback: the vendored font must give different geometry."""
+    vendored = Text("PLA", font_size=9.0, font_path=chip_clip.LABEL_FONT_PATH, align=None)
+    fallback = Text("PLA", font_size=9.0, font_path=str(tmp_path / "missing.ttf"), align=None)
+    assert vendored.area != pytest.approx(fallback.area, rel=1e-3)
+
+
+def test_canonical_order_keeps_winding():
+    """mesh_xml reorders vertices and triangles; the written mesh must still be closed and outward-facing."""
+    import re
+
+    import numpy as np
+    import trimesh
+
+    box = trimesh.creation.box((3, 4, 5))
+    xml = chip_3mf.mesh_xml(1, box)
+    verts = np.array(re.findall(r'<vertex x="([^"]+)" y="([^"]+)" z="([^"]+)"/>', xml), float)
+    faces = np.array(re.findall(r'<triangle v1="(\d+)" v2="(\d+)" v3="(\d+)"/>', xml), int)
+    written = trimesh.Trimesh(verts, faces, process=False)
+    assert written.is_watertight and written.is_winding_consistent
+    assert written.volume == pytest.approx(box.volume)
+
+
 def test_all_chips_tables_cover_every_filament():
     assert len(P.ALL_CHIPS_PARTS) == len(chip_clip.FILAMENTS)
     assert [p[1] for p in P.ALL_CHIPS_PARTS] == [f"Chip, {m}" for m in chip_clip.FILAMENTS]

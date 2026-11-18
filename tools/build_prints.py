@@ -1,7 +1,7 @@
 """Build everything and publish the ready-to-slice 3MFs into prints/ (tracked, unlike chip/out and u1/out), plus prints/README.md listing them.
 
 Writes prints/chips/tag-clip_<stem>.3mf (one per filament), prints/tag-clip_all-chips.3mf (every chip on one plate) and prints/u1/u1_docks_fingers_set.3mf (the four docks with socket fingers), and deletes anything else under prints/ so a removed filament does not leave a stale file.
-The 3MFs are byte-reproducible: the same geometry rebuilds to identical files. Run from anywhere: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/build_prints.py
+The 3MFs are byte-reproducible for a given toolchain (uv.lock): the same geometry rebuilds to identical files on one machine; across operating systems that is not yet verified. Run from anywhere: uv run python tools/build_prints.py
 Set TAG_CLIP_LOG_LEVEL (DEBUG, INFO, WARNING, ...) to change the log level; the default is INFO.
 """
 import logging

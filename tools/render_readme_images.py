@@ -1,7 +1,7 @@
 """Render the README's picture, docs/images/hero.png: a PLA+ chip on its own, and the same chip sitting in the slot 1 finger dock.
 
 Reads the built meshes in chip/out and u1/out (run tools/build_prints.py first) and renders off screen with PyVista (VTK).
-Run: uv run --with pyvista --with numpy python tools/render_readme_images.py
+Run: uv run --group render python tools/render_readme_images.py
 """
 from pathlib import Path
 

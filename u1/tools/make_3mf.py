@@ -3,7 +3,7 @@
 Uses the layout from print_plates.py. Bodies print with filament 1 and inlays (labels, digits, hint) with filament 2. The blank cover gets supports on the plate.
 There are no printer, process or filament settings in it: pick the U1 0.4mm presets in Snapmaker Orca after opening. (Snapmaker Orca 1.10.1's CLI segfaults on loading any process preset, so it cannot fill them in or slice-check the file.)
 
-Run after the builds: uv run --with build123d --with trimesh --with numpy --with matplotlib python u1/tools/make_3mf.py
+Run after the builds: uv run python u1/tools/make_3mf.py
 """
 import sys
 from pathlib import Path

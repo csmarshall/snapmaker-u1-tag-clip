@@ -5,8 +5,8 @@ An independent test plate, not a replacement for the integral socket adapter. Us
 Build and check:
 
 ```
-uv run --with build123d python u1/finger_fallback.py
-uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx --with manifold3d --with rtree python u1/tools/finger_fallback_plate.py
+uv run python u1/finger_fallback.py
+uv run python u1/tools/finger_fallback_plate.py
 ```
 
 The first writes `u1/out/u1_finger_fallback_plate.stl` and `u1_finger_fallback_fingers.stl` (and STEP). The second picks each piece's print orientation, prints the overhang table, and writes `u1/out/u1_finger_fallback.3mf` (one plate, both pieces, filament 1; it carries no printer, process or filament settings, so choose the U1 0.4mm and PETG presets in Snapmaker Orca after opening). Nothing existing is touched: `u1/out/u1_test_print.3mf`, the PARTS and PLATES in `u1/tools/print_plates.py` and the dock, adapter, cover and chip meshes build exactly as before.

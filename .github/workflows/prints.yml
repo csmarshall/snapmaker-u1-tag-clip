@@ -7,6 +7,8 @@ on:
       - "chip/**"
       - "u1/**"
       - "tools/build_prints.py"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/prints.yml"
   workflow_dispatch:
 
@@ -28,7 +30,7 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - name: Build prints
-        run: uv run --with build123d --with trimesh --with numpy --with matplotlib --with scipy --with networkx python tools/build_prints.py
+        run: uv run --locked --no-default-groups python tools/build_prints.py
       - name: Commit changed prints
         run: |
           git add --all prints
@@ -39,4 +41,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "prints: rebuild from ${GITHUB_SHA::7}"
+          git pull --rebase origin main  # main may have moved during the build
           git push
