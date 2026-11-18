@@ -2,7 +2,11 @@
 
 A filament clip that carries its spool's NFC tag, and a numbered dock that snaps into the Snapmaker U1's side-panel socket. Load a spool, drop its clip in the dock, and the U1 reads the tag.
 
-![The clip chip and the dock](docs/images/hero.png)
+![The chip and the slot 1 dock, rendered from the model](docs/images/hero.png)
+
+![Two finger docks on the U1's side panel: slot 1 holding an ABS chip, slot 2 empty](docs/images/installed.jpg)
+
+Slots 1 and 2 on my U1. Slot 1 has an ABS chip in it. Slot 2 is empty, so you can see the little "this way up" hint printed on its back wall.
 
 Every spool I own gets its own **chip**. It clips the loose filament end, has an NTAG215 sticker pressed into the back, and has the material name printed in a second colour on the front.
 
