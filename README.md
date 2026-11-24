@@ -74,7 +74,7 @@ The finger dock as an old-school blueprint. A workflow redraws it from the model
 <!-- blueprint:blueprint_dock -->
 [![U1 TAG CLIP · FINGER DOCK](docs/images/blueprint_dock.svg)](docs/images/blueprint_dock.svg)
 
-<sub>Drawing generated from `u1/u1_parts.py (dock_fingers_parts)` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model · [Buy me a coffee](https://buymeacoffee.com/cs_marshall)</sub>
+<sub>Drawing generated from `u1/u1_parts.py (dock_fingers_parts)` by [common-blueprint-generator](https://github.com/csmarshall/common-blueprint-generator) on every change to the model</sub>
 <!-- /blueprint -->
 
 ## The repo
