@@ -18,8 +18,10 @@ Each file is a Snapmaker Orca / Bambu-format 3MF holding geometry, parts and whi
 | `chips/tag-clip_PETG-CF.3mf` | Chip for PETG-CF |
 | `chips/tag-clip_PCTG.3mf` | Chip for PCTG |
 | `chips/tag-clip_ASA.3mf` | Chip for ASA |
+| `chips/tag-clip_ASA-CF08.3mf` | Chip for ASA-CF08 |
 | `chips/tag-clip_ABS.3mf` | Chip for ABS |
 | `chips/tag-clip_PC.3mf` | Chip for PC |
+| `chips/tag-clip_PC-GF.3mf` | Chip for PC-GF |
 | `chips/tag-clip_TPU.3mf` | Chip for TPU |
 | `chips/tag-clip_TPU_95A.3mf` | Chip for TPU 95A |
 | `chips/tag-clip_TPU_90A.3mf` | Chip for TPU 90A |
@@ -27,7 +29,8 @@ Each file is a Snapmaker Orca / Bambu-format 3MF holding geometry, parts and whi
 | `chips/tag-clip_Nylon_CF.3mf` | Chip for Nylon CF |
 | `chips/tag-clip_Nylon_GF.3mf` | Chip for Nylon GF |
 | `chips/tag-clip_PVA.3mf` | Chip for PVA |
-| `tag-clip_all-chips.3mf` | All 21 chips above on one plate |
+| `chips/tag-clip_Breakaway.3mf` | Chip for Breakaway |
+| `tag-clip_all-chips.3mf` | All 24 chips above on one plate |
 | `u1/u1_docks_fingers_set.3mf` | Snapmaker U1 docks with socket fingers, slots 1 to 4, on one plate |
 
 ## Printing notes
