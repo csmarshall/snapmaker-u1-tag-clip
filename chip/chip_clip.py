@@ -95,10 +95,10 @@ C_CATCH_BANDS = ((0.0, 1.3, 2.68), (1.3, 1.85, 2.43), (1.85, 3.0, 1.92))
 FILAMENTS = (
     "PLA", "PLA+", "PLA+ HS", "PLA Silk", "PLA Matte", "PLA-CF",
     "PETG", "PETG+", "PETG HF", "PETG-CF", "PCTG",
-    "ASA", "ABS", "PC",
+    "ASA", "ASA-CF08", "ABS", "PC", "PC-GF",
     "TPU", "TPU 95A", "TPU 90A",
     "Nylon", "Nylon CF", "Nylon GF",
-    "PVA",
+    "PVA", "Breakaway",
 )
 LABEL_FONT_SIZE = 9.0
 LABEL_EDGE_MARGIN = 1.5  # the engraved name stays this far inside the chip's edge
