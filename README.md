@@ -29,7 +29,7 @@ Everything ready to slice is in [`prints/`](prints/). GitHub Actions rebuilds th
 | File | What |
 |---|---|
 | [`prints/chips/tag-clip_<type>.3mf`](prints/chips/) | One chip per filament type: PLA, PLA+, PLA+ HS, PETG, ABS, TPU, nylon and 14 more. The full list is in [`prints/README.md`](prints/README.md). |
-| [`prints/tag-clip_all-chips.3mf`](prints/tag-clip_all-chips.3mf) | All 21 chips on one U1 plate. |
+| [`prints/tag-clip_all-chips.3mf`](prints/tag-clip_all-chips.3mf) | All 24 chips on one U1 plate. |
 | [`prints/u1/u1_docks_fingers_set.3mf`](prints/u1/u1_docks_fingers_set.3mf) | The 4 U1 docks, slots 1 to 4, on one plate. |
 
 They open in Snapmaker Orca, Orca Slicer or Bambu Studio. There's geometry and filament assignments in them and nothing else, so pick your printer, process and filament presets after you open one.
